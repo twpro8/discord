@@ -15,3 +15,15 @@ class ServerNotFoundError(ServerError, ObjectNotFoundError):
 
 class MemberNotFoundError(ServerError, ObjectNotFoundError):
     detail = "Member not found"
+
+
+class OwnerCannotLeaveServerError(ServerError):
+    detail = "Owner cannot leave to the server"
+
+
+class CannotKickSelfError(ServerError):
+    detail = "User cannot kick self"
+
+
+class OnlyOwnerCanKickError(ServerError):
+    detail = "Only owner can kick"
