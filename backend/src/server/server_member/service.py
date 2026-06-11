@@ -1,3 +1,5 @@
+from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +9,7 @@ from src.server.enums import ServerMemberRole
 from src.server.server_member.schemas import (
     ServerMemberCreateSchema,
     ServerMemberSchema,
+    ServerMemberUpdateSchema,
 )
 from src.server.server_member.unit_of_work import ServerMemberUnitOfWork
 
@@ -38,3 +41,14 @@ class ServerMemberService(BaseService):
             await self.uow.commit()
 
         return member
+
+    async def get_one(self, **filter_by: Any) -> ServerMemberSchema | None:
+        return await self.uow.server_members.get_one(**filter_by)
+
+    async def update(
+        self, server_member_id: UUID, left_at: datetime
+    ) -> ServerMemberSchema:
+        update_schema = ServerMemberUpdateSchema(left_at=left_at)
+        state = await self.uow.server_members.update(server_member_id, update_schema)
+        await self.uow.commit()
+        return state
