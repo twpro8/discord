@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,10 @@ from src.server.schemas import (
 from src.channel.service import ChannelService
 from src.server.server_member.service import ServerMemberService
 from src.server.exceptions import (
+    CannotKickSelfError,
+    MemberNotFoundError,
+    OnlyOwnerCanKickError,
+    OwnerCannotLeaveServerError,
     ServerNotFoundError,
     ServerNotEmptyError,
 )
@@ -93,4 +98,87 @@ class ServerService(BaseService):
             raise ServerNotEmptyError
 
         await self.uow.servers.delete(server.id)
+        await self.uow.commit()
+
+    async def kick_member(
+        self,
+        server_id: UUID,
+        request_user_id: UUID,
+        target_user_id: UUID,
+    ) -> None:
+        """
+        Method for kicking a user from the server
+
+        Steps:
+        1. A user can't kick themselves.
+        2. Check that the server exists.
+        3. Check that the user has permission to kick (currently, only the owner can kick).
+        4. Check that the user being kicked is a server partner.
+        5. Kick the users (update left_at).
+        6. Decrease the user counter in the region.
+        """
+
+        if request_user_id == target_user_id:
+            raise CannotKickSelfError
+
+        server = await self.uow.servers.get_one(id=server_id)
+        if not server:
+            raise ServerNotFoundError
+
+        if server.owner_id != request_user_id:
+            raise OnlyOwnerCanKickError
+
+        member = await self.server_member_service.get_one(
+            server_id=server_id,
+            user_id=target_user_id,
+            left_at=None,
+        )
+
+        if not member:
+            raise MemberNotFoundError
+
+        await self.server_member_service.update(
+            server_member_id=member.id,
+            left_at=datetime.now(timezone.utc),
+        )
+        await self.uow.servers.decrement_member_count(server.id)
+        await self.uow.commit()
+
+    async def leave_server(
+        self,
+        server_id: UUID,
+        user_id: UUID,
+    ) -> None:
+        """
+        Method for leaving the server
+
+        Steps:
+        1. Check that the server exists.
+        2. Check that the user is a member of the server.
+        3. A owner can't leave the server, they can only delete it.
+        4. Update left_at for the user.
+        5. Decrease the user counter in the region.
+        """
+
+        server = await self.uow.servers.get_one(id=server_id)
+        if not server:
+            raise ServerNotFoundError
+
+        if server.owner_id == user_id:
+            raise OwnerCannotLeaveServerError
+
+        member = await self.server_member_service.get_one(
+            server_id=server_id,
+            user_id=user_id,
+            left_at=None,
+        )
+
+        if not member:
+            raise MemberNotFoundError
+
+        await self.server_member_service.update(
+            server_member_id=member.id,
+            left_at=datetime.now(timezone.utc),
+        )
+        await self.uow.servers.decrement_member_count(server.id)
         await self.uow.commit()
