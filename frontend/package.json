@@ -7,12 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "generate-client": "openapi-ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
     "@hookform/resolvers": "^5.4.0",
     "@tailwindcss/vite": "^4.3.0",
+    "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-router": "^1.170.15",
     "@tanstack/react-router-devtools": "^1.167.0",
     "@tanstack/router-plugin": "^1.168.18",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@hey-api/openapi-ts": "0.98.2",
     "@types/node": "^24.13.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
