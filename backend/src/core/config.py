@@ -1,7 +1,9 @@
-from typing import Literal
+from typing import Literal, Annotated
 
-from pydantic import computed_field, PostgresDsn
+from pydantic import computed_field, PostgresDsn, AnyUrl, BeforeValidator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from src.core.utils import parse_cors
 
 
 class Settings(BaseSettings):
@@ -37,6 +39,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_SECONDS: int = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
 
     API_V1_STR: str = "/api/v1"
+    FRONTEND_HOST: str
+    CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = []
 
     @computed_field  # type: ignore
     @property
@@ -55,10 +59,18 @@ class Settings(BaseSettings):
     def REDIS_URL(self) -> str:
         return f"redis://{self.REDIS_USER}:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}"
 
+    @computed_field  # type: ignore
     @property
     def secure_cookies(self) -> bool:
         """Enable secure only on production (HTTPS)"""
         return self.APP_ENV == "production"
+
+    @computed_field  # type: ignore
+    @property
+    def ALL_CORS_ORIGINS(self) -> list[str]:
+        return [str(origin).rstrip("/") for origin in self.CORS_ORIGINS] + [
+            self.FRONTEND_HOST
+        ]
 
 
 settings = Settings()  # type: ignore
