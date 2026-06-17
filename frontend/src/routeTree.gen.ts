@@ -13,6 +13,8 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutServersRouteImport } from './routes/_layout/servers'
+import { Route as LayoutChatsRouteImport } from './routes/_layout/chats'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -33,15 +35,29 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutServersRoute = LayoutServersRouteImport.update({
+  id: '/servers',
+  path: '/servers',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutChatsRoute = LayoutChatsRouteImport.update({
+  id: '/chats',
+  path: '/chats',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/chats': typeof LayoutChatsRoute
+  '/servers': typeof LayoutServersRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/chats': typeof LayoutChatsRoute
+  '/servers': typeof LayoutServersRoute
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesById {
@@ -49,14 +65,23 @@ export interface FileRoutesById {
   '/_layout': typeof LayoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/_layout/chats': typeof LayoutChatsRoute
+  '/_layout/servers': typeof LayoutServersRoute
   '/_layout/': typeof LayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup'
+  fullPaths: '/' | '/login' | '/signup' | '/chats' | '/servers'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/signup' | '/'
-  id: '__root__' | '/_layout' | '/login' | '/signup' | '/_layout/'
+  to: '/login' | '/signup' | '/chats' | '/servers' | '/'
+  id:
+    | '__root__'
+    | '/_layout'
+    | '/login'
+    | '/signup'
+    | '/_layout/chats'
+    | '/_layout/servers'
+    | '/_layout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,14 +120,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/servers': {
+      id: '/_layout/servers'
+      path: '/servers'
+      fullPath: '/servers'
+      preLoaderRoute: typeof LayoutServersRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/chats': {
+      id: '/_layout/chats'
+      path: '/chats'
+      fullPath: '/chats'
+      preLoaderRoute: typeof LayoutChatsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
 interface LayoutRouteChildren {
+  LayoutChatsRoute: typeof LayoutChatsRoute
+  LayoutServersRoute: typeof LayoutServersRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutChatsRoute: LayoutChatsRoute,
+  LayoutServersRoute: LayoutServersRoute,
   LayoutIndexRoute: LayoutIndexRoute,
 }
 
