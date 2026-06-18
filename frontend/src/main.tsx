@@ -7,6 +7,7 @@ import ReactDOM from "react-dom/client"
 import "./styles/globals.css"
 import { routeTree } from "./routeTree.gen"
 import { ThemeProvider } from "@/providers/ThemeProvider.tsx";
+import { Toaster } from "@/components/ui/sonner"
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
                 <RouterProvider router={router} />
+                <Toaster gap={8} position="top-center" />
             </ThemeProvider>
         </QueryClientProvider>
     </StrictMode>,
