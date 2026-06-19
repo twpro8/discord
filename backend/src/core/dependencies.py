@@ -5,6 +5,7 @@ from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
+from src.auth.schemas import RefreshToken
 from src.core.postgres import get_session
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
@@ -15,22 +16,31 @@ def get_redis(request: Request) -> Redis:
 
 
 def get_access_token(
-    access_token_cookie: str = Cookie(
-        default=None,
-        include_in_schema=False,
-        alias="access_token",
-    ),
-    access_token_header: str = Header(
-        default=None,
-        include_in_schema=False,
-        alias="Authorization",
-    ),
+    authorization: Annotated[str | None, Header()] = None,
+    access_token: Annotated[str | None, Cookie()] = None,
 ) -> str:
     """get access token"""
-    if access_token_header:
-        return access_token_header
-    elif access_token_cookie:
-        return access_token_cookie
+    if authorization:
+        parts = authorization.split(" ", 1)
+
+        if len(parts) != 2:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication scheme",
+            )
+
+        scheme, token = parts
+
+        if scheme.lower() != "bearer":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication scheme",
+            )
+
+        return token
+
+    if access_token:
+        return access_token
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -39,26 +49,19 @@ def get_access_token(
 
 
 def get_refresh_token(
-    refresh_token_cookie: str = Cookie(
-        default=None,
-        include_in_schema=False,
-        alias="refresh_token",
-    ),
-    refresh_token_body: str = Body(
-        default=None,
-        alias="refresh_token",
-        embed=True,
-    ),
+    token_body: Annotated[RefreshToken | None, Body()] = None,
+    refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> str:
     """get refresh token"""
-    if refresh_token_body:
-        return refresh_token_body
-    elif refresh_token_cookie:
-        return refresh_token_cookie
+    if token_body:
+        return token_body.refresh_token
+
+    if refresh_token:
+        return refresh_token
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="You have not provided an refresh token",
+        detail="You have not provided a refresh token",
     )
 
 
