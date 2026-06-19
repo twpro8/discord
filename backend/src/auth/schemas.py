@@ -60,3 +60,7 @@ class RefreshTokenSchema(BaseSchema):
     is_revoked: bool
     expires_at: datetime
     created_at: datetime
+
+
+class RefreshToken(BaseSchema):
+    refresh_token: str
