@@ -1,6 +1,7 @@
 import { Controller, useForm } from "react-hook-form"
 import { Link } from "@tanstack/react-router"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -17,29 +18,19 @@ import {
     FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-    type SignupFormData,
-    signupFormSchema,
-    type SignupRequest,
-} from "@/schemas/auth"
+import { type SignupFormData, signupFormSchema } from "@/schemas/auth"
 import { ROUTES } from "@/routes"
+import useAuth from "@/hooks/useAuth";
 
-interface SignupFormProps extends React.ComponentProps<typeof Card> {
-    submit: (data: SignupRequest) => void
-    loading: boolean
-    error: string | null
-}
-
-export function SignupForm({
-    submit,
-    loading,
-    error,
-    ...props
-}: SignupFormProps) {
+export function SignupForm() {
+    const { signUpMutation } = useAuth()
     const form = useForm<SignupFormData>({
         resolver: zodResolver(signupFormSchema),
+        mode: "onBlur",
+        criteriaMode: "all",
         defaultValues: {
-            full_name: "",
+            name: "",
+            username: "",
             email: "",
             password: "",
             confirmPassword: "",
@@ -47,13 +38,15 @@ export function SignupForm({
     })
 
     const onSubmit = (data: SignupFormData) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { confirmPassword: _confirmPassword, ...payload } = data
-        submit(payload)
+        if (signUpMutation.isPending) return
+
+        // exclude confirmPassword from submission data
+        const { confirmPassword: _confirmPassword, ...submitData } = data
+        signUpMutation.mutate({ body: submitData })
     }
 
     return (
-        <Card {...props}>
+        <Card>
             <CardHeader>
                 <CardTitle>Create an account</CardTitle>
                 <CardDescription>
@@ -63,26 +56,48 @@ export function SignupForm({
             <CardContent>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FieldGroup>
-                        <Controller
-                            name="full_name"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id={field.name}
-                                        aria-invalid={fieldState.invalid}
-                                        type="text"
-                                        placeholder="John Doe"
-                                        required
-                                    />
-                                    {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
-                                    )}
-                                </Field>
-                            )}
-                        />
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                            <Controller
+                                name="name"
+                                control={form.control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id={field.name}
+                                            aria-invalid={fieldState.invalid}
+                                            type="text"
+                                            placeholder="John Doe"
+                                            required
+                                        />
+                                        {fieldState.invalid && (
+                                            <FieldError errors={[fieldState.error]} />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+                            <Controller
+                                name="username"
+                                control={form.control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor={field.name}>Username</FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id={field.name}
+                                            aria-invalid={fieldState.invalid}
+                                            type="text"
+                                            placeholder="johndoe_42"
+                                            required
+                                        />
+                                        {fieldState.invalid && (
+                                            <FieldError errors={[fieldState.error]} />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+                        </div>
                         <Controller
                             name="email"
                             control={form.control}
@@ -121,7 +136,7 @@ export function SignupForm({
                                         required
                                     />
                                     <FieldDescription>
-                                        Must be at least 8 characters long.
+                                        Must be at least 6 characters long.
                                     </FieldDescription>
                                     {fieldState.invalid && (
                                         <FieldError errors={[fieldState.error]} />
@@ -152,9 +167,11 @@ export function SignupForm({
                             )}
                         />
                         <Field>
-                            {error && <FieldError errors={[{ message: error }]} />}
                             <Button type="submit">
-                                {loading ? "Creating account..." : "Create Account"}
+                                {signUpMutation.isPending
+                                    ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    : "Create Account"
+                                }
                             </Button>
                             <FieldDescription className="px-6 text-center">
                                 Already have an account? <Link to={ROUTES.LOGIN}>Sign in</Link>
