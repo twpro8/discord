@@ -1,7 +1,7 @@
 import { Controller, useForm } from "react-hook-form"
 import { Link } from "@tanstack/react-router"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { cn } from "@/lib/utils"
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -18,54 +18,51 @@ import {
     FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { loginFormSchema, type LoginRequest } from "@/schemas/auth.ts"
+import { loginFormSchema, type LoginFormData } from "@/schemas/auth.ts"
 import { ROUTES } from "@/routes"
+import useAuth from "@/hooks/useAuth.tsx";
 
-interface LoginFormProps extends React.ComponentProps<"div"> {
-    submit: (data: LoginRequest) => void
-    loading: boolean
-    error: string | null
-}
-
-export function LoginForm({
-    submit,
-    loading,
-    error,
-    className,
-    ...props
-}: LoginFormProps) {
-    const form = useForm<LoginRequest>({
+export function LoginForm() {
+    const form = useForm<LoginFormData>({
         resolver: zodResolver(loginFormSchema),
+        mode: "onBlur",
+        criteriaMode: "all",
         defaultValues: {
-            email: "",
+            username: "",
             password: "",
         },
     })
+    const { loginMutation } = useAuth()
+
+    const onSubmit = (data: LoginFormData) => {
+        if (loginMutation.isPending) return
+        loginMutation.mutate({ body: data })
+    }
 
     return (
-        <div className={cn("flex flex-col gap-6", className)} {...props}>
+        <div className="flex flex-col gap-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Login to your account</CardTitle>
                     <CardDescription>
-                        Enter your email below to login to your account
+                        Enter your username below to login to your account
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={form.handleSubmit(submit)}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
                         <FieldGroup>
                             <Controller
-                                name="email"
+                                name="username"
                                 control={form.control}
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                                        <FieldLabel htmlFor={field.name}>Username</FieldLabel>
                                         <Input
                                             {...field}
                                             id={field.name}
                                             aria-invalid={fieldState.invalid}
-                                            type="email"
-                                            placeholder="m@example.com"
+                                            type="text"
+                                            placeholder="Enter your username"
                                         />
                                         {fieldState.invalid && (
                                             <FieldError
@@ -104,9 +101,11 @@ export function LoginForm({
                                 )}
                             />
                             <Field>
-                                {error && <FieldError errors={[{ message: error }]} />}
-                                <Button type="submit" disabled={loading}>
-                                    {loading ? "Logging in..." : "Login"}
+                                <Button type="submit" disabled={loginMutation.isPending}>
+                                    {loginMutation.isPending
+                                        ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        : "Login"
+                                    }
                                 </Button>
                                 <FieldDescription className="text-center">
                                     Don&apos;t have an account?{" "}
