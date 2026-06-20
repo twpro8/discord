@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from sqlalchemy import update
+from sqlalchemy import update, select
+from sqlalchemy.orm import selectinload
 from src.core.repositories import BaseRepository
 from src.server.mappers import ServerMapper
-from src.server.models import ServerOrm
-from src.server.schemas import ServerSchema
+from src.server.models import ServerMemberOrm, ServerOrm
+from src.server.schemas import ServerSchema, UserServerSummarySchema
 
 
 class ServerRepository(BaseRepository[ServerOrm, ServerSchema]):
@@ -20,3 +21,30 @@ class ServerRepository(BaseRepository[ServerOrm, ServerSchema]):
             .returning(ServerOrm)
         )
         return await self._execute_and_map_one(statement)
+
+    async def get_servers_where_user_is_member(
+        self, user_id: UUID
+    ) -> list[UserServerSummarySchema]:
+        statement = (
+            select(
+                ServerOrm.id,
+                ServerOrm.name,
+                ServerOrm.icon_url,
+                ServerOrm.owner_id,
+                ServerOrm.member_count,
+                ServerMemberOrm.role,
+                ServerMemberOrm.joined_at,
+            )
+            .join(ServerMemberOrm, ServerMemberOrm.server_id == ServerOrm.id)
+            .where(
+                ServerMemberOrm.user_id == user_id, ServerMemberOrm.left_at.is_(None)
+            )
+            .order_by(ServerMemberOrm.joined_at.desc())
+        )
+
+        result = await self.session.execute(statement)
+
+        return [
+            UserServerSummarySchema.model_validate(row)
+            for row in result.mappings().all()
+        ]
