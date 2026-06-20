@@ -11,6 +11,7 @@ from src.server.schemas import (
     ServerSchema,
     ServerUpdateRequestSchema,
     ServerUpdateSchema,
+    UserServerSummarySchema,
 )
 from src.channel.service import ChannelService
 from src.server.server_member.service import ServerMemberService
@@ -182,3 +183,8 @@ class ServerService(BaseService):
         )
         await self.uow.servers.decrement_member_count(server.id)
         await self.uow.commit()
+
+    async def get_servers_where_user_memeber(
+        self, user_id: UUID
+    ) -> list[UserServerSummarySchema]:
+        return await self.uow.servers.get_servers_where_user_is_member(user_id)
