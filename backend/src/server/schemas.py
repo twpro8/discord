@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import Field
 
 from src.core.schemas import BaseSchema
+from src.server.enums import ServerMemberRole
 
 
 class ServerSchema(BaseSchema):
@@ -34,3 +35,13 @@ class ServerUpdateRequestSchema(BaseSchema):
 class ServerUpdateSchema(ServerUpdateRequestSchema):
     id: UUID
     owner_id: UUID
+
+
+class UserServerSummarySchema(BaseSchema):
+    id: UUID
+    name: str
+    icon_url: str | None
+    owner_id: UUID
+    member_count: int
+    role: ServerMemberRole
+    joined_at: datetime
