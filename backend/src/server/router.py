@@ -7,6 +7,7 @@ from src.server.schemas import (
     ServerCreateRequestSchema,
     ServerSchema,
     ServerUpdateRequestSchema,
+    UserServerSummarySchema,
 )
 from src.user.dependencies import UserIdDep
 
@@ -24,6 +25,14 @@ async def create_server(
         owner_id=current_user_id,
     )
     return new_server
+
+
+@router.get("", response_model=list[UserServerSummarySchema])
+async def get_my_servers(
+    current_user_id: UserIdDep,
+    service: ServerServiceDep,
+) -> list[UserServerSummarySchema]:
+    return await service.get_servers_where_user_memeber(user_id=current_user_id)
 
 
 @router.patch("/update/{server_id}")
