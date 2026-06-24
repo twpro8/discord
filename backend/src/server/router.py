@@ -1,9 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
 from src.server.dependencies import ServerServiceDep
-from src.server.exceptions import ServerNotEmptyError, ServerNotFoundError
 from src.server.schemas import (
     ServerCreateRequestSchema,
     ServerSchema,
@@ -34,17 +33,11 @@ async def update_server(
     update_data: ServerUpdateRequestSchema,
     service: ServerServiceDep,
 ) -> ServerSchema:
-    try:
-        updated_server = await service.update_server(
-            update_data=update_data,
-            server_id=server_id,
-            owner_id=current_user_id,
-        )
-    except ServerNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Server does not exist",
-        )
+    updated_server = await service.update_server(
+        update_data=update_data,
+        server_id=server_id,
+        owner_id=current_user_id,
+    )
     return updated_server
 
 
@@ -54,18 +47,7 @@ async def delete_server(
     current_user_id: UserIdDep,
     service: ServerServiceDep,
 ) -> None:
-    try:
-        await service.delete_server(
-            server_id=server_id,
-            owner_id=current_user_id,
-        )
-    except ServerNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Server does not exist",
-        )
-    except ServerNotEmptyError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Server has to be empty",
-        )
+    await service.delete_server(
+        server_id=server_id,
+        owner_id=current_user_id,
+    )
