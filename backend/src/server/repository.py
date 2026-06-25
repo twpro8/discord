@@ -3,9 +3,9 @@ from uuid import UUID
 from sqlalchemy import update, select
 from sqlalchemy.orm import selectinload
 from src.core.repositories import BaseRepository
-from src.server.mappers import ServerMapper
+from src.server.mappers import ServerMapper, ServerUserBriefMapper
 from src.server.models import ServerMemberOrm, ServerOrm
-from src.server.schemas import ServerSchema, UserServerSummarySchema
+from src.server.schemas import ServerSchema, ServerUserBriefSchema
 
 
 class ServerRepository(BaseRepository[ServerOrm, ServerSchema]):
@@ -24,7 +24,7 @@ class ServerRepository(BaseRepository[ServerOrm, ServerSchema]):
 
     async def get_servers_where_user_is_member(
         self, user_id: UUID
-    ) -> list[UserServerSummarySchema]:
+    ) -> list[ServerUserBriefSchema]:
         statement = (
             select(
                 ServerOrm.id,
@@ -43,8 +43,4 @@ class ServerRepository(BaseRepository[ServerOrm, ServerSchema]):
         )
 
         result = await self.session.execute(statement)
-
-        return [
-            UserServerSummarySchema.model_validate(row)
-            for row in result.mappings().all()
-        ]
+        return [ServerUserBriefMapper.to_schema(model) for model in result.all()]

@@ -37,7 +37,7 @@ class ServerUpdateSchema(ServerUpdateRequestSchema):
     owner_id: UUID
 
 
-class UserServerSummarySchema(BaseSchema):
+class ServerUserBriefSchema(BaseSchema):
     id: UUID
     name: str
     icon_url: str | None
