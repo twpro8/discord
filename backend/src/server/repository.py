@@ -44,3 +44,18 @@ class ServerRepository(BaseRepository[ServerOrm, ServerSchema]):
 
         result = await self.session.execute(statement)
         return [ServerUserBriefMapper.to_schema(model) for model in result.all()]
+
+    async def get_server_where_user_is_member(
+        self, user_id: UUID, server_id: UUID
+    ) -> ServerSchema | None:
+        statement = (
+            select(ServerOrm)
+            .join(ServerMemberOrm, ServerMemberOrm.server_id == ServerOrm.id)
+            .where(
+                ServerOrm.id == server_id,
+                ServerMemberOrm.user_id == user_id,
+                ServerMemberOrm.left_at.is_(None),
+            )
+        )
+
+        return await self._execute_and_map_one_or_none(statement)
