@@ -188,3 +188,15 @@ class ServerService(BaseService):
         self, user_id: UUID
     ) -> list[ServerUserBriefSchema]:
         return await self.uow.servers.get_servers_where_user_is_member(user_id)
+
+    async def get_server_where_user_member(
+        self, user_id: UUID, server_id: UUID
+    ) -> ServerSchema | None:
+        result = await self.uow.servers.get_server_where_user_is_member(
+            user_id, server_id
+        )
+
+        if not result:
+            raise ServerNotFoundError
+
+        return result
