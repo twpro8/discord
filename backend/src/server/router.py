@@ -36,6 +36,17 @@ async def get_my_servers(
     return await service.get_servers_where_user_memeber(user_id=current_user_id)
 
 
+@router.get("/{server_id}", response_model=ServerSchema)
+async def get_my_server(
+    current_user_id: UserIdDep,
+    server_id: UUID,
+    service: ServerServiceDep,
+) -> ServerSchema | None:
+    return await service.get_server_where_user_member(
+        user_id=current_user_id, server_id=server_id
+    )
+
+
 @router.patch("/update/{server_id}")
 async def update_server(
     server_id: UUID,
