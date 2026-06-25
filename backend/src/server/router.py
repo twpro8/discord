@@ -8,7 +8,7 @@ from src.server.schemas import (
     ServerCreateRequestSchema,
     ServerSchema,
     ServerUpdateRequestSchema,
-    UserServerSummarySchema,
+    ServerUserBriefSchema,
 )
 from src.user.dependencies import UserIdDep
 
@@ -28,11 +28,11 @@ async def create_server(
     return new_server
 
 
-@router.get("", response_model=list[UserServerSummarySchema])
+@router.get("", response_model=list[ServerUserBriefSchema])
 async def get_my_servers(
     current_user_id: UserIdDep,
     service: ServerServiceDep,
-) -> list[UserServerSummarySchema]:
+) -> list[ServerUserBriefSchema]:
     return await service.get_servers_where_user_memeber(user_id=current_user_id)
 
 
