@@ -4,7 +4,7 @@ import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
 import { AuthService, ChatService, type Options, ServerService, UserService } from '../sdk.gen';
-import type { AuthLoginUserData, AuthLoginUserError, AuthLoginUserResponse, AuthRefreshData, AuthRefreshError, AuthRefreshResponse, AuthRegisterUserData, AuthRegisterUserError, AuthRegisterUserResponse, ChatsCreateChatData, ChatsCreateChatError, ChatsCreateChatResponse, ServersCreateServerData, ServersCreateServerError, ServersCreateServerResponse, ServersDeleteServerData, ServersDeleteServerError, ServersDeleteServerResponse, ServersUpdateServerData, ServersUpdateServerError, ServersUpdateServerResponse, UsersGetCurrentUserData, UsersGetCurrentUserError, UsersGetCurrentUserResponse } from '../types.gen';
+import type { AuthLoginUserData, AuthLoginUserError, AuthLoginUserResponse, AuthRefreshData, AuthRefreshError, AuthRefreshResponse, AuthRegisterUserData, AuthRegisterUserError, AuthRegisterUserResponse, ChatsCreateChatData, ChatsCreateChatError, ChatsCreateChatResponse, ServersCreateServerData, ServersCreateServerError, ServersCreateServerResponse, ServersDeleteServerData, ServersDeleteServerError, ServersDeleteServerResponse, ServersGetMyServersData, ServersGetMyServersError, ServersGetMyServersResponse, ServersUpdateServerData, ServersUpdateServerError, ServersUpdateServerResponse, UsersGetCurrentUserData, UsersGetCurrentUserError, UsersGetCurrentUserResponse } from '../types.gen';
 
 /**
  * Register new user
@@ -132,6 +132,24 @@ export const chatsCreateChatMutation = (options?: Partial<Options<ChatsCreateCha
     };
     return mutationOptions;
 };
+
+export const serversGetMyServersQueryKey = (options?: Options<ServersGetMyServersData>) => createQueryKey('serversGetMyServers', options);
+
+/**
+ * Get My Servers
+ */
+export const serversGetMyServersOptions = (options?: Options<ServersGetMyServersData>) => queryOptions<ServersGetMyServersResponse, ServersGetMyServersError, ServersGetMyServersResponse, ReturnType<typeof serversGetMyServersQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ServerService.getMyServers({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: serversGetMyServersQueryKey(options)
+});
 
 /**
  * Create Server
