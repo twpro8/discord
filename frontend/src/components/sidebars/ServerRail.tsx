@@ -7,40 +7,73 @@ import { ROUTES } from "@/routes.ts";
 import type { UserServerSummarySchema } from "@/client";
 import { colorFromId, getInitials } from "@/utils.ts";
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
+import { useState } from "react";
+import { CreateServerDialog } from "@/components/CreateServerDialog.tsx";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Trash2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { serversDeleteServerMutation, serversGetMyServersOptions } from "@/client/@tanstack/react-query.gen.ts";
 
 interface ServerIconProps {
     server: UserServerSummarySchema;
     active: boolean;
     onClick: () => void;
+    onDelete: (id: string) => void;
 }
 
-function ServerIcon({ server, active, onClick }: ServerIconProps) {
+function ServerIcon({ server, active, onClick, onDelete }: ServerIconProps) {
+    const [menuOpen, setMenuOpen] = useState(false);
+
     return (
-        <TooltipProvider delayDuration={200}>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <button
-                        onClick={onClick}
-                        aria-label={server.id}
-                        aria-pressed={active}
-                        className={`w-9 h-9 flex items-center justify-center font-semibold text-sm transition-all duration-150 cursor-pointer ${
-                            active
-                                ? "rounded-xl"
-                                : "rounded-2xl hover:rounded-xl"
-                        }`}
-                        style={{
-                            backgroundColor: colorFromId(server.id),
-                            color: "var(--crust)",
-                        }}
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+            <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                    <DropdownMenuTrigger
+                        asChild
+                        onPointerDown={(e) => e.preventDefault()}
                     >
-                        {getInitials(server.name)}
-                    </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                    <p>{server.name}</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={onClick}
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    setMenuOpen((prev) => !prev);
+                                }}
+                                aria-label={server.id}
+                                aria-pressed={active}
+                                className={`w-9 h-9 flex items-center justify-center font-semibold text-sm transition-all duration-150 cursor-pointer ${
+                                    active ? "rounded-xl" : "rounded-2xl hover:rounded-xl"
+                                }`}
+                                style={{
+                                    backgroundColor: colorFromId(server.id),
+                                    color: "var(--crust)",
+                                }}
+                            >
+                                {getInitials(server.name)}
+                            </button>
+                        </TooltipTrigger>
+                    </DropdownMenuTrigger>
+                    <TooltipContent side="right">
+                        <p>{server.name}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
+            <DropdownMenuContent
+                side="right"
+                onCloseAutoFocus={(e) => e.preventDefault()}
+            >
+                <DropdownMenuItem
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(server.id);
+                    }}
+                >
+                    <Trash2 size={14} />
+                    <span className="cursor-pointer">Delete Server</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 
@@ -58,6 +91,15 @@ function ServerRailSeparator() {
 
 export function ServerRail() {
     const { servers, activeServerId, setActiveServerId } = useServerRail();
+    const [createOpen, setCreateOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    const { mutate: deleteServer } = useMutation({
+        ...serversDeleteServerMutation(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: serversGetMyServersOptions().queryKey });
+        },
+    });
 
     return (
         <aside
@@ -85,6 +127,7 @@ export function ServerRail() {
                             server={server}
                             active={server.id === activeServerId}
                             onClick={() => setActiveServerId(server.id)}
+                            onDelete={(id) => deleteServer({ path: { server_id: id } })}
                         />
                         ))}
                 </div>
@@ -97,9 +140,12 @@ export function ServerRail() {
                 className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:rounded-xl shrink-0 cursor-pointer"
                 style={{ backgroundColor: "var(--surface0)", color: "var(--green)" }}
                 aria-label="Add server"
+                onClick={() => setCreateOpen(true)}
             >
                 <Plus size={16} />
             </button>
+
+            <CreateServerDialog open={createOpen} onOpenChange={setCreateOpen} />
 
             {/* User controls pinned to bottom */}
             <div className="mt-auto flex flex-col items-center gap-1">
