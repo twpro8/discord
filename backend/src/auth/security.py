@@ -81,7 +81,7 @@ def decode_token(token: str) -> AccessTokenPayload:
         if sub is None:
             raise ValueError("No sub UUID provided")
         return AccessTokenPayload(sub=sub)
-    except jwt.exceptions.DecodeError:
+    except jwt.exceptions.DecodeError, jwt.exceptions.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid JWT"
         )
