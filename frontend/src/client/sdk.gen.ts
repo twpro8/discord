@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AuthLoginUserData, AuthLoginUserErrors, AuthLoginUserResponses, AuthRefreshData, AuthRefreshErrors, AuthRefreshResponses, AuthRegisterUserData, AuthRegisterUserErrors, AuthRegisterUserResponses, ChatsCreateChatData, ChatsCreateChatErrors, ChatsCreateChatResponses, ServersCreateServerData, ServersCreateServerErrors, ServersCreateServerResponses, ServersDeleteServerData, ServersDeleteServerErrors, ServersDeleteServerResponses, ServersUpdateServerData, ServersUpdateServerErrors, ServersUpdateServerResponses, UsersGetCurrentUserData, UsersGetCurrentUserErrors, UsersGetCurrentUserResponses } from './types.gen';
+import type { AuthLoginUserData, AuthLoginUserErrors, AuthLoginUserResponses, AuthRefreshData, AuthRefreshErrors, AuthRefreshResponses, AuthRegisterUserData, AuthRegisterUserErrors, AuthRegisterUserResponses, ChatsCreateChatData, ChatsCreateChatErrors, ChatsCreateChatResponses, ServersCreateServerData, ServersCreateServerErrors, ServersCreateServerResponses, ServersDeleteServerData, ServersDeleteServerErrors, ServersDeleteServerResponses, ServersGetMyServersData, ServersGetMyServersErrors, ServersGetMyServersResponses, ServersUpdateServerData, ServersUpdateServerErrors, ServersUpdateServerResponses, UsersGetCurrentUserData, UsersGetCurrentUserErrors, UsersGetCurrentUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -34,7 +34,7 @@ export class AuthService {
             }
         });
     }
-    
+
     /**
      * Login user
      *
@@ -50,7 +50,7 @@ export class AuthService {
             }
         });
     }
-    
+
     /**
      * Refresh token
      *
@@ -97,6 +97,13 @@ export class ChatService {
 
 export class ServerService {
     /**
+     * Get My Servers
+     */
+    public static getMyServers<ThrowOnError extends boolean = false>(options?: Options<ServersGetMyServersData, ThrowOnError>): RequestResult<ServersGetMyServersResponses, ServersGetMyServersErrors, ThrowOnError> {
+        return (options?.client ?? client).get<ServersGetMyServersResponses, ServersGetMyServersErrors, ThrowOnError>({ url: '/api/v1/servers', ...options });
+    }
+
+    /**
      * Create Server
      */
     public static createServer<ThrowOnError extends boolean = false>(options: Options<ServersCreateServerData, ThrowOnError>): RequestResult<ServersCreateServerResponses, ServersCreateServerErrors, ThrowOnError> {
@@ -109,7 +116,7 @@ export class ServerService {
             }
         });
     }
-    
+
     /**
      * Update Server
      */
@@ -123,7 +130,7 @@ export class ServerService {
             }
         });
     }
-    
+
     /**
      * Delete Server
      */

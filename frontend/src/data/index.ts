@@ -1,10 +1,4 @@
-import type { Server, TextChannel, VoiceChannel, ChatEntry, Message, Member } from "@/types";
-
-export const SERVERS: Server[] = [
-    { id: "lumiere", label: "✦", color: "var(--mauve)", shape: "rounded" },
-    { id: "design",  label: "◆", color: "var(--red)", shape: "rounded" },
-    { id: "dev",     label: "▲", color: "var(--green)",    shape: "rounded" },
-];
+import type { TextChannel, VoiceChannel, ChatEntry, Message, Member } from "@/types";
 
 export const TEXT_CHANNELS: TextChannel[] = [
     { id: "general",       name: "general",       unread: true },

@@ -6,14 +6,15 @@ import {
     type ReactNode,
 } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { SERVERS } from "@/data";
-import type { Server } from "@/types";
-import {ROUTES} from "@/routes.ts";
+import { ROUTES } from "@/routes.ts";
+import { useQuery } from "@tanstack/react-query";
+import { serversGetMyServersOptions } from "@/client/@tanstack/react-query.gen.ts";
+import type {UserServerSummarySchema} from "@/client";
 
 interface ServerRailContextValue {
-    servers: Server[];
+    servers: UserServerSummarySchema[];
     activeServerId: string | null;
-    activeServer: Server | undefined;
+    activeServer: UserServerSummarySchema | undefined;
     setActiveServerId: (id: string | null) => void;
 }
 
@@ -23,6 +24,11 @@ export function ServerRailProvider({ children }: { children: ReactNode }) {
     const navigate = useNavigate();
     const [activeServerId, setActiveServerIdState] = useState<string | null>(null);
 
+    const { data: servers = [] } = useQuery({
+        ...serversGetMyServersOptions(),
+        enabled: !!localStorage.getItem("access_token"),
+    })
+
     const setActiveServerId = useCallback((id: string | null) => {
         setActiveServerIdState(id);
         if (id) {
@@ -31,11 +37,11 @@ export function ServerRailProvider({ children }: { children: ReactNode }) {
         }
     }, [navigate]);
 
-    const activeServer = SERVERS.find((s) => s.id === activeServerId);
+    const activeServer = servers.find((s) => s.id === activeServerId);
 
     return (
         <ServerRailContext.Provider
-            value={{ servers: SERVERS, activeServerId, activeServer, setActiveServerId }}
+            value={{ servers, activeServerId, activeServer, setActiveServerId }}
         >
             {children}
         </ServerRailContext.Provider>
