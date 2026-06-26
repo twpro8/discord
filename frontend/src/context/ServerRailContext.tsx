@@ -29,6 +29,9 @@ export function ServerRailProvider({ children }: { children: ReactNode }) {
         enabled: !!localStorage.getItem("access_token"),
     })
 
+    // use filters instead in the future updates
+    const sortedServers = [...servers].reverse();
+
     const setActiveServerId = useCallback((id: string | null) => {
         setActiveServerIdState(id);
         if (id) {
@@ -37,11 +40,11 @@ export function ServerRailProvider({ children }: { children: ReactNode }) {
         }
     }, [navigate]);
 
-    const activeServer = servers.find((s) => s.id === activeServerId);
+    const activeServer = sortedServers.find((s) => s.id === activeServerId);
 
     return (
         <ServerRailContext.Provider
-            value={{ servers, activeServerId, activeServer, setActiveServerId }}
+            value={{ servers: sortedServers, activeServerId, activeServer, setActiveServerId }}
         >
             {children}
         </ServerRailContext.Provider>
