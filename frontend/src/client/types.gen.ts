@@ -5,16 +5,6 @@ export type ClientOptions = {
 };
 
 /**
- * Body_Auth-refresh
- */
-export type BodyAuthRefresh = {
-    /**
-     * Refresh Token
-     */
-    refresh_token?: string;
-};
-
-/**
  * ChatCreateRequestSchema
  */
 export type ChatCreateRequestSchema = {
@@ -58,6 +48,16 @@ export type HttpValidationError = {
 };
 
 /**
+ * RefreshToken
+ */
+export type RefreshToken = {
+    /**
+     * Refresh Token
+     */
+    refresh_token: string;
+};
+
+/**
  * ServerCreateRequestSchema
  */
 export type ServerCreateRequestSchema = {
@@ -70,6 +70,16 @@ export type ServerCreateRequestSchema = {
      */
     description?: string | null;
 };
+
+/**
+ * ServerMemberRole
+ */
+export const ServerMemberRole = { OWNER: 'owner', MEMBER: 'member' } as const;
+
+/**
+ * ServerMemberRole
+ */
+export type ServerMemberRole = typeof ServerMemberRole[keyof typeof ServerMemberRole];
 
 /**
  * ServerSchema
@@ -218,6 +228,37 @@ export type UserRegisterSchema = {
 };
 
 /**
+ * UserServerSummarySchema
+ */
+export type UserServerSummarySchema = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Icon Url
+     */
+    icon_url: string | null;
+    /**
+     * Owner Id
+     */
+    owner_id: string;
+    /**
+     * Member Count
+     */
+    member_count: number;
+    role: ServerMemberRole;
+    /**
+     * Joined At
+     */
+    joined_at: string;
+};
+
+/**
  * ValidationError
  */
 export type ValidationError = {
@@ -296,7 +337,10 @@ export type AuthLoginUserResponses = {
 export type AuthLoginUserResponse = AuthLoginUserResponses[keyof AuthLoginUserResponses];
 
 export type AuthRefreshData = {
-    body?: BodyAuthRefresh;
+    /**
+     * Token Body
+     */
+    body?: RefreshToken | null;
     path?: never;
     query?: never;
     url: '/api/v1/auth/refresh';
@@ -322,6 +366,12 @@ export type AuthRefreshResponse = AuthRefreshResponses[keyof AuthRefreshResponse
 
 export type UsersGetCurrentUserData = {
     body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
     path?: never;
     query?: never;
     url: '/api/v1/users/me';
@@ -347,6 +397,12 @@ export type UsersGetCurrentUserResponse = UsersGetCurrentUserResponses[keyof Use
 
 export type ChatsCreateChatData = {
     body: ChatCreateRequestSchema;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
     path?: never;
     query?: never;
     url: '/api/v1/chats';
@@ -370,8 +426,47 @@ export type ChatsCreateChatResponses = {
 
 export type ChatsCreateChatResponse = ChatsCreateChatResponses[keyof ChatsCreateChatResponses];
 
+export type ServersGetMyServersData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/servers';
+};
+
+export type ServersGetMyServersErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ServersGetMyServersError = ServersGetMyServersErrors[keyof ServersGetMyServersErrors];
+
+export type ServersGetMyServersResponses = {
+    /**
+     * Response Servers-Get My Servers
+     *
+     * Successful Response
+     */
+    200: Array<UserServerSummarySchema>;
+};
+
+export type ServersGetMyServersResponse = ServersGetMyServersResponses[keyof ServersGetMyServersResponses];
+
 export type ServersCreateServerData = {
     body: ServerCreateRequestSchema;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
     path?: never;
     query?: never;
     url: '/api/v1/servers';
@@ -397,6 +492,12 @@ export type ServersCreateServerResponse = ServersCreateServerResponses[keyof Ser
 
 export type ServersUpdateServerData = {
     body: ServerUpdateRequestSchema;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
     path: {
         /**
          * Server Id
@@ -427,6 +528,12 @@ export type ServersUpdateServerResponse = ServersUpdateServerResponses[keyof Ser
 
 export type ServersDeleteServerData = {
     body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
     path: {
         /**
          * Server Id
