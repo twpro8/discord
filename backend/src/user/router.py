@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.user.schemas import UserReadSchema
+from src.user.schemas import UserRead
 from src.user.dependencies import CurrentUserDep
 
 router = APIRouter(
@@ -12,10 +12,10 @@ router = APIRouter(
 @router.get(
     "/me",
     summary="Get current user",
-    response_model=UserReadSchema,
+    response_model=UserRead,
 )
 async def get_current_user(
     user: CurrentUserDep,
-) -> UserReadSchema:
+) -> UserRead:
     """Get current user"""
-    return UserReadSchema.model_validate(user)
+    return UserRead.model_validate(user)

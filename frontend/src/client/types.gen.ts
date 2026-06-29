@@ -5,6 +5,56 @@ export type ClientOptions = {
 };
 
 /**
+ * Body_Auth-login
+ */
+export type BodyAuthLogin = {
+    /**
+     * Grant Type
+     */
+    grant_type?: string | null;
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Password
+     */
+    password: string;
+    /**
+     * Scope
+     */
+    scope?: string;
+    /**
+     * Client Id
+     */
+    client_id?: string | null;
+    /**
+     * Client Secret
+     */
+    client_secret?: string | null;
+};
+
+/**
+ * Body_Auth-logout
+ */
+export type BodyAuthLogout = {
+    /**
+     * Refresh Token
+     */
+    refresh_token: string;
+};
+
+/**
+ * Body_Auth-refresh
+ */
+export type BodyAuthRefresh = {
+    /**
+     * Refresh Token
+     */
+    refresh_token: string;
+};
+
+/**
  * ChatCreateRequestSchema
  */
 export type ChatCreateRequestSchema = {
@@ -48,13 +98,25 @@ export type HttpValidationError = {
 };
 
 /**
- * RefreshToken
+ * RegisterForm
  */
-export type RefreshToken = {
+export type RegisterForm = {
     /**
-     * Refresh Token
+     * Name
      */
-    refresh_token: string;
+    name: string;
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Password
+     */
+    password: string;
 };
 
 /**
@@ -134,6 +196,37 @@ export type ServerUpdateRequestSchema = {
 };
 
 /**
+ * ServerUserBriefSchema
+ */
+export type ServerUserBriefSchema = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Icon Url
+     */
+    icon_url: string | null;
+    /**
+     * Owner Id
+     */
+    owner_id: string;
+    /**
+     * Member Count
+     */
+    member_count: number;
+    role: ServerMemberRole;
+    /**
+     * Joined At
+     */
+    joined_at: string;
+};
+
+/**
  * TokenPair
  */
 export type TokenPair = {
@@ -145,30 +238,16 @@ export type TokenPair = {
      * Refresh Token
      */
     refresh_token: string;
+    /**
+     * Token Type
+     */
+    token_type?: string;
 };
 
 /**
- * UserLoginSchema
- *
- * Schema for login a user
+ * UserRead
  */
-export type UserLoginSchema = {
-    /**
-     * Username
-     */
-    username: string;
-    /**
-     * Password
-     */
-    password: string;
-};
-
-/**
- * UserReadSchema
- *
- * Schema for get a user
- */
-export type UserReadSchema = {
+export type UserRead = {
     /**
      * Id
      */
@@ -204,61 +283,6 @@ export type UserReadSchema = {
 };
 
 /**
- * UserRegisterSchema
- *
- * Schema for creating a user
- */
-export type UserRegisterSchema = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Username
-     */
-    username: string;
-    /**
-     * Email
-     */
-    email: string;
-    /**
-     * Password
-     */
-    password: string;
-};
-
-/**
- * UserServerSummarySchema
- */
-export type UserServerSummarySchema = {
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Icon Url
-     */
-    icon_url: string | null;
-    /**
-     * Owner Id
-     */
-    owner_id: string;
-    /**
-     * Member Count
-     */
-    member_count: number;
-    role: ServerMemberRole;
-    /**
-     * Joined At
-     */
-    joined_at: string;
-};
-
-/**
  * ValidationError
  */
 export type ValidationError = {
@@ -286,61 +310,58 @@ export type ValidationError = {
     };
 };
 
-export type AuthRegisterUserData = {
-    body: UserRegisterSchema;
+export type AuthRegisterData = {
+    body: RegisterForm;
     path?: never;
     query?: never;
     url: '/api/v1/auth/register';
 };
 
-export type AuthRegisterUserErrors = {
+export type AuthRegisterErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type AuthRegisterUserError = AuthRegisterUserErrors[keyof AuthRegisterUserErrors];
+export type AuthRegisterError = AuthRegisterErrors[keyof AuthRegisterErrors];
 
-export type AuthRegisterUserResponses = {
+export type AuthRegisterResponses = {
     /**
      * Successful Response
      */
-    201: UserReadSchema;
+    201: UserRead;
 };
 
-export type AuthRegisterUserResponse = AuthRegisterUserResponses[keyof AuthRegisterUserResponses];
+export type AuthRegisterResponse = AuthRegisterResponses[keyof AuthRegisterResponses];
 
-export type AuthLoginUserData = {
-    body: UserLoginSchema;
+export type AuthLoginData = {
+    body: BodyAuthLogin;
     path?: never;
     query?: never;
     url: '/api/v1/auth/login';
 };
 
-export type AuthLoginUserErrors = {
+export type AuthLoginErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type AuthLoginUserError = AuthLoginUserErrors[keyof AuthLoginUserErrors];
+export type AuthLoginError = AuthLoginErrors[keyof AuthLoginErrors];
 
-export type AuthLoginUserResponses = {
+export type AuthLoginResponses = {
     /**
      * Successful Response
      */
     200: TokenPair;
 };
 
-export type AuthLoginUserResponse = AuthLoginUserResponses[keyof AuthLoginUserResponses];
+export type AuthLoginResponse = AuthLoginResponses[keyof AuthLoginResponses];
 
 export type AuthRefreshData = {
-    /**
-     * Token Body
-     */
-    body?: RefreshToken | null;
+    body: BodyAuthRefresh;
     path?: never;
     query?: never;
     url: '/api/v1/auth/refresh';
@@ -364,45 +385,49 @@ export type AuthRefreshResponses = {
 
 export type AuthRefreshResponse = AuthRefreshResponses[keyof AuthRefreshResponses];
 
-export type UsersGetCurrentUserData = {
-    body?: never;
-    headers?: {
-        /**
-         * Authorization
-         */
-        authorization?: string | null;
-    };
+export type AuthLogoutData = {
+    body: BodyAuthLogout;
     path?: never;
     query?: never;
-    url: '/api/v1/users/me';
+    url: '/api/v1/auth/logout';
 };
 
-export type UsersGetCurrentUserErrors = {
+export type AuthLogoutErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type UsersGetCurrentUserError = UsersGetCurrentUserErrors[keyof UsersGetCurrentUserErrors];
+export type AuthLogoutError = AuthLogoutErrors[keyof AuthLogoutErrors];
+
+export type AuthLogoutResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type AuthLogoutResponse = AuthLogoutResponses[keyof AuthLogoutResponses];
+
+export type UsersGetCurrentUserData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me';
+};
 
 export type UsersGetCurrentUserResponses = {
     /**
      * Successful Response
      */
-    200: UserReadSchema;
+    200: UserRead;
 };
 
 export type UsersGetCurrentUserResponse = UsersGetCurrentUserResponses[keyof UsersGetCurrentUserResponses];
 
 export type ChatsCreateChatData = {
     body: ChatCreateRequestSchema;
-    headers?: {
-        /**
-         * Authorization
-         */
-        authorization?: string | null;
-    };
     path?: never;
     query?: never;
     url: '/api/v1/chats';
@@ -428,25 +453,10 @@ export type ChatsCreateChatResponse = ChatsCreateChatResponses[keyof ChatsCreate
 
 export type ServersGetMyServersData = {
     body?: never;
-    headers?: {
-        /**
-         * Authorization
-         */
-        authorization?: string | null;
-    };
     path?: never;
     query?: never;
     url: '/api/v1/servers';
 };
-
-export type ServersGetMyServersErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ServersGetMyServersError = ServersGetMyServersErrors[keyof ServersGetMyServersErrors];
 
 export type ServersGetMyServersResponses = {
     /**
@@ -454,19 +464,13 @@ export type ServersGetMyServersResponses = {
      *
      * Successful Response
      */
-    200: Array<UserServerSummarySchema>;
+    200: Array<ServerUserBriefSchema>;
 };
 
 export type ServersGetMyServersResponse = ServersGetMyServersResponses[keyof ServersGetMyServersResponses];
 
 export type ServersCreateServerData = {
     body: ServerCreateRequestSchema;
-    headers?: {
-        /**
-         * Authorization
-         */
-        authorization?: string | null;
-    };
     path?: never;
     query?: never;
     url: '/api/v1/servers';
@@ -490,14 +494,38 @@ export type ServersCreateServerResponses = {
 
 export type ServersCreateServerResponse = ServersCreateServerResponses[keyof ServersCreateServerResponses];
 
+export type ServersGetMyServerData = {
+    body?: never;
+    path: {
+        /**
+         * Server Id
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/api/v1/servers/{server_id}';
+};
+
+export type ServersGetMyServerErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ServersGetMyServerError = ServersGetMyServerErrors[keyof ServersGetMyServerErrors];
+
+export type ServersGetMyServerResponses = {
+    /**
+     * Successful Response
+     */
+    200: ServerSchema;
+};
+
+export type ServersGetMyServerResponse = ServersGetMyServerResponses[keyof ServersGetMyServerResponses];
+
 export type ServersUpdateServerData = {
     body: ServerUpdateRequestSchema;
-    headers?: {
-        /**
-         * Authorization
-         */
-        authorization?: string | null;
-    };
     path: {
         /**
          * Server Id
@@ -528,12 +556,6 @@ export type ServersUpdateServerResponse = ServersUpdateServerResponses[keyof Ser
 
 export type ServersDeleteServerData = {
     body?: never;
-    headers?: {
-        /**
-         * Authorization
-         */
-        authorization?: string | null;
-    };
     path: {
         /**
          * Server Id

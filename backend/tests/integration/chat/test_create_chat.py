@@ -1,13 +1,13 @@
 from httpx import AsyncClient
 
 from src.chat.enums import ChatType
-from src.user.schemas import UserSchema
+from src.user.schemas import User
 
 
 async def test_create_private_chat_valid(
     authed_client: AsyncClient,
-    current_user: UserSchema,
-    get_all_users: list[UserSchema],
+    current_user: User,
+    get_all_users: list[User],
 ) -> None:
     user = next((u for u in get_all_users if current_user.id != u.id), None)
     assert user is not None
@@ -29,7 +29,7 @@ async def test_create_private_chat_valid(
 
 async def test_create_chat_unauthorized(
     ac: AsyncClient,
-    get_all_users: list[UserSchema],
+    get_all_users: list[User],
 ) -> None:
     user_id = str(get_all_users[1].id)
     data = {
@@ -42,7 +42,7 @@ async def test_create_chat_unauthorized(
 
 async def test_create_private_chat_invalid(
     authed_client: AsyncClient,
-    current_user: UserSchema,
+    current_user: User,
 ) -> None:
     data = {
         "type": ChatType.private,

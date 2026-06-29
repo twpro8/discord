@@ -1,48 +1,49 @@
 from uuid import UUID
-from typing import Annotated
+from typing import Annotated, AsyncGenerator
 
-from fastapi import HTTPException, Depends, status
+from fastapi import Depends
 
+from src.auth.exceptions import InvalidAccessTokenError
 from src.core.dependencies import AccessTokenDep, SessionDep
-from src.auth.security import decode_token
+from src.auth.security import decode_access_token
 from src.user.repository import UserRepository
-from src.user.schemas import UserSchema
+from src.user.schemas import User
 from src.user.service import UserService
+from src.user.unit_of_work import UserUnitOfWork
+
+
+def get_user_repository(session: SessionDep) -> UserRepository:
+    return UserRepository(session)
+
+
+async def get_user_unit_of_work(
+    session: SessionDep,
+    user_repository: UserRepositoryDep,
+) -> AsyncGenerator[UserUnitOfWork]:
+    async with UserUnitOfWork(session, user_repository) as user_unit_of_work:
+        yield user_unit_of_work
+
+
+def get_user_service(user_unit_of_work: UserUnitOfWorkDep) -> UserService:
+    return UserService(user_unit_of_work)
 
 
 def get_current_user_id(access_token: AccessTokenDep) -> UUID:
-    """get current user id from access token"""
-    user_id = decode_token(access_token).sub
+    user_id = decode_access_token(access_token).get("sub")
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User ID not found in token",
-        )
-    return user_id
+        raise InvalidAccessTokenError
+    return UUID(user_id)
 
 
 async def get_current_user(
     user_id: UserIdDep,
     user_service: UserServiceDep,
-) -> UserSchema:
-    """get current user"""
+) -> User:
     return await user_service.get_user(user_id)
 
 
-def get_user_service(
-    session: SessionDep,
-    user_repository: UserRepositoryDep,
-) -> UserService:
-    """get user service"""
-    return UserService(session, user_repository)
-
-
-def get_user_repository(session: SessionDep) -> UserRepository:
-    """get user repository"""
-    return UserRepository(session)
-
-
+UserRepositoryDep = Annotated[UserRepository, Depends(get_user_repository)]
+UserUnitOfWorkDep = Annotated[UserUnitOfWork, Depends(get_user_unit_of_work)]
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 UserIdDep = Annotated[UUID, Depends(get_current_user_id)]
-CurrentUserDep = Annotated[UserSchema, Depends(get_current_user)]
-UserRepositoryDep = Annotated[UserRepository, Depends(get_user_repository)]
+CurrentUserDep = Annotated[User, Depends(get_current_user)]

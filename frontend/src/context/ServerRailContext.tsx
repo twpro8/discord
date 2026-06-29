@@ -9,12 +9,12 @@ import { useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/routes.ts";
 import { useQuery } from "@tanstack/react-query";
 import { serversGetMyServersOptions } from "@/client/@tanstack/react-query.gen.ts";
-import type {UserServerSummarySchema} from "@/client";
+import type { ServerUserBriefSchema } from "@/client";
 
 interface ServerRailContextValue {
-    servers: UserServerSummarySchema[];
+    servers: ServerUserBriefSchema[];
     activeServerId: string | null;
-    activeServer: UserServerSummarySchema | undefined;
+    activeServer: ServerUserBriefSchema | undefined;
     setActiveServerId: (id: string | null) => void;
 }
 
