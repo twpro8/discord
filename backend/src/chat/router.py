@@ -1,9 +1,8 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
 from src.chat.dependencies import ChatServiceDep
-from src.chat.schemas import ChatCreateRequestSchema
+from src.chat.schemas import ChatCreateRequestSchema, ChatSchema
 from src.user.dependencies import UserIdDep
-from src.chat.exceptions import SelfChatCreationNotAllowed
 
 router = APIRouter(prefix="/chats", tags=["Chats"])
 
@@ -14,11 +13,5 @@ async def create_chat(
     service: ChatServiceDep,
     data: ChatCreateRequestSchema,
 ) -> ChatCreateRequestSchema:
-    try:
-        await service.create_chat(current_user_id, data)
-    except SelfChatCreationNotAllowed as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
+    await service.create_chat(current_user_id, data)
     return data

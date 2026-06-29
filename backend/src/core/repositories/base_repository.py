@@ -9,7 +9,7 @@ from sqlalchemy.sql import Executable
 from src.core.schemas.base_schema import BaseSchema
 from src.core.postgres import UUIDBase
 from src.core.repositories.base_data_mapper import BaseMapper
-from src.core.errors import ObjectNotFoundError
+from src.core.errors import NotFoundError
 
 
 class BaseRepository[T: UUIDBase, R: BaseSchema]:
@@ -53,7 +53,7 @@ class BaseRepository[T: UUIDBase, R: BaseSchema]:
     async def _execute_and_map_one(self, query: Executable) -> R:
         schema = await self._execute_and_map_one_or_none(query)
         if schema is None:
-            raise ObjectNotFoundError
+            raise NotFoundError
         return schema
 
     async def _execute_and_map_one_or_none(self, query: Executable) -> R | None:

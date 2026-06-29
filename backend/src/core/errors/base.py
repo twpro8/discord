@@ -1,7 +1,7 @@
 from fastapi import status
 
 
-class AppException(Exception):
+class LumiereError(Exception):
     detail: str = "Unexpected error"
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -10,17 +10,20 @@ class AppException(Exception):
         detail: str | None = None,
         status_code: int | None = None,
     ) -> None:
-        self.detail = detail or self.detail
-        self.status_code = status_code or self.status_code
+        if detail is not None:
+            self.detail = detail
+
+        if status_code is not None:
+            self.status_code = status_code
 
         super().__init__(self.detail)
 
 
-class ObjectNotFoundError(AppException):
+class NotFoundError(LumiereError):
     detail = "Object not found"
     status_code = status.HTTP_404_NOT_FOUND
 
 
-class ObjectAlreadyExistsError(AppException):
+class ConflictError(LumiereError):
     detail = "Object already exists"
     status_code = status.HTTP_409_CONFLICT

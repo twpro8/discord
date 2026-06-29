@@ -1,15 +1,14 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.core.config import settings
-from src.core.errors.base import AppException
+from src.core.errors import LumiereError, app_exception_handler
 from src.core.logging import configure_logging, get_logger
 from src.core.redis import init_redis, close_redis
 from src.core.router import api_router
-from src.core.errors import app_exception_handler
 from src.utils import custom_generate_unique_id
 
 logger = get_logger(__name__)
@@ -46,5 +45,5 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_exception_handler(AppException, app_exception_handler)  # type: ignore
+app.add_exception_handler(LumiereError, app_exception_handler)  # type: ignore
 app.include_router(api_router, prefix=settings.API_V1_STR)
