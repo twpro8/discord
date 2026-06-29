@@ -1,9 +1,9 @@
 from httpx import AsyncClient
 
-from src.user.schemas import UserSchema
+from src.user.schemas import User
 
 
-async def test_get_me(authed_client: AsyncClient, current_user: UserSchema) -> None:
+async def test_get_me(authed_client: AsyncClient, current_user: User) -> None:
     response = await authed_client.get("/api/v1/users/me")
     assert response.status_code == 200
 

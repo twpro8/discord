@@ -4,11 +4,7 @@ from uuid import UUID
 from src.core.schemas import BaseSchema
 
 
-class UserSchema(BaseSchema):
-    """
-    Schema for get a user
-    """
-
+class User(BaseSchema):
     id: UUID
     name: str
     username: str
@@ -20,11 +16,7 @@ class UserSchema(BaseSchema):
     updated_at: datetime
 
 
-class UserReadSchema(BaseSchema):
-    """
-    Schema for get a user
-    """
-
+class UserRead(BaseSchema):
     id: UUID
     name: str
     username: str
@@ -33,3 +25,10 @@ class UserReadSchema(BaseSchema):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class UserCreate(BaseSchema):
+    name: str
+    username: str
+    email: str
+    password_hash: str
