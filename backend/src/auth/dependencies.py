@@ -1,32 +1,40 @@
-from typing import Annotated
+from typing import Annotated, AsyncGenerator
 
 from fastapi import Depends
 
-from src.auth.repository import AuthRepository
+from src.auth.repository import RefreshTokenRepository
 from src.auth.service import AuthService
-from src.core.dependencies import SessionDep, RedisDep
+from src.auth.unit_of_work import AuthUnitOfWork
+from src.core.dependencies import SessionDep
 from src.user.dependencies import UserRepositoryDep
+
+
+def get_refresh_token_repository(session: SessionDep) -> RefreshTokenRepository:
+    return RefreshTokenRepository(session)
+
+
+async def get_auth_unit_of_work(
+    session: SessionDep,
+    user_repository: UserRepositoryDep,
+    refresh_token_repository: RefreshTokenRepositoryDep,
+) -> AsyncGenerator[AuthUnitOfWork]:
+    async with AuthUnitOfWork(
+        session,
+        user_repository,
+        refresh_token_repository,
+    ) as auth_unit_of_work:
+        yield auth_unit_of_work
 
 
 def get_auth_service(
     session: SessionDep,
-    user_repository: UserRepositoryDep,
-    auth_repository: AuthRepositoryDep,
-    client_redis: RedisDep,
+    auth_unit_of_work: AuthUnitOfWorkDep,
 ) -> AuthService:
-    """get auth service"""
-    return AuthService(
-        session,
-        user_repository,
-        auth_repository,
-        client_redis,
-    )
+    return AuthService(session, auth_unit_of_work)
 
 
-def get_auth_repository(session: SessionDep) -> AuthRepository:
-    """get auth repository"""
-    return AuthRepository(session)
-
-
+RefreshTokenRepositoryDep = Annotated[
+    RefreshTokenRepository, Depends(get_refresh_token_repository)
+]
+AuthUnitOfWorkDep = Annotated[AuthUnitOfWork, Depends(get_auth_unit_of_work)]
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
-AuthRepositoryDep = Annotated[AuthRepository, Depends(get_auth_repository)]

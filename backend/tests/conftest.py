@@ -10,7 +10,7 @@ from src.core.postgres.session import null_pool_session_maker
 from src.main import app
 from src.core.postgres import Base, get_session
 from src.core.models import *  # noqa
-from src.user.schemas import UserSchema
+from src.user.schemas import User
 from tests.dependency_overrides.redis_client import get_fake_redis_client
 from tests.dependency_overrides.session import get_null_pool_session
 from tests.seeder import populate_database
@@ -60,19 +60,32 @@ async def async_client() -> AsyncGenerator[AsyncClient, Any]:
 @pytest.fixture
 async def authed_client(
     ac: AsyncClient,
-    current_user: UserSchema,
+    current_user: User,
 ) -> AsyncGenerator[AsyncClient, Any]:
     """Authenticated async http client fixture"""
     response = await ac.post(
-        "/api/v1/auth/login",
-        json={
+        f"{settings.API_V1_STR}/auth/login",
+        data={
             "username": current_user.username,
             "password": "12345678",
         },
     )
     assert response.status_code == 200
-    assert ac.cookies.get("access_token")
-    assert ac.cookies.get("refresh_token")
+
+    auth_result = response.json()
+
+    access_token = auth_result.get("access_token")
+    refresh_token = auth_result.get("refresh_token")
+
+    assert access_token, "No access token in response body"
+    assert refresh_token, "No refresh token in response body"
+
+    ac.headers.update(
+        {
+            "Authorization": f"Bearer {access_token}",
+        }
+    )
+
     yield ac
 
 

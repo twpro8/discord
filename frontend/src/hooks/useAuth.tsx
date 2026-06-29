@@ -4,9 +4,9 @@ import { handleError } from "@/utils.ts";
 import useCustomToast from "@/hooks/useCustomToast.tsx";
 import { ROUTES } from "@/routes.ts";
 import {
-    authLoginUserMutation,
-    authRegisterUserMutation,
-    usersGetCurrentUserOptions
+    authLoginMutation,
+    authRegisterMutation,
+    usersGetCurrentUserOptions,
 } from "@/client/@tanstack/react-query.gen.ts";
 
 const isLoggedIn = () => {
@@ -24,7 +24,7 @@ const useAuth = () => {
     })
 
     const signUpMutation = useMutation({
-        ...authRegisterUserMutation(),
+        ...authRegisterMutation(),
         onSuccess: () => {
             navigate({ to: ROUTES.LOGIN })
             showSuccessToast("You have successfully registered.")
@@ -36,7 +36,7 @@ const useAuth = () => {
     })
 
     const loginMutation = useMutation({
-        ...authLoginUserMutation(),
+        ...authLoginMutation(),
         onSuccess: (data) => {
             localStorage.setItem("access_token", data.access_token)
             navigate({ to: ROUTES.DASHBOARD })

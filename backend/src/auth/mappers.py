@@ -1,8 +1,8 @@
 from src.core.repositories.base_data_mapper import BaseMapper
 from src.auth.models import RefreshTokenOrm
-from src.auth.schemas import RefreshTokenSchema
+from src.auth.schemas import RefreshToken
 
 
-class AuthMapper(BaseMapper[RefreshTokenOrm, RefreshTokenSchema]):
+class AuthMapper(BaseMapper[RefreshTokenOrm, RefreshToken]):
     orm_class = RefreshTokenOrm
-    schema_class = RefreshTokenSchema
+    schema_class = RefreshToken
