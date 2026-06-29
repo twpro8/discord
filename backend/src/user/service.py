@@ -12,7 +12,7 @@ class UserService(BaseService):
         self.uow = user_unit_of_work
 
     async def get_user(self, user_id: UUID) -> User:
-        user = await self.uow.users.get_one(id=user_id)
+        user = await self.uow.users.get_one(id=user_id, is_active=True)
         if not user:
             raise UserNotFoundError
         return user
