@@ -14,8 +14,6 @@ router = APIRouter(
     summary="Get current user",
     response_model=UserRead,
 )
-async def get_current_user(
-    user: CurrentUserDep,
-) -> UserRead:
+async def get_current_user(user: CurrentUserDep) -> UserRead:
     """Get current user"""
     return UserRead.model_validate(user)
