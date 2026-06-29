@@ -9,7 +9,7 @@ from src.chat.schemas import (
 )
 from src.core.services.base_service import BaseService
 from src.chat.unit_of_work import ChatUnitOfWork
-from src.chat.exceptions import SelfChatCreationNotAllowed
+from src.chat.exceptions import SelfChatForbiddenError
 
 
 class ChatService(BaseService):
@@ -33,7 +33,7 @@ class ChatService(BaseService):
         data: ChatCreateRequestSchema,
     ) -> ChatSchema:
         if creator_id == data.target_user_id:
-            raise SelfChatCreationNotAllowed
+            raise SelfChatForbiddenError
 
         assert data.target_user_id
 

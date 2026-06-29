@@ -1,7 +1,7 @@
-from src.core.errors import ObjectNotFoundError, AppException
+from src.core.errors import NotFoundError, LumiereError
 
 
-class ServerError(AppException):
+class ServerError(LumiereError):
     detail = "Unknown server error"
 
 
@@ -9,11 +9,11 @@ class ServerNotEmptyError(ServerError):
     detail = "Cannot delete a server that is not empty"
 
 
-class ServerNotFoundError(ServerError, ObjectNotFoundError):
+class ServerNotFoundError(ServerError, NotFoundError):
     detail = "Server not found"
 
 
-class MemberNotFoundError(ServerError, ObjectNotFoundError):
+class MemberNotFoundError(ServerError, NotFoundError):
     detail = "Member not found"
 
 

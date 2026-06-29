@@ -40,7 +40,7 @@ async def test_create_chat_unauthorized(
     assert response.status_code == 401
 
 
-async def test_create_private_chat_on_conflict(
+async def test_create_private_chat_invalid(
     authed_client: AsyncClient,
     current_user: UserSchema,
 ) -> None:
@@ -49,4 +49,4 @@ async def test_create_private_chat_on_conflict(
         "target_user_id": str(current_user.id),
     }
     response = await authed_client.post("/api/v1/chats", json=data)
-    assert response.status_code == 409
+    assert response.status_code == 400

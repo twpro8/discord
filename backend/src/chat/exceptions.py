@@ -1,9 +1,11 @@
-from src.core.errors.base import AppException
+from fastapi import status
+
+from src.core.errors.base import LumiereError
 
 
-class ChatException(AppException):
-    detail = "Chat Exception"
+class ChatError(LumiereError): ...
 
 
-class SelfChatCreationNotAllowed(ChatException):
+class SelfChatForbiddenError(ChatError):
     detail = "User cannot create a private chat with themselves"
+    status_code = status.HTTP_400_BAD_REQUEST
