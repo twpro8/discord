@@ -17,6 +17,9 @@ class User(BaseSchema):
     created_at: datetime
     updated_at: datetime
 
+    def mark_as_inactive(self) -> None:
+        self.is_active = False
+
 
 class UserRead(BaseSchema):
     id: UUID
