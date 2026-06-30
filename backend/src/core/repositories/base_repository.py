@@ -37,11 +37,17 @@ class BaseRepository[T: UUIDBase, R: BaseSchema]:
         statement = insert(self.model).values(**data.model_dump()).returning(self.model)
         return await self._execute_and_map_one(statement)
 
-    async def update(self, id_: UUID, data: BaseModel) -> R:
+    async def update(
+        self,
+        id_: UUID,
+        data: BaseModel,
+        exclude_unset: bool = False,
+        **filter_by: Any,
+    ) -> R:
         statement = (
             update(self.model)
             .where(self.model.id == id_)
-            .values(**data.model_dump())
+            .values(**data.model_dump(exclude_unset=exclude_unset))
             .returning(self.model)
         )
         return await self._execute_and_map_one(statement)
