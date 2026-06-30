@@ -42,3 +42,4 @@ dev = [
 strict = true
 show_error_codes = true
 exclude = [".venv"]
+disable_error_code = ["import-untyped"]
