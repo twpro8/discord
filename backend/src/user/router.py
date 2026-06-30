@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 
 from src.user.schemas import UserRead, UserUpdateRequest
 from src.user.dependencies import UserIdDep, CurrentUserDep, UserServiceDep
@@ -27,3 +27,8 @@ async def update_user(
 ) -> UserRead:
     user = await service.update(user_id, data)
     return UserRead.model_validate(user)
+
+
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(user: CurrentUserDep, service: UserServiceDep) -> None:
+    await service.delete(user)
