@@ -19,3 +19,8 @@ class UserService(BaseService):
 
     async def update(self, user_id: UUID, data: UserUpdateRequest) -> User:
         return await self.uow.users.update(user_id, data, exclude_unset=True)
+
+    async def delete(self, user: User) -> None:
+        user.mark_as_inactive()
+        await self.uow.users.update(user.id, user)
+        await self.uow.commit()
