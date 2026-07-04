@@ -154,18 +154,30 @@ export const ChatCreateRequestSchema = {
     title: 'ChatCreateRequest'
 } as const;
 
-export const ChatSummarySchema = {
+export const ChatSummaryPageSchema = {
     properties: {
-        id: {
-            type: 'string',
-            format: 'uuid',
-            title: 'Id'
+        items: {
+            items: {
+                oneOf: [
+                    {
+                        $ref: '#/components/schemas/GroupChatSummary'
+                    },
+                    {
+                        $ref: '#/components/schemas/PrivateChatSummary'
+                    }
+                ],
+                discriminator: {
+                    propertyName: 'type',
+                    mapping: {
+                        group: '#/components/schemas/GroupChatSummary',
+                        private: '#/components/schemas/PrivateChatSummary'
+                    }
+                }
+            },
+            type: 'array',
+            title: 'Items'
         },
-        type: {
-            type: 'string',
-            title: 'Type'
-        },
-        name: {
+        next_cursor: {
             anyOf: [
                 {
                     type: 'string'
@@ -174,6 +186,45 @@ export const ChatSummarySchema = {
                     type: 'null'
                 }
             ],
+            title: 'Next Cursor'
+        },
+        total: {
+            type: 'integer',
+            title: 'Total'
+        }
+    },
+    type: 'object',
+    required: [
+        'items',
+        'next_cursor',
+        'total'
+    ],
+    title: 'ChatSummaryPage'
+} as const;
+
+export const ChatTypeSchema = {
+    type: 'string',
+    enum: [
+        'private',
+        'group'
+    ],
+    title: 'ChatType'
+} as const;
+
+export const GroupChatSummarySchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        type: {
+            type: 'string',
+            const: 'group',
+            title: 'Type'
+        },
+        name: {
+            type: 'string',
             title: 'Name'
         },
         image_url: {
@@ -211,50 +262,7 @@ export const ChatSummarySchema = {
         'unread_count',
         'last_message'
     ],
-    title: 'ChatSummary'
-} as const;
-
-export const ChatSummaryPageSchema = {
-    properties: {
-        items: {
-            items: {
-                $ref: '#/components/schemas/ChatSummary'
-            },
-            type: 'array',
-            title: 'Items'
-        },
-        next_cursor: {
-            anyOf: [
-                {
-                    type: 'string'
-                },
-                {
-                    type: 'null'
-                }
-            ],
-            title: 'Next Cursor'
-        },
-        total: {
-            type: 'integer',
-            title: 'Total'
-        }
-    },
-    type: 'object',
-    required: [
-        'items',
-        'next_cursor',
-        'total'
-    ],
-    title: 'ChatSummaryPage'
-} as const;
-
-export const ChatTypeSchema = {
-    type: 'string',
-    enum: [
-        'private',
-        'group'
-    ],
-    title: 'ChatType'
+    title: 'GroupChatSummary'
 } as const;
 
 export const HTTPValidationErrorSchema = {
@@ -302,6 +310,66 @@ export const LastMessagePreviewSchema = {
         'created_at'
     ],
     title: 'LastMessagePreview'
+} as const;
+
+export const PrivateChatSummarySchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        type: {
+            type: 'string',
+            const: 'private',
+            title: 'Type'
+        },
+        peer_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Peer Id'
+        },
+        peer_name: {
+            type: 'string',
+            title: 'Peer Name'
+        },
+        peer_avatar_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Peer Avatar Url'
+        },
+        unread_count: {
+            type: 'integer',
+            title: 'Unread Count'
+        },
+        last_message: {
+            anyOf: [
+                {
+                    $ref: '#/components/schemas/LastMessagePreview'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        }
+    },
+    type: 'object',
+    required: [
+        'id',
+        'type',
+        'peer_id',
+        'peer_name',
+        'peer_avatar_url',
+        'unread_count',
+        'last_message'
+    ],
+    title: 'PrivateChatSummary'
 } as const;
 
 export const RegisterFormSchema = {
