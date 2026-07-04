@@ -2,10 +2,11 @@ from uuid import UUID
 
 from src.chat.enums import ChatMemberRole, ChatType
 from src.chat.schemas import (
-    ChatCreateRequestSchema,
-    ChatCreateSchema,
-    ChatSchema,
-    MemberCreateSchema,
+    ChatCreateRequest,
+    ChatCreate,
+    Chat,
+    MemberCreate,
+    ChatSummaryPage,
 )
 from src.core.services.base_service import BaseService
 from src.chat.unit_of_work import ChatUnitOfWork
@@ -20,8 +21,8 @@ class ChatService(BaseService):
     async def create_chat(
         self,
         creator_id: UUID,
-        data: ChatCreateRequestSchema,
-    ) -> ChatSchema:
+        data: ChatCreateRequest,
+    ) -> Chat:
         if data.type == ChatType.private:
             return await self._get_or_create_private_chat(creator_id, data)
         else:
@@ -30,8 +31,8 @@ class ChatService(BaseService):
     async def _get_or_create_private_chat(
         self,
         creator_id: UUID,
-        data: ChatCreateRequestSchema,
-    ) -> ChatSchema:
+        data: ChatCreateRequest,
+    ) -> Chat:
         if creator_id == data.target_user_id:
             raise SelfChatForbiddenError
 
@@ -45,14 +46,14 @@ class ChatService(BaseService):
         if existing_chat:
             return existing_chat
 
-        chat = await self.uow.chats.create(ChatCreateSchema(type=ChatType.private))
+        chat = await self.uow.chats.create(ChatCreate(type=ChatType.private))
 
         members = [
-            MemberCreateSchema(
+            MemberCreate(
                 user_id=creator_id,
                 chat_id=chat.id,
             ),
-            MemberCreateSchema(
+            MemberCreate(
                 user_id=data.target_user_id,
                 chat_id=chat.id,
             ),
@@ -66,10 +67,10 @@ class ChatService(BaseService):
     async def _create_group_chat(
         self,
         creator_id: UUID,
-        data: ChatCreateRequestSchema,
-    ) -> ChatSchema:
+        data: ChatCreateRequest,
+    ) -> Chat:
         chat = await self.uow.chats.create(
-            ChatCreateSchema(
+            ChatCreate(
                 owner_id=creator_id,
                 type=ChatType.group,
                 name=data.name,
@@ -81,7 +82,7 @@ class ChatService(BaseService):
 
         if data.member_ids:
             members = [
-                MemberCreateSchema(
+                MemberCreate(
                     user_id=user_id,
                     chat_id=chat.id,
                     role=ChatMemberRole.member,
@@ -90,7 +91,7 @@ class ChatService(BaseService):
             ]
 
         members.append(
-            MemberCreateSchema(
+            MemberCreate(
                 user_id=creator_id,
                 chat_id=chat.id,
                 role=ChatMemberRole.owner,
@@ -101,3 +102,11 @@ class ChatService(BaseService):
         await self.uow.commit()
 
         return chat
+
+    async def get_chats(
+        self,
+        user_id: UUID,
+        limit: int,
+        cursor: str | None,
+    ) -> ChatSummaryPage:
+        return await self.uow.chats.list_chats_for_user(user_id, limit, cursor)

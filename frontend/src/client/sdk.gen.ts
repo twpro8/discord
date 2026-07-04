@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AuthLoginData, AuthLoginErrors, AuthLoginResponses, AuthLogoutData, AuthLogoutErrors, AuthLogoutResponses, AuthRefreshData, AuthRefreshErrors, AuthRefreshResponses, AuthRegisterData, AuthRegisterErrors, AuthRegisterResponses, ChatsCreateChatData, ChatsCreateChatErrors, ChatsCreateChatResponses, ServersCreateServerData, ServersCreateServerErrors, ServersCreateServerResponses, ServersDeleteServerData, ServersDeleteServerErrors, ServersDeleteServerResponses, ServersGetMyServerData, ServersGetMyServerErrors, ServersGetMyServerResponses, ServersGetMyServersData, ServersGetMyServersResponses, ServersUpdateServerData, ServersUpdateServerErrors, ServersUpdateServerResponses, UsersGetCurrentUserData, UsersGetCurrentUserResponses } from './types.gen';
+import type { AuthLoginData, AuthLoginErrors, AuthLoginResponses, AuthLogoutData, AuthLogoutErrors, AuthLogoutResponses, AuthRefreshData, AuthRefreshErrors, AuthRefreshResponses, AuthRegisterData, AuthRegisterErrors, AuthRegisterResponses, ChatsCreateChatData, ChatsCreateChatErrors, ChatsCreateChatResponses, ChatsGetMyChatsData, ChatsGetMyChatsErrors, ChatsGetMyChatsResponses, ServersCreateServerData, ServersCreateServerErrors, ServersCreateServerResponses, ServersDeleteServerData, ServersDeleteServerErrors, ServersDeleteServerResponses, ServersGetMyServerData, ServersGetMyServerErrors, ServersGetMyServerResponses, ServersGetMyServersData, ServersGetMyServersResponses, ServersUpdateServerData, ServersUpdateServerErrors, ServersUpdateServerResponses, UsersDeleteUserData, UsersDeleteUserResponses, UsersGetCurrentUserData, UsersGetCurrentUserResponses, UsersGetUserByIdData, UsersGetUserByIdErrors, UsersGetUserByIdResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -79,8 +79,17 @@ export class AuthService {
 
 export class UserService {
     /**
-     * Get current user
-     *
+     * Delete User
+     */
+    public static deleteUser<ThrowOnError extends boolean = false>(options?: Options<UsersDeleteUserData, ThrowOnError>): RequestResult<UsersDeleteUserResponses, unknown, ThrowOnError> {
+        return (options?.client ?? client).delete<UsersDeleteUserResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/users/me',
+            ...options
+        });
+    }
+
+    /**
      * Get current user
      */
     public static getCurrentUser<ThrowOnError extends boolean = false>(options?: Options<UsersGetCurrentUserData, ThrowOnError>): RequestResult<UsersGetCurrentUserResponses, unknown, ThrowOnError> {
@@ -90,9 +99,46 @@ export class UserService {
             ...options
         });
     }
+
+    /**
+     * Update current user
+     */
+    public static updateUser<ThrowOnError extends boolean = false>(options: Options<UsersUpdateUserData, ThrowOnError>): RequestResult<UsersUpdateUserResponses, UsersUpdateUserErrors, ThrowOnError> {
+        return (options.client ?? client).patch<UsersUpdateUserResponses, UsersUpdateUserErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/users/me',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+
+    /**
+     * Get user by id
+     */
+    public static getUserById<ThrowOnError extends boolean = false>(options: Options<UsersGetUserByIdData, ThrowOnError>): RequestResult<UsersGetUserByIdResponses, UsersGetUserByIdErrors, ThrowOnError> {
+        return (options.client ?? client).get<UsersGetUserByIdResponses, UsersGetUserByIdErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/users/{user_id}',
+            ...options
+        });
+    }
 }
 
 export class ChatService {
+    /**
+     * Get My Chats
+     */
+    public static getMyChats<ThrowOnError extends boolean = false>(options?: Options<ChatsGetMyChatsData, ThrowOnError>): RequestResult<ChatsGetMyChatsResponses, ChatsGetMyChatsErrors, ThrowOnError> {
+        return (options?.client ?? client).get<ChatsGetMyChatsResponses, ChatsGetMyChatsErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/chats',
+            ...options
+        });
+    }
+
     /**
      * Create Chat
      */
