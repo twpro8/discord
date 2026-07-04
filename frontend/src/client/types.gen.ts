@@ -55,9 +55,9 @@ export type BodyAuthRefresh = {
 };
 
 /**
- * ChatCreateRequestSchema
+ * ChatCreateRequest
  */
-export type ChatCreateRequestSchema = {
+export type ChatCreateRequest = {
     type: ChatType;
     /**
      * Target User Id
@@ -78,6 +78,51 @@ export type ChatCreateRequestSchema = {
 };
 
 /**
+ * ChatSummary
+ */
+export type ChatSummary = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Type
+     */
+    type: string;
+    /**
+     * Name
+     */
+    name: string | null;
+    /**
+     * Image Url
+     */
+    image_url: string | null;
+    /**
+     * Unread Count
+     */
+    unread_count: number;
+    last_message: LastMessagePreview | null;
+};
+
+/**
+ * ChatSummaryPage
+ */
+export type ChatSummaryPage = {
+    /**
+     * Items
+     */
+    items: Array<ChatSummary>;
+    /**
+     * Next Cursor
+     */
+    next_cursor: string | null;
+    /**
+     * Total
+     */
+    total: number;
+};
+
+/**
  * ChatType
  */
 export const ChatType = { PRIVATE: 'private', GROUP: 'group' } as const;
@@ -95,6 +140,24 @@ export type HttpValidationError = {
      * Detail
      */
     detail?: Array<ValidationError>;
+};
+
+/**
+ * LastMessagePreview
+ */
+export type LastMessagePreview = {
+    /**
+     * Sender Id
+     */
+    sender_id: string;
+    /**
+     * Body
+     */
+    body: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
 };
 
 /**
@@ -283,6 +346,24 @@ export type UserRead = {
 };
 
 /**
+ * UserUpdateRequest
+ */
+export type UserUpdateRequest = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Username
+     */
+    username?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+};
+
+/**
  * ValidationError
  */
 export type ValidationError = {
@@ -410,6 +491,22 @@ export type AuthLogoutResponses = {
 
 export type AuthLogoutResponse = AuthLogoutResponses[keyof AuthLogoutResponses];
 
+export type UsersDeleteUserData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me';
+};
+
+export type UsersDeleteUserResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type UsersDeleteUserResponse = UsersDeleteUserResponses[keyof UsersDeleteUserResponses];
+
 export type UsersGetCurrentUserData = {
     body?: never;
     path?: never;
@@ -426,8 +523,97 @@ export type UsersGetCurrentUserResponses = {
 
 export type UsersGetCurrentUserResponse = UsersGetCurrentUserResponses[keyof UsersGetCurrentUserResponses];
 
+export type UsersUpdateUserData = {
+    body: UserUpdateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me';
+};
+
+export type UsersUpdateUserErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersUpdateUserError = UsersUpdateUserErrors[keyof UsersUpdateUserErrors];
+
+export type UsersUpdateUserResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserRead;
+};
+
+export type UsersUpdateUserResponse = UsersUpdateUserResponses[keyof UsersUpdateUserResponses];
+
+export type UsersGetUserByIdData = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{user_id}';
+};
+
+export type UsersGetUserByIdErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersGetUserByIdError = UsersGetUserByIdErrors[keyof UsersGetUserByIdErrors];
+
+export type UsersGetUserByIdResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserRead;
+};
+
+export type UsersGetUserByIdResponse = UsersGetUserByIdResponses[keyof UsersGetUserByIdResponses];
+
+export type ChatsGetMyChatsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+    };
+    url: '/api/v1/chats';
+};
+
+export type ChatsGetMyChatsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChatsGetMyChatsError = ChatsGetMyChatsErrors[keyof ChatsGetMyChatsErrors];
+
+export type ChatsGetMyChatsResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatSummaryPage;
+};
+
+export type ChatsGetMyChatsResponse = ChatsGetMyChatsResponses[keyof ChatsGetMyChatsResponses];
+
 export type ChatsCreateChatData = {
-    body: ChatCreateRequestSchema;
+    body: ChatCreateRequest;
     path?: never;
     query?: never;
     url: '/api/v1/chats';
@@ -446,7 +632,7 @@ export type ChatsCreateChatResponses = {
     /**
      * Successful Response
      */
-    201: ChatCreateRequestSchema;
+    201: ChatCreateRequest;
 };
 
 export type ChatsCreateChatResponse = ChatsCreateChatResponses[keyof ChatsCreateChatResponses];

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
@@ -7,7 +8,7 @@ from src.chat.enums import ChatMemberRole, ChatType
 from src.core.schemas.base_schema import BaseSchema
 
 
-class ChatSchema(BaseSchema):
+class Chat(BaseSchema):
     id: UUID
     type: ChatType
     name: str | None
@@ -19,7 +20,7 @@ class ChatSchema(BaseSchema):
     updated_at: datetime
 
 
-class ChatMemberSchema(BaseSchema):
+class ChatMember(BaseSchema):
     chat_id: UUID
     user_id: UUID
     role: ChatMemberRole
@@ -28,20 +29,20 @@ class ChatMemberSchema(BaseSchema):
     left_at: datetime | None
 
 
-class MemberCreateSchema(BaseSchema):
+class MemberCreate(BaseSchema):
     user_id: UUID
     chat_id: UUID
     role: ChatMemberRole | None = ChatMemberRole.member
 
 
-class ChatCreateSchema(BaseSchema):
+class ChatCreate(BaseSchema):
     owner_id: UUID | None = None
     type: ChatType
     name: str | None = None
     description: str | None = None
 
 
-class ChatCreateRequestSchema(BaseSchema):
+class ChatCreateRequest(BaseSchema):
     type: ChatType
     target_user_id: UUID | None = None
     name: str | None = Field(None, min_length=1, max_length=100)
@@ -49,7 +50,7 @@ class ChatCreateRequestSchema(BaseSchema):
     member_ids: list[UUID] | None = None
 
     @model_validator(mode="after")
-    def validate_conditional_fields(self) -> ChatCreateRequestSchema:
+    def validate_conditional_fields(self) -> ChatCreateRequest:
         if self.type == ChatType.private:
             if self.target_user_id is None:
                 raise ValueError("'target_user_id' is required when type is 'private'.")
@@ -67,3 +68,27 @@ class ChatCreateRequestSchema(BaseSchema):
                 raise ValueError("'target_user_id' is only allowed for private chats.")
 
         return self
+
+
+@dataclass(frozen=True)
+class LastMessagePreview:
+    sender_id: UUID
+    body: str | None
+    created_at: datetime
+
+
+@dataclass(frozen=True)
+class ChatSummary:
+    id: UUID
+    type: str
+    name: str | None
+    image_url: str | None
+    unread_count: int
+    last_message: LastMessagePreview | None
+
+
+@dataclass(frozen=True)
+class ChatSummaryPage:
+    items: list[ChatSummary]
+    next_cursor: str | None
+    total: int

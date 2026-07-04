@@ -88,7 +88,7 @@ export const Body_Auth_refreshSchema = {
     title: 'Body_Auth-refresh'
 } as const;
 
-export const ChatCreateRequestSchemaSchema = {
+export const ChatCreateRequestSchema = {
     properties: {
         type: {
             $ref: '#/components/schemas/ChatType'
@@ -151,7 +151,101 @@ export const ChatCreateRequestSchemaSchema = {
     required: [
         'type'
     ],
-    title: 'ChatCreateRequestSchema'
+    title: 'ChatCreateRequest'
+} as const;
+
+export const ChatSummarySchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        type: {
+            type: 'string',
+            title: 'Type'
+        },
+        name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Name'
+        },
+        image_url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Image Url'
+        },
+        unread_count: {
+            type: 'integer',
+            title: 'Unread Count'
+        },
+        last_message: {
+            anyOf: [
+                {
+                    $ref: '#/components/schemas/LastMessagePreview'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        }
+    },
+    type: 'object',
+    required: [
+        'id',
+        'type',
+        'name',
+        'image_url',
+        'unread_count',
+        'last_message'
+    ],
+    title: 'ChatSummary'
+} as const;
+
+export const ChatSummaryPageSchema = {
+    properties: {
+        items: {
+            items: {
+                $ref: '#/components/schemas/ChatSummary'
+            },
+            type: 'array',
+            title: 'Items'
+        },
+        next_cursor: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Next Cursor'
+        },
+        total: {
+            type: 'integer',
+            title: 'Total'
+        }
+    },
+    type: 'object',
+    required: [
+        'items',
+        'next_cursor',
+        'total'
+    ],
+    title: 'ChatSummaryPage'
 } as const;
 
 export const ChatTypeSchema = {
@@ -177,23 +271,64 @@ export const HTTPValidationErrorSchema = {
     title: 'HTTPValidationError'
 } as const;
 
+export const LastMessagePreviewSchema = {
+    properties: {
+        sender_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Sender Id'
+        },
+        body: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Body'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: [
+        'sender_id',
+        'body',
+        'created_at'
+    ],
+    title: 'LastMessagePreview'
+} as const;
+
 export const RegisterFormSchema = {
     properties: {
         name: {
             type: 'string',
+            maxLength: 64,
+            minLength: 3,
             title: 'Name'
         },
         username: {
             type: 'string',
+            maxLength: 32,
+            minLength: 3,
             title: 'Username'
         },
         email: {
             type: 'string',
+            maxLength: 32,
+            minLength: 3,
             format: 'email',
             title: 'Email'
         },
         password: {
             type: 'string',
+            maxLength: 128,
+            minLength: 3,
             title: 'Password'
         }
     },
@@ -477,6 +612,52 @@ export const UserReadSchema = {
         'updated_at'
     ],
     title: 'UserRead'
+} as const;
+
+export const UserUpdateRequestSchema = {
+    properties: {
+        name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 64
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Name'
+        },
+        username: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 32,
+                    minLength: 3
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Username'
+        },
+        email: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 32,
+                    minLength: 3,
+                    format: 'email'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email'
+        }
+    },
+    type: 'object',
+    title: 'UserUpdateRequest'
 } as const;
 
 export const ValidationErrorSchema = {
