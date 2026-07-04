@@ -44,7 +44,7 @@ class AuthService(BaseService):
         return user
 
     async def login(self, username: str, password: str) -> TokenPair:
-        user = await self.uow.users.get_one(username=username)
+        user = await self.uow.users.get_one(username=username, is_active=True)
         if not user:
             raise UserNotFoundError
         if not verify_password(password, user.password_hash):
