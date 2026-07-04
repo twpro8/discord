@@ -16,6 +16,7 @@ from src.chat.schemas import (
 from src.chat.mappers import ChatMapper, MemberMapper, ChatSummaryMapper
 from src.chat.enums import ChatType
 from src.message.models import MessageOrm
+from src.user.models import UserOrm
 
 SNIPPET_LEN = 120
 
@@ -99,6 +100,23 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
             .subquery("last_message")
         )
 
+        peer_sq = (
+            select(
+                ChatMemberOrm.chat_id,
+                ChatMemberOrm.user_id.label("peer_id"),
+                UserOrm.name.label("peer_name"),
+                UserOrm.avatar_url.label("peer_avatar_url"),
+            )
+            .join(UserOrm, UserOrm.id == ChatMemberOrm.user_id)
+            .where(
+                ChatMemberOrm.user_id != user_id,
+                ChatMemberOrm.left_at.is_(None),
+            )
+            .distinct(ChatMemberOrm.chat_id)
+            .order_by(ChatMemberOrm.chat_id, ChatMemberOrm.joined_at)
+            .subquery("peer")
+        )
+
         unread_count_sq = (
             select(func.count(MessageOrm.id))
             .where(
@@ -126,10 +144,14 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
                 last_message_sq.c.sender_id.label("lm_sender_id"),
                 last_message_sq.c.body_snippet.label("lm_body_snippet"),
                 last_message_sq.c.created_at.label("lm_created_at"),
+                peer_sq.c.peer_id,
+                peer_sq.c.peer_name,
+                peer_sq.c.peer_avatar_url,
                 sort_key.label("sort_key"),
             )
             .join(my_membership, my_membership.chat_id == ChatOrm.id)
             .outerjoin(last_message_sq, last_message_sq.c.chat_id == ChatOrm.id)
+            .outerjoin(peer_sq, peer_sq.c.chat_id == ChatOrm.id)
             .where(*base_filters)
             .order_by(desc(sort_key), desc(ChatOrm.id))
             .limit(limit + 1)

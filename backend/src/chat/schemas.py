@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 from datetime import datetime
+from typing import Literal, Annotated, Union
 from uuid import UUID
 
 from pydantic import Field, model_validator
@@ -70,25 +70,38 @@ class ChatCreateRequest(BaseSchema):
         return self
 
 
-@dataclass(frozen=True)
-class LastMessagePreview:
+class LastMessagePreview(BaseSchema):
     sender_id: UUID
     body: str | None
     created_at: datetime
 
 
-@dataclass(frozen=True)
-class ChatSummary:
+class GroupChatSummary(BaseSchema):
     id: UUID
-    type: str
-    name: str | None
+    type: Literal[ChatType.group]
+    name: str
     image_url: str | None
     unread_count: int
     last_message: LastMessagePreview | None
 
 
-@dataclass(frozen=True)
-class ChatSummaryPage:
+class PrivateChatSummary(BaseSchema):
+    id: UUID
+    type: Literal[ChatType.private]
+    peer_id: UUID
+    peer_name: str
+    peer_avatar_url: str | None
+    unread_count: int
+    last_message: LastMessagePreview | None
+
+
+ChatSummary = Annotated[
+    Union[GroupChatSummary, PrivateChatSummary],
+    Field(discriminator="type"),
+]
+
+
+class ChatSummaryPage(BaseSchema):
     items: list[ChatSummary]
     next_cursor: str | None
     total: int

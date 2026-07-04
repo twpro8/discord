@@ -78,40 +78,17 @@ export type ChatCreateRequest = {
 };
 
 /**
- * ChatSummary
- */
-export type ChatSummary = {
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Type
-     */
-    type: string;
-    /**
-     * Name
-     */
-    name: string | null;
-    /**
-     * Image Url
-     */
-    image_url: string | null;
-    /**
-     * Unread Count
-     */
-    unread_count: number;
-    last_message: LastMessagePreview | null;
-};
-
-/**
  * ChatSummaryPage
  */
 export type ChatSummaryPage = {
     /**
      * Items
      */
-    items: Array<ChatSummary>;
+    items: Array<({
+        type: 'group';
+    } & GroupChatSummary) | ({
+        type: 'private';
+    } & PrivateChatSummary)>;
     /**
      * Next Cursor
      */
@@ -131,6 +108,33 @@ export const ChatType = { PRIVATE: 'private', GROUP: 'group' } as const;
  * ChatType
  */
 export type ChatType = typeof ChatType[keyof typeof ChatType];
+
+/**
+ * GroupChatSummary
+ */
+export type GroupChatSummary = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Type
+     */
+    type: 'group';
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Image Url
+     */
+    image_url: string | null;
+    /**
+     * Unread Count
+     */
+    unread_count: number;
+    last_message: LastMessagePreview | null;
+};
 
 /**
  * HTTPValidationError
@@ -158,6 +162,37 @@ export type LastMessagePreview = {
      * Created At
      */
     created_at: string;
+};
+
+/**
+ * PrivateChatSummary
+ */
+export type PrivateChatSummary = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Type
+     */
+    type: 'private';
+    /**
+     * Peer Id
+     */
+    peer_id: string;
+    /**
+     * Peer Name
+     */
+    peer_name: string;
+    /**
+     * Peer Avatar Url
+     */
+    peer_avatar_url: string | null;
+    /**
+     * Unread Count
+     */
+    unread_count: number;
+    last_message: LastMessagePreview | null;
 };
 
 /**
