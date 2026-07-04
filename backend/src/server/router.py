@@ -46,7 +46,7 @@ async def get_my_server(
     )
 
 
-@router.patch("/update/{server_id}")
+@router.patch("/{server_id}")
 async def update_server(
     server_id: UUID,
     current_user_id: UserIdDep,
@@ -61,7 +61,7 @@ async def update_server(
     return updated_server
 
 
-@router.delete("/delete/{server_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{server_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_server(
     server_id: UUID,
     current_user_id: UserIdDep,

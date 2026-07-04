@@ -183,6 +183,17 @@ export class ServerService {
     }
 
     /**
+     * Delete Server
+     */
+    public static deleteServer<ThrowOnError extends boolean = false>(options: Options<ServersDeleteServerData, ThrowOnError>): RequestResult<ServersDeleteServerResponses, ServersDeleteServerErrors, ThrowOnError> {
+        return (options.client ?? client).delete<ServersDeleteServerResponses, ServersDeleteServerErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/servers/{server_id}',
+            ...options
+        });
+    }
+
+    /**
      * Get My Server
      */
     public static getMyServer<ThrowOnError extends boolean = false>(options: Options<ServersGetMyServerData, ThrowOnError>): RequestResult<ServersGetMyServerResponses, ServersGetMyServerErrors, ThrowOnError> {
@@ -199,23 +210,12 @@ export class ServerService {
     public static updateServer<ThrowOnError extends boolean = false>(options: Options<ServersUpdateServerData, ThrowOnError>): RequestResult<ServersUpdateServerResponses, ServersUpdateServerErrors, ThrowOnError> {
         return (options.client ?? client).patch<ServersUpdateServerResponses, ServersUpdateServerErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/api/v1/servers/update/{server_id}',
+            url: '/api/v1/servers/{server_id}',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers
             }
-        });
-    }
-
-    /**
-     * Delete Server
-     */
-    public static deleteServer<ThrowOnError extends boolean = false>(options: Options<ServersDeleteServerData, ThrowOnError>): RequestResult<ServersDeleteServerResponses, ServersDeleteServerErrors, ThrowOnError> {
-        return (options.client ?? client).delete<ServersDeleteServerResponses, ServersDeleteServerErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/api/v1/servers/delete/{server_id}',
-            ...options
         });
     }
 }
