@@ -680,6 +680,36 @@ export type ServersCreateServerResponses = {
 
 export type ServersCreateServerResponse = ServersCreateServerResponses[keyof ServersCreateServerResponses];
 
+export type ServersDeleteServerData = {
+    body?: never;
+    path: {
+        /**
+         * Server Id
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/api/v1/servers/{server_id}';
+};
+
+export type ServersDeleteServerErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ServersDeleteServerError = ServersDeleteServerErrors[keyof ServersDeleteServerErrors];
+
+export type ServersDeleteServerResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type ServersDeleteServerResponse = ServersDeleteServerResponses[keyof ServersDeleteServerResponses];
+
 export type ServersGetMyServerData = {
     body?: never;
     path: {
@@ -719,7 +749,7 @@ export type ServersUpdateServerData = {
         server_id: string;
     };
     query?: never;
-    url: '/api/v1/servers/update/{server_id}';
+    url: '/api/v1/servers/{server_id}';
 };
 
 export type ServersUpdateServerErrors = {
@@ -739,33 +769,3 @@ export type ServersUpdateServerResponses = {
 };
 
 export type ServersUpdateServerResponse = ServersUpdateServerResponses[keyof ServersUpdateServerResponses];
-
-export type ServersDeleteServerData = {
-    body?: never;
-    path: {
-        /**
-         * Server Id
-         */
-        server_id: string;
-    };
-    query?: never;
-    url: '/api/v1/servers/delete/{server_id}';
-};
-
-export type ServersDeleteServerErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ServersDeleteServerError = ServersDeleteServerErrors[keyof ServersDeleteServerErrors];
-
-export type ServersDeleteServerResponses = {
-    /**
-     * Successful Response
-     */
-    204: void;
-};
-
-export type ServersDeleteServerResponse = ServersDeleteServerResponses[keyof ServersDeleteServerResponses];

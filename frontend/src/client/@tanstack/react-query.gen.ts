@@ -303,6 +303,23 @@ export const serversCreateServerMutation = (options?: Partial<Options<ServersCre
     return mutationOptions;
 };
 
+/**
+ * Delete Server
+ */
+export const serversDeleteServerMutation = (options?: Partial<Options<ServersDeleteServerData>>): UseMutationOptions<ServersDeleteServerResponse, ServersDeleteServerError, Options<ServersDeleteServerData>> => {
+    const mutationOptions: UseMutationOptions<ServersDeleteServerResponse, ServersDeleteServerError, Options<ServersDeleteServerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ServerService.deleteServer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const serversGetMyServerQueryKey = (options: Options<ServersGetMyServerData>) => createQueryKey('serversGetMyServer', options);
 
 /**
@@ -328,23 +345,6 @@ export const serversUpdateServerMutation = (options?: Partial<Options<ServersUpd
     const mutationOptions: UseMutationOptions<ServersUpdateServerResponse, ServersUpdateServerError, Options<ServersUpdateServerData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await ServerService.updateServer({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Delete Server
- */
-export const serversDeleteServerMutation = (options?: Partial<Options<ServersDeleteServerData>>): UseMutationOptions<ServersDeleteServerResponse, ServersDeleteServerError, Options<ServersDeleteServerData>> => {
-    const mutationOptions: UseMutationOptions<ServersDeleteServerResponse, ServersDeleteServerError, Options<ServersDeleteServerData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await ServerService.deleteServer({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
