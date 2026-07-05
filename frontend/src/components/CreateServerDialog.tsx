@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Camera, Plus } from "lucide-react";
 import { serversCreateServerMutation, serversGetMyServersOptions } from "@/client/@tanstack/react-query.gen.ts";
 import useCustomToast from "@/hooks/useCustomToast.tsx";
-import { handleError } from "@/utils.ts";
+import { handleError } from "@/utils";
 
 interface CreateServerDialogProps {
     open: boolean;

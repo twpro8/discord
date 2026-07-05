@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { handleError } from "@/utils.ts";
+import { handleError } from "@/utils";
 import useCustomToast from "@/hooks/useCustomToast.tsx";
 import { ROUTES } from "@/routes.ts";
 import {
