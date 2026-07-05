@@ -18,21 +18,6 @@ export interface VoiceChannel {
 
 export type UserStatus = "online" | "away" | "offline";
 
-export interface ChatEntry {
-    id: string;
-    name: string;
-    initials: string;
-    color: string;
-    lastMessage: string;
-    time: string;
-    unread: number;
-    isGroup: boolean;
-    /** only for DMs */
-    status?: UserStatus;
-    /** only for group chats */
-    members?: string[];
-}
-
 export interface Message {
     id: number | string;
     author: string;

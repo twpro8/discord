@@ -4,8 +4,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useServerRail } from "@/context/ServerRailContext";
 import { Link } from "@tanstack/react-router";
 import { ROUTES } from "@/routes.ts";
-import type { UserServerSummarySchema } from "@/client";
-import { colorFromId, getInitials } from "@/utils.ts";
+import type { ServerUserBriefSchema } from "@/client";
+import { colorFromId, getInitials } from "@/utils";
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { useState } from "react";
 import { CreateServerDialog } from "@/components/CreateServerDialog.tsx";
@@ -15,7 +15,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { serversDeleteServerMutation, serversGetMyServersOptions } from "@/client/@tanstack/react-query.gen.ts";
 
 interface ServerIconProps {
-    server: UserServerSummarySchema;
+    server: ServerUserBriefSchema;
     active: boolean;
     onClick: () => void;
     onDelete: (id: string) => void;
