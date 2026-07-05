@@ -1,9 +1,10 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { useEffect, useRef } from "react";
 import { Search, Users } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar } from "@/components/Avatar";
-import { GROUP_CHATS, DIRECT_CHATS } from "@/data";
-import type { ChatEntry } from "@/types";
+import { useChats } from "@/hooks/useChats";
+import type { ChatEntry } from "@/types/chat"
+import { toChatEntry } from "@/utils";
 
 interface ChatListProps {
     activeChatId: string | null;
@@ -89,6 +90,30 @@ function ChatRow({ chat, active, onClick }: {
 }
 
 export function ChatList({ activeChatId, onChatSelect }: ChatListProps) {
+    const { items, isLoading, hasMore, loadMore } = useChats()
+    const triggerRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!hasMore || isLoading) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMore();
+                }
+            },
+            {
+                rootMargin: "200px"
+            }
+        );
+
+        if (triggerRef.current) {
+            observer.observe(triggerRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, [hasMore, isLoading, loadMore]);
+
     return (
         <>
             {/* Search header */}
@@ -101,48 +126,23 @@ export function ChatList({ activeChatId, onChatSelect }: ChatListProps) {
                     style={{ backgroundColor: "var(--surface0)" }}
                 >
                     <Search size={13} style={{ color: "var(--overlay1)" }} />
-                    <span className="text-xs" style={{ color: "var(--overlay1)" }}>
-            Find a conversation...
-          </span>
+                    <span className="text-xs" style={{ color: "var(--overlay1)" }}> Find a conversation...</span>
                 </div>
             </div>
 
             <ScrollArea className="flex-1 min-h-0 px-2 py-3">
-                <p
-                    className="text-[10px] font-semibold tracking-wider px-2 mb-1"
-                    style={{ color: "var(--overlay1)" }}
-                >
-                    GROUP CHATS
-                </p>
-                <div className="space-y-0.5 mb-3">
-                    {GROUP_CHATS.map((chat) => (
-                        <ChatRow
-                            key={chat.id}
-                            chat={chat}
-                            active={activeChatId === chat.id}
-                            onClick={() => onChatSelect(chat.id)}
-                        />
-                    ))}
-                </div>
-
-                <Separator className="my-2" style={{ backgroundColor: "var(--surface1)" }} />
-
-                <p
-                    className="text-[10px] font-semibold tracking-wider px-2 mb-1 mt-3"
-                    style={{ color: "var(--overlay1)" }}
-                >
-                    DIRECT MESSAGES
-                </p>
                 <div className="space-y-0.5">
-                    {DIRECT_CHATS.map((chat) => (
-                        <ChatRow
-                            key={chat.id}
-                            chat={chat}
-                            active={activeChatId === chat.id}
-                            onClick={() => onChatSelect(chat.id)}
-                        />
-                    ))}
+                    {items.map((i) => {
+                        const chat = toChatEntry(i)
+                        return <ChatRow key={chat.id} chat={chat} active={activeChatId === chat.id} onClick={() => onChatSelect(chat.id)} />
+                })}
                 </div>
+                <div ref={triggerRef} className="h-2 w-full" />
+                {isLoading && (
+                    <div className="w-full text-xs py-2 text-center" style={{ color: "var(--overlay1)" }}>
+                        Loading more...
+                    </div>
+                )}
             </ScrollArea>
         </>
     );
