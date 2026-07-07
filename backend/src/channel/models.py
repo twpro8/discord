@@ -22,6 +22,7 @@ class ChannelOrm(UUIDBase):
     name: Mapped[str_128]
     topic: Mapped[str_1024 | None]
     position: Mapped[int] = mapped_column(default=0)
+    last_sequence: Mapped[int] = mapped_column(default=0, server_default="0")
     is_private: Mapped[bool] = mapped_column(
         default=False,
     )  # Reserved; always False in MVP

@@ -1,10 +1,12 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import and_, insert, select, func, desc, tuple_, Executable
+from sqlalchemy import and_, insert, select, func, desc, tuple_, Executable, update
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import aliased
 
 from src.chat.cursor import encode_cursor, decode_cursor
+from src.chat.exceptions import ChatNotFoundError
 from src.core.repositories.base_repository import BaseRepository
 from src.chat.models import ChatOrm, ChatMemberOrm
 from src.chat.schemas import (
@@ -165,6 +167,19 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
 
     async def get_by_id(self, chat_id: UUID) -> Chat | None:
         return await self.get_one(id=chat_id)
+
+    async def increment_sequence(self, chat_id: UUID) -> int:
+        stmt = (
+            update(ChatOrm)
+            .where(ChatOrm.id == chat_id)
+            .values(last_sequence=ChatOrm.last_sequence + 1)
+            .returning(ChatOrm.last_sequence)
+        )
+        try:
+            last_sequence = (await self.session.execute(stmt)).scalar_one()
+        except NoResultFound:
+            raise ChatNotFoundError
+        return last_sequence
 
 
 class ChatMemberRepository(BaseRepository[ChatMemberOrm, ChatMember]):

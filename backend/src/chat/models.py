@@ -20,6 +20,7 @@ class ChatOrm(UUIDBase):
         index=True,
     )  # NULL for private chats
     image_url: Mapped[str_512 | None]
+    last_sequence: Mapped[int] = mapped_column(default=0, server_default="0")
     is_archived: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[timestamp]
     # Make sure you have added the trigger to the migration.
