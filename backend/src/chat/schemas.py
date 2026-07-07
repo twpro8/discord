@@ -15,6 +15,7 @@ class Chat(BaseSchema):
     description: str | None
     owner_id: UUID | None
     image_url: str | None
+    last_sequence: int
     is_archived: bool
     created_at: datetime
     updated_at: datetime
