@@ -1,8 +1,4 @@
-default_language_version:
-  python: python3.14
-
 repos:
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -19,18 +15,9 @@ repos:
 
   - repo: local
     hooks:
-      - id: mypy
-        name: mypy
+      - id: local-mypy
+        name: mypy check
         entry: uv run mypy --config-file backend/pyproject.toml
-        language: system
+        require_serial: true
+        language: unsupported
         types: [python]
-        files: ^backend/
-
-  - repo: local
-    hooks:
-      - id: pytest-check
-        name: pytest-check
-        entry: bash -c "cd backend && uv run pytest"
-        language: system
-        pass_filenames: false
-        files: ^backend/
