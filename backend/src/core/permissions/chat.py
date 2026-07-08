@@ -7,7 +7,6 @@ if TYPE_CHECKING:
     from src.chat.schemas import Chat
     from src.chat.repositories import ChatRepository, ChatMemberRepository
 
-
 class SupportsChatPermissions(Protocol):
     chats: ChatRepository
     chat_members: ChatMemberRepository
