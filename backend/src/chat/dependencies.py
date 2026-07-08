@@ -2,7 +2,7 @@ from typing import Annotated, AsyncGenerator
 
 from fastapi import Depends
 
-from src.chat.repositories import ChatRepository, MemberRepository
+from src.chat.repositories import ChatRepository, ChatMemberRepository
 from src.chat.unit_of_work import ChatUnitOfWork
 from src.core.dependencies import SessionDep
 from src.chat.service import ChatService
@@ -12,8 +12,8 @@ def get_chat_repository(session: SessionDep) -> ChatRepository:
     return ChatRepository(session)
 
 
-def get_chat_member_repository(session: SessionDep) -> MemberRepository:
-    return MemberRepository(session)
+def get_chat_member_repository(session: SessionDep) -> ChatMemberRepository:
+    return ChatMemberRepository(session)
 
 
 def get_chat_service(unit_of_work: ChatUnitOfWorkDep) -> ChatService:
@@ -23,7 +23,7 @@ def get_chat_service(unit_of_work: ChatUnitOfWorkDep) -> ChatService:
 async def get_chat_unit_of_work(
     session: SessionDep,
     chat_repository: ChatRepositoryDep,
-    chat_member_repository: ChatMemberRepository,
+    chat_member_repository: ChatMemberRepositoryDep,
 ) -> AsyncGenerator[ChatUnitOfWork]:
     async with ChatUnitOfWork(
         session=session,
@@ -34,6 +34,8 @@ async def get_chat_unit_of_work(
 
 
 ChatRepositoryDep = Annotated[ChatRepository, Depends(get_chat_repository)]
-ChatMemberRepository = Annotated[MemberRepository, Depends(get_chat_member_repository)]
+ChatMemberRepositoryDep = Annotated[
+    ChatMemberRepository, Depends(get_chat_member_repository)
+]
 ChatUnitOfWorkDep = Annotated[ChatUnitOfWork, Depends(get_chat_unit_of_work)]
 ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
