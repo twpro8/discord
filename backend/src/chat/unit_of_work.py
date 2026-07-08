@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.unit_of_work import BaseUnitOfWork
-from src.chat.repositories import ChatRepository, MemberRepository
+from src.chat.repositories import ChatRepository, ChatMemberRepository
 
 
 class ChatUnitOfWork(BaseUnitOfWork):
@@ -9,7 +9,7 @@ class ChatUnitOfWork(BaseUnitOfWork):
         self,
         session: AsyncSession,
         chat_repository: ChatRepository,
-        chat_member_repository: MemberRepository,
+        chat_member_repository: ChatMemberRepository,
     ):
         super().__init__(session)
         self.chats = chat_repository

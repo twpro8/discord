@@ -163,11 +163,17 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
 
         return query
 
+    async def get_by_id(self, chat_id: UUID) -> Chat | None:
+        return await self.get_one(id=chat_id)
 
-class MemberRepository(BaseRepository[ChatMemberOrm, ChatMember]):
+
+class ChatMemberRepository(BaseRepository[ChatMemberOrm, ChatMember]):
     model = ChatMemberOrm
     mapper = MemberMapper
 
     async def add_members(self, members: list[MemberCreate]) -> None:
         statement = insert(ChatMemberOrm).values([m.model_dump() for m in members])
         await self.session.execute(statement)
+
+    async def get_active(self, chat_id: UUID, user_id: UUID) -> ChatMember | None:
+        return await self.get_one(user_id=user_id, chat_id=chat_id, left_at=None)
