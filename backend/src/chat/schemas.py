@@ -21,6 +21,7 @@ class Chat(BaseSchema):
 
 
 class ChatMember(BaseSchema):
+    id: UUID
     chat_id: UUID
     user_id: UUID
     role: ChatMemberRole
