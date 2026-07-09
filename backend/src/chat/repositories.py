@@ -175,11 +175,8 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
             .values(last_sequence=ChatOrm.last_sequence + 1)
             .returning(ChatOrm.last_sequence)
         )
-        try:
-            last_sequence = (await self.session.execute(stmt)).scalar_one()
-        except NoResultFound:
-            raise ChatNotFoundError
-        return last_sequence
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
 
 
 class ChatMemberRepository(BaseRepository[ChatMemberOrm, ChatMember]):

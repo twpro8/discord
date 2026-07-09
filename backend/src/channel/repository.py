@@ -1,9 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import update
-from sqlalchemy.exc import NoResultFound
 
-from src.channel.exceptions import ChannelNotFoundError
 from src.channel.mappers import ChannelMapper
 from src.channel.models import ChannelOrm
 from src.channel.schemas import ChannelSchema
@@ -22,8 +20,5 @@ class ChannelRepository(BaseRepository[ChannelOrm, ChannelSchema]):
             .values(last_sequence=ChannelOrm.last_sequence + 1)
             .returning(ChannelOrm.last_sequence)
         )
-        try:
-            last_sequence = (await self.session.execute(stmt)).scalar_one()
-        except NoResultFound:
-            raise ChannelNotFoundError
-        return last_sequence
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
