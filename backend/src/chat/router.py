@@ -3,8 +3,10 @@ from fastapi import APIRouter, status, Query
 from src.chat.dependencies import ChatServiceDep
 from src.chat.schemas import ChatCreateRequest, ChatSummaryPage
 from src.user.dependencies import UserIdDep
+from src.message.router import chat_message_router
 
 router = APIRouter(prefix="/chats", tags=["Chats"])
+router.include_router(chat_message_router, prefix="/{chat_id}")
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
