@@ -8,6 +8,7 @@ from src.server.schemas import (
     ServerSchema,
     ServerUpdateRequestSchema,
     ServerUserBriefSchema,
+    UpdateOwnerIdSchema,
 )
 from src.user.dependencies import UserIdDep
 
@@ -23,6 +24,19 @@ async def create_server(
     new_server = await service.create_server(
         server_data=server_data,
         owner_id=current_user_id,
+    )
+    return new_server
+
+
+@router.post("/{server_id}/transfer", status_code=status.HTTP_200_OK)
+async def transfer_ownership(
+    server_id: UUID,
+    current_user_id: UserIdDep,
+    service: ServerServiceDep,
+    owner_id: UpdateOwnerIdSchema,
+) -> ServerSchema:
+    new_server = await service.transfer_server_ownership(
+        server_id=server_id, current_user_id=current_user_id, data=owner_id
     )
     return new_server
 
