@@ -2,14 +2,16 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from src.server.dependencies import ServerServiceDep
+from src.server.dependencies import ServerMemberServiceDep, ServerServiceDep
 from src.server.schemas import (
     ServerCreateRequestSchema,
+    ServerInviteCode,
     ServerSchema,
     ServerUpdateRequestSchema,
     ServerUserBriefSchema,
     UpdateOwnerIdSchema,
 )
+from src.server.server_member.schemas import ServerMemberSchema
 from src.user.dependencies import UserIdDep
 
 router = APIRouter(prefix="/servers", tags=["Servers"])
@@ -25,6 +27,16 @@ async def create_server(
         server_data=server_data,
         owner_id=current_user_id,
     )
+    return new_server
+
+
+@router.post("/join", status_code=status.HTTP_201_CREATED)
+async def join_server(
+    current_user_id: UserIdDep,
+    code: ServerInviteCode,
+    service: ServerMemberServiceDep,
+) -> ServerMemberSchema:
+    new_server = await service.join_server(user_id=current_user_id, code_schema=code)
     return new_server
 
 

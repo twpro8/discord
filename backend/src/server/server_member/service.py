@@ -8,6 +8,7 @@ from src.core.services import BaseService
 from src.server.enums import ServerMemberRole
 from src.server.exceptions import MemberNotFoundError
 from src.server.invite.exceptions import ServerInviteNotFoundError
+from src.server.schemas import ServerInviteCode
 from src.server.server_member.schemas import (
     ServerMemberCreateSchema,
     ServerMemberSchema,
@@ -72,7 +73,10 @@ class ServerMemberService(BaseService):
         await self.uow.commit()
         return state
 
-    async def join_server(self, user_id: UUID, code: str) -> ServerMemberSchema:
+    async def join_server(
+        self, user_id: UUID, code_schema: ServerInviteCode
+    ) -> ServerMemberSchema:
+        code = code_schema.code
         invite = await self.uow.invites.get_one(code=code)
         if not invite:
             raise ServerInviteNotFoundError

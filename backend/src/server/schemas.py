@@ -54,3 +54,7 @@ class ServerUserBriefSchema(BaseSchema):
     member_count: int
     role: ServerMemberRole
     joined_at: datetime
+
+
+class ServerInviteCode(BaseSchema):
+    code: str
