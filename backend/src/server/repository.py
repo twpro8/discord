@@ -22,6 +22,15 @@ class ServerRepository(BaseRepository[ServerOrm, ServerSchema]):
         )
         return await self._execute_and_map_one(statement)
 
+    async def increment_count(self, server_id: UUID) -> ServerSchema:
+        statement = (
+            update(ServerOrm)
+            .where(ServerOrm.id == server_id)
+            .values(member_count=ServerOrm.member_count + 1)
+            .returning(ServerOrm)
+        )
+        return await self._execute_and_map_one(statement)
+
     async def get_servers_where_user_is_member(
         self, user_id: UUID
     ) -> list[ServerUserBriefSchema]:

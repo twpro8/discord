@@ -20,3 +20,7 @@ class ServerMemberCreateSchema(BaseSchema):
 
 class ServerMemberUpdateSchema(BaseSchema):
     left_at: datetime | None = None
+
+
+class UpdateMemberRole(BaseSchema):
+    role: ServerMemberRole
