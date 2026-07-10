@@ -12,16 +12,21 @@ from src.server.schemas import (
     ServerUpdateRequestSchema,
     ServerUpdateSchema,
     ServerUserBriefSchema,
+    UpdateServerOwner,
+    UpdateOwnerIdSchema,
 )
 from src.channel.service import ChannelService
+from src.server.server_member.schemas import ServerMemberSchema
 from src.server.server_member.service import ServerMemberService
 from src.server.exceptions import (
     CannotKickSelfError,
+    CannotTransferToSelfError,
     MemberNotFoundError,
     OnlyOwnerCanKickError,
     OwnerCannotLeaveServerError,
     ServerNotFoundError,
     ServerNotEmptyError,
+    YouAreNotOwnerError,
 )
 from src.server.unit_of_work import ServerUnitOfWork
 
@@ -76,11 +81,11 @@ class ServerService(BaseService):
         if not server:
             raise ServerNotFoundError
 
-        _update_data = ServerUpdateSchema(
-            **update_data.model_dump(),
-            id=server.id,
-            owner_id=owner_id,
-        )
+        merged_data = server.model_dump() | update_data.model_dump(exclude_unset=True)
+        merged_data["id"] = server.id
+        merged_data["owner_id"] = owner_id
+
+        _update_data = ServerUpdateSchema(**merged_data)
         updated_server = await self.uow.servers.update(server.id, _update_data)
 
         await self.uow.commit()
@@ -138,7 +143,7 @@ class ServerService(BaseService):
         if not member:
             raise MemberNotFoundError
 
-        await self.server_member_service.update(
+        await self.server_member_service.mark_as_left(
             server_member_id=member.id,
             left_at=datetime.now(timezone.utc),
         )
@@ -177,7 +182,7 @@ class ServerService(BaseService):
         if not member:
             raise MemberNotFoundError
 
-        await self.server_member_service.update(
+        await self.server_member_service.mark_as_left(
             server_member_id=member.id,
             left_at=datetime.now(timezone.utc),
         )
@@ -200,3 +205,52 @@ class ServerService(BaseService):
             raise ServerNotFoundError
 
         return result
+
+    async def transfer_server_ownership(
+        self, server_id: UUID, current_user_id: UUID, data: UpdateOwnerIdSchema
+    ) -> ServerSchema:
+
+        server = await self.uow.servers.get_one(id=server_id)
+        if not server:
+            raise ServerNotFoundError
+
+        current_user = await self.server_member_service.get_one(
+            server_id=server.id,
+            user_id=current_user_id,
+            left_at=None,
+        )
+
+        if not current_user:
+            raise MemberNotFoundError
+
+        new_owner_id = data.owner_id
+
+        if current_user_id == new_owner_id:
+            raise CannotTransferToSelfError
+
+        if current_user.role != ServerMemberRole.owner:
+            raise YouAreNotOwnerError
+
+        new_owner = await self.server_member_service.get_one(
+            server_id=server.id,
+            user_id=new_owner_id,
+            left_at=None,
+        )
+
+        if not new_owner:
+            raise MemberNotFoundError
+
+        await self.server_member_service.update_role(
+            current_user.id, role=ServerMemberRole.member
+        )
+
+        await self.server_member_service.update_role(
+            new_owner.id, role=ServerMemberRole.owner
+        )
+
+        update_server_schema = UpdateServerOwner(**data.model_dump(), id=server.id)
+
+        new_server = await self.uow.servers.update(server.id, update_server_schema)
+
+        await self.uow.commit()
+        return new_server
