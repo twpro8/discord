@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import Field
@@ -20,7 +21,7 @@ class ServerSchema(BaseSchema):
 
 class ServerCreateRequestSchema(BaseSchema):
     name: str = Field(..., min_length=1, max_length=100)
-    description: str | None = Field(None, max_length=300)
+    description: str | None = Field(..., max_length=300)
 
 
 class ServerCreateSchema(ServerCreateRequestSchema):
@@ -28,13 +29,21 @@ class ServerCreateSchema(ServerCreateRequestSchema):
 
 
 class ServerUpdateRequestSchema(BaseSchema):
-    name: str | None = Field(None, min_length=1, max_length=100)
-    description: str | None = Field(None, max_length=300)
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, min_length=1, max_length=300)
 
 
 class ServerUpdateSchema(ServerUpdateRequestSchema):
     id: UUID
     owner_id: UUID
+
+
+class UpdateOwnerIdSchema(BaseSchema):
+    owner_id: UUID
+
+
+class UpdateServerOwner(UpdateOwnerIdSchema):
+    id: UUID
 
 
 class ServerUserBriefSchema(BaseSchema):
