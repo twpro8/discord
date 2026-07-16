@@ -13,8 +13,10 @@ from src.server.schemas import (
 )
 from src.server.server_member.schemas import ServerMemberSchema
 from src.user.dependencies import UserIdDep
+from src.server.invite.router import router as invite_router
 
 router = APIRouter(prefix="/servers", tags=["Servers"])
+router.include_router(invite_router, prefix="/{server_id}")
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

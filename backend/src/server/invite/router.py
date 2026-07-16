@@ -1,36 +1,37 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Query, status
+
 from src.server.dependencies import ServerInviteServiceDep
 from src.server.invite.schemas import (
-    CreateServerInviteRequestSchema,
-    ServerInviteSchema,
-    ServerInviteWithStatusSchema,
+    CreateServerInviteRequest,
+    ServerInvite,
+    ServerInviteWithStatus,
 )
 from src.user.dependencies import UserIdDep
 
-router = APIRouter(prefix="/{server_id}/invites", tags=["Server Invites"])
+router = APIRouter(prefix="/invites", tags=["Server Invites"])
 
 
-@router.post("", response_model=ServerInviteSchema, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ServerInvite, status_code=status.HTTP_201_CREATED)
 async def create_invite(
     server_id: UUID,
     current_user_id: UserIdDep,
-    payload: CreateServerInviteRequestSchema,
+    payload: CreateServerInviteRequest,
     service: ServerInviteServiceDep,
-) -> ServerInviteSchema:
+) -> ServerInvite:
     return await service.create_invite(
         server_id=server_id, user_id=current_user_id, payload=payload
     )
 
 
-@router.get("", response_model=list[ServerInviteWithStatusSchema])
-async def list_invites(
+@router.get("", response_model=list[ServerInviteWithStatus])
+async def get_invites(
     server_id: UUID,
     service: ServerInviteServiceDep,
     limit: int = Query(default=100, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-) -> list[ServerInviteWithStatusSchema]:
+) -> list[ServerInviteWithStatus]:
     return await service.list_invites(server_id=server_id, limit=limit, offset=offset)
 
 
