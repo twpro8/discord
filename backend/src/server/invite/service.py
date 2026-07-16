@@ -14,10 +14,10 @@ from src.server.invite.exceptions import (
     ServerInvitePermissionDeniedError,
 )
 from src.server.invite.schemas import (
-    CreateServerInviteRequestSchema,
-    CreateServerInviteSchema,
-    ServerInviteWithStatusSchema,
-    ServerInviteSchema,
+    CreateServerInviteRequest,
+    CreateServerInvite,
+    ServerInviteWithStatus,
+    ServerInvite,
 )
 from src.server.invite.unit_of_work import ServerInviteUnitOfWork
 
@@ -44,7 +44,7 @@ class ServerInviteService(BaseService):
         return "".join(secrets.choice(alphabet) for _ in range(length))
 
     def _compute_validity_status(
-        self, invite: ServerInviteSchema
+        self, invite: ServerInvite
     ) -> Literal["valid", "expired", "exhausted"]:
         """Computes the current operational status of a server invite.
 
@@ -77,8 +77,8 @@ class ServerInviteService(BaseService):
         return "valid"
 
     async def create_invite(
-        self, server_id: UUID, user_id: UUID, payload: CreateServerInviteRequestSchema
-    ) -> ServerInviteSchema:
+        self, server_id: UUID, user_id: UUID, payload: CreateServerInviteRequest
+    ) -> ServerInvite:
         """Creates a brand new unique invite code for a specific server.
 
         This action is restricted exclusively to the owner of the server. The method
@@ -120,7 +120,7 @@ class ServerInviteService(BaseService):
         if not code:
             raise ServerInviteGenerationFailedError
 
-        db_payload = CreateServerInviteSchema(
+        db_payload = CreateServerInvite(
             **payload.model_dump(),
             server_id=server_id,
             created_by=user_id,
@@ -134,7 +134,7 @@ class ServerInviteService(BaseService):
 
     async def list_invites(
         self, server_id: UUID, limit: int = 100, offset: int = 0
-    ) -> list[ServerInviteWithStatusSchema]:
+    ) -> list[ServerInviteWithStatus]:
         """Retrieves a paginated list of all invites associated with a given server.
 
         Fetches records indiscriminately of their validity status, then maps each record
@@ -155,7 +155,7 @@ class ServerInviteService(BaseService):
             offset=offset,
         )
         return [
-            ServerInviteWithStatusSchema(
+            ServerInviteWithStatus(
                 **invite.model_dump(),
                 validity_status=self._compute_validity_status(invite)
             )

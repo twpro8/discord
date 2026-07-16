@@ -4,6 +4,7 @@ from src.core.errors.base import LumiereError, NotFoundError
 
 
 class ServerInviteError(LumiereError):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     detail = "Server Invite Error"
 
 
@@ -24,3 +25,7 @@ class ServerInviteNotFoundError(ServerInviteError, NotFoundError):
 class ServerInviteCannotDeleteError(ServerInviteError):
     status_code = status.HTTP_403_FORBIDDEN
     detail = "Only the server owner can delete invites."
+
+
+class ServerInviteNotFoundError(ServerInviteError, NotFoundError):
+    detail = "Server invite not found"
