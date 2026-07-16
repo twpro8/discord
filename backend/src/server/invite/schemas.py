@@ -3,10 +3,11 @@ from typing import Literal
 from uuid import UUID
 
 from pydantic import Field
+
 from src.core.schemas.base_schema import BaseSchema
 
 
-class ServerInviteSchema(BaseSchema):
+class ServerInvite(BaseSchema):
     id: UUID
     server_id: UUID
     code: str
@@ -17,14 +18,14 @@ class ServerInviteSchema(BaseSchema):
     created_at: datetime
 
 
-class CreateServerInviteRequestSchema(BaseSchema):
+class CreateServerInviteRequest(BaseSchema):
     expires_in: int | None = Field(None)
     max_uses: int | None = Field(
         default=None,
     )
 
 
-class CreateServerInviteSchema(BaseSchema):
+class CreateServerInvite(BaseSchema):
     server_id: UUID
     code: str
     created_by: UUID
@@ -32,5 +33,5 @@ class CreateServerInviteSchema(BaseSchema):
     expires_at: datetime | None
 
 
-class ServerInviteWithStatusSchema(ServerInviteSchema):
+class ServerInviteWithStatus(ServerInvite):
     validity_status: Literal["valid", "expired", "exhausted"]
