@@ -133,7 +133,7 @@ class ServerInviteService(BaseService):
         return invite
 
     async def list_invites(
-        self, server_id: UUID, limit: int = 100, offset: int = 0
+        self, user_id: UUID, server_id: UUID, limit: int = 100, offset: int = 0
     ) -> list[ServerInviteWithStatus]:
         """Retrieves a paginated list of all invites associated with a given server.
 
@@ -149,6 +149,10 @@ class ServerInviteService(BaseService):
             list[ServerInviteSchema]: A list of enhanced response schemas including
                 the calculated status for each invite.
         """
+        server = await self.uow.servers.get_one(id=server_id, owner_id=user_id)
+        if not server:
+            return []
+
         invites = await self.uow.invites.get_filtered(
             server_id=server_id,
             limit=limit,
