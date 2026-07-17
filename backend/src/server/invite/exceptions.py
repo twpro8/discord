@@ -25,7 +25,3 @@ class ServerInviteNotFoundError(ServerInviteError, NotFoundError):
 class ServerInviteCannotDeleteError(ServerInviteError):
     status_code = status.HTTP_403_FORBIDDEN
     detail = "Only the server owner can delete invites."
-
-
-class ServerInviteNotFoundError(ServerInviteError, NotFoundError):
-    detail = "Server invite not found"
