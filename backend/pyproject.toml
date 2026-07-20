@@ -18,6 +18,7 @@ dependencies = [
     "uvicorn>=0.44.0",
     "httpx>=0.28.1",
     "python-multipart>=0.0.32",
+    "tenacity>=9.1.4",
 ]
 
 [build-system]
