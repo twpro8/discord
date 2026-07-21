@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # --- Startup ---
     configure_logging()
-    logger.info("app.startup", env=settings.APP_ENV)
+    logger.info("app.startup", env=settings.ENVIRONMENT)
 
     # Initialize Redis connection pool
     app.state.redis = await init_redis()

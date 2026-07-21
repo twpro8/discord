@@ -19,7 +19,7 @@ from tests.seeder import populate_database
 @pytest.fixture(scope="session", autouse=True)
 def check_test_mode() -> None:
     """Ensure test mode is enabled"""
-    assert settings.APP_ENV == "testing"
+    assert settings.ENVIRONMENT == "testing"
 
 
 @pytest.fixture(scope="session", autouse=True)

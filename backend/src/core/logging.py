@@ -21,7 +21,7 @@ def configure_logging() -> None:
 
     renderer: Callable[..., Any]
 
-    if settings.APP_ENV == "production":
+    if settings.ENVIRONMENT == "production":
         renderer = structlog.processors.JSONRenderer()
     else:
         renderer = structlog.dev.ConsoleRenderer(colors=True)
