@@ -8,19 +8,19 @@ from src.core.utils import parse_cors
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=[".env", "../.env"],
+        env_file=["../.env"],
         env_ignore_empty=True,
         extra="ignore",
     )
 
     APP_NAME: str = "FastAPI"
-    APP_ENV: Literal["development", "testing", "production"] = "development"
+    ENVIRONMENT: Literal["development", "testing", "production"] = "development"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str
-    POSTGRES_PASS: str
+    POSTGRES_PASSWORD: str
     POSTGRES_DB: str
 
     REDIS_HOST: str = "localhost"
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
         return PostgresDsn.build(
             scheme="postgresql+asyncpg",
             username=self.POSTGRES_USER,
-            password=self.POSTGRES_PASS,
+            password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_HOST,
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     @property
     def secure_cookies(self) -> bool:
         """Enable secure only on production (HTTPS)"""
-        return self.APP_ENV == "production"
+        return self.ENVIRONMENT == "production"
 
     @computed_field  # type: ignore
     @property
