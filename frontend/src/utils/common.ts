@@ -1,20 +1,26 @@
-import type { ApiError } from "@/api/errors.ts";
+import { isApiError } from "@/api/errors.ts";
 
-function extractErrorMessage(err: ApiError): string {
-    const detail = err.body?.detail
+type ErrorBody = { detail?: unknown; msg?: unknown };
 
-    if (Array.isArray(detail)) {
-        return detail[0]?.msg ?? "Something went wrong."
-    }
-
-    return detail ?? err.message
+function isErrorBody(value: unknown): value is ErrorBody {
+    return typeof value === "object" && value !== null;
 }
 
-export const handleError = function (
-    this: (msg: string) => void,
-    err: any,
-) {
-    this(extractErrorMessage(err))
+export function getErrorMessage(error: unknown): string {
+    if (!isApiError(error)) {
+        return error instanceof Error ? error.message : "Something went wrong.";
+    }
+
+    const detail = isErrorBody(error.body) ? error.body.detail : undefined;
+
+    if (Array.isArray(detail)) {
+        const firstError = detail[0];
+        if (isErrorBody(firstError) && typeof firstError.msg === "string") {
+            return firstError.msg;
+        }
+    }
+
+    return typeof detail === "string" ? detail : error.message;
 }
 
 export const getInitials = (name: string): string => {
