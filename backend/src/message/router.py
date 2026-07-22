@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter
 
 from src.message.dependencies import MessageServiceDep
-from src.message.schemas import MessageCreateRequest, ChatMessage, ChannelMessage
+from src.message.schemas import ChannelMessage, ChatMessage, MessageCreateRequest
 from src.user.dependencies import UserIdDep
 
 channel_message_router = APIRouter(prefix="/messages", tags=["Channel Messages"])

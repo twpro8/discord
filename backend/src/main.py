@@ -1,5 +1,5 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.core.config import settings
 from src.core.errors import LumiereError, app_exception_handler
 from src.core.logging import configure_logging, get_logger
-from src.core.redis import init_redis, close_redis
+from src.core.redis import close_redis, init_redis
 from src.core.router import api_router
 from src.utils import custom_generate_unique_id
 

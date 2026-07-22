@@ -3,6 +3,7 @@ from re import match
 from uuid import UUID
 
 from pydantic import Field, field_validator
+
 from src.channel.enums import ChannelType
 from src.core.schemas import BaseSchema
 

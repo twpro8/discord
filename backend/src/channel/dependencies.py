@@ -1,10 +1,12 @@
-from typing import Annotated, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends
-from src.channel.unit_of_work import ChannelUnitOfWork
-from src.core.dependencies import SessionDep
+
 from src.channel.repository import ChannelRepository
 from src.channel.service import ChannelService
+from src.channel.unit_of_work import ChannelUnitOfWork
+from src.core.dependencies import SessionDep
 
 
 def get_channel_repository(

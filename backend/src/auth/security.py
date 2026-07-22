@@ -1,11 +1,10 @@
+import hashlib
 import secrets
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
 import jwt
-import hashlib
-from datetime import datetime, timedelta, timezone
-
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 
@@ -27,9 +26,7 @@ def verify_password(
 
 
 def create_access_token(subject: UUID | Any) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = jwt.encode(
         payload={
             "sub": str(subject),

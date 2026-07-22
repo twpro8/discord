@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, status, Depends, Body
+from fastapi import APIRouter, Body, Depends, status
 from fastapi.requests import Request
 from fastapi.responses import Response
 from fastapi.security import OAuth2PasswordRequestForm

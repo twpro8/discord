@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import CursorResult, or_, update
+
 from src.core.repositories.base_repository import BaseRepository
 from src.server.invite.mappers import ServerInviteMapper
 from src.server.invite.schemas import ServerInvite

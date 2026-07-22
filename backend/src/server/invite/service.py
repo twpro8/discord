@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
 import secrets
 import string
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
@@ -14,10 +14,10 @@ from src.server.invite.exceptions import (
     ServerInvitePermissionDeniedError,
 )
 from src.server.invite.schemas import (
-    CreateServerInviteRequest,
     CreateServerInvite,
-    ServerInviteWithStatus,
+    CreateServerInviteRequest,
     ServerInvite,
+    ServerInviteWithStatus,
 )
 from src.server.invite.unit_of_work import ServerInviteUnitOfWork
 
@@ -60,14 +60,14 @@ class ServerInviteService(BaseService):
         Returns:
             str: One of the following statuses: "exhausted", "expired", or "valid".
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if invite.max_uses is not None and invite.use_count >= invite.max_uses:
             return "exhausted"
 
         if invite.expires_at is not None:
             expires_at = (
-                invite.expires_at.replace(tzinfo=timezone.utc)
+                invite.expires_at.replace(tzinfo=UTC)
                 if invite.expires_at.tzinfo is None
                 else invite.expires_at
             )
@@ -105,9 +105,7 @@ class ServerInviteService(BaseService):
 
         expires_at = None
         if payload.expires_in is not None:
-            expires_at = datetime.now(timezone.utc) + timedelta(
-                seconds=payload.expires_in
-            )
+            expires_at = datetime.now(UTC) + timedelta(seconds=payload.expires_in)
 
         code = None
         for _ in range(3):
@@ -125,7 +123,7 @@ class ServerInviteService(BaseService):
             server_id=server_id,
             created_by=user_id,
             code=code,
-            expires_at=expires_at
+            expires_at=expires_at,
         )
 
         invite = await self.uow.invites.create(db_payload)
@@ -161,7 +159,7 @@ class ServerInviteService(BaseService):
         return [
             ServerInviteWithStatus(
                 **invite.model_dump(),
-                validity_status=self._compute_validity_status(invite)
+                validity_status=self._compute_validity_status(invite),
             )
             for invite in invites
         ]

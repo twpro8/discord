@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AuthLoginData, AuthLoginErrors, AuthLoginResponses, AuthLogoutData, AuthLogoutErrors, AuthLogoutResponses, AuthRefreshData, AuthRefreshErrors, AuthRefreshResponses, AuthRegisterData, AuthRegisterErrors, AuthRegisterResponses, ChatsCreateChatData, ChatsCreateChatErrors, ChatsCreateChatResponses, ChatsGetMyChatsData, ChatsGetMyChatsErrors, ChatsGetMyChatsResponses, ServersCreateServerData, ServersCreateServerErrors, ServersCreateServerResponses, ServersDeleteServerData, ServersDeleteServerErrors, ServersDeleteServerResponses, ServersGetMyServerData, ServersGetMyServerErrors, ServersGetMyServerResponses, ServersGetMyServersData, ServersGetMyServersResponses, ServersUpdateServerData, ServersUpdateServerErrors, ServersUpdateServerResponses, UsersDeleteUserData, UsersDeleteUserResponses, UsersGetCurrentUserData, UsersGetCurrentUserResponses, UsersGetUserByIdData, UsersGetUserByIdErrors, UsersGetUserByIdResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserResponses } from './types.gen';
+import type { AuthLoginData, AuthLoginErrors, AuthLoginResponses, AuthLogoutData, AuthLogoutErrors, AuthLogoutResponses, AuthRefreshData, AuthRefreshErrors, AuthRefreshResponses, AuthRegisterData, AuthRegisterErrors, AuthRegisterResponses, ChannelsSendChannelMessageData, ChannelsSendChannelMessageErrors, ChannelsSendChannelMessageResponses, ChatsCreateChatData, ChatsCreateChatErrors, ChatsCreateChatResponses, ChatsGetMyChatsData, ChatsGetMyChatsErrors, ChatsGetMyChatsResponses, ChatsSendChatMessageData, ChatsSendChatMessageErrors, ChatsSendChatMessageResponses, ServersCreateInviteData, ServersCreateInviteErrors, ServersCreateInviteResponses, ServersCreateServerData, ServersCreateServerErrors, ServersCreateServerResponses, ServersDeleteInviteData, ServersDeleteInviteErrors, ServersDeleteInviteResponses, ServersDeleteServerData, ServersDeleteServerErrors, ServersDeleteServerResponses, ServersGetInvitesData, ServersGetInvitesErrors, ServersGetInvitesResponses, ServersGetMyServerData, ServersGetMyServerErrors, ServersGetMyServerResponses, ServersGetMyServersData, ServersGetMyServersResponses, ServersJoinServerData, ServersJoinServerErrors, ServersJoinServerResponses, ServersTransferOwnershipData, ServersTransferOwnershipErrors, ServersTransferOwnershipResponses, ServersUpdateServerData, ServersUpdateServerErrors, ServersUpdateServerResponses, UsersDeleteUserData, UsersDeleteUserResponses, UsersGetCurrentUserData, UsersGetCurrentUserResponses, UsersGetUserByIdData, UsersGetUserByIdErrors, UsersGetUserByIdResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -32,7 +32,7 @@ export class AuthService {
             }
         });
     }
-
+    
     /**
      * Login
      */
@@ -47,7 +47,7 @@ export class AuthService {
             }
         });
     }
-
+    
     /**
      * Refresh token
      */
@@ -61,7 +61,7 @@ export class AuthService {
             }
         });
     }
-
+    
     /**
      * Logout
      */
@@ -88,7 +88,7 @@ export class UserService {
             ...options
         });
     }
-
+    
     /**
      * Get current user
      */
@@ -99,7 +99,7 @@ export class UserService {
             ...options
         });
     }
-
+    
     /**
      * Update current user
      */
@@ -114,7 +114,7 @@ export class UserService {
             }
         });
     }
-
+    
     /**
      * Get user by id
      */
@@ -129,6 +129,21 @@ export class UserService {
 
 export class ChatService {
     /**
+     * Send Chat Message
+     */
+    public static sendChatMessage<ThrowOnError extends boolean = false>(options: Options<ChatsSendChatMessageData, ThrowOnError>): RequestResult<ChatsSendChatMessageResponses, ChatsSendChatMessageErrors, ThrowOnError> {
+        return (options.client ?? client).post<ChatsSendChatMessageResponses, ChatsSendChatMessageErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/chats/{chat_id}/messages',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
      * Get My Chats
      */
     public static getMyChats<ThrowOnError extends boolean = false>(options?: Options<ChatsGetMyChatsData, ThrowOnError>): RequestResult<ChatsGetMyChatsResponses, ChatsGetMyChatsErrors, ThrowOnError> {
@@ -138,7 +153,7 @@ export class ChatService {
             ...options
         });
     }
-
+    
     /**
      * Create Chat
      */
@@ -155,7 +170,61 @@ export class ChatService {
     }
 }
 
+export class ChatMessageService {
+    /**
+     * Send Chat Message
+     */
+    public static sendChatMessage<ThrowOnError extends boolean = false>(options: Options<ChatsSendChatMessageData, ThrowOnError>): RequestResult<ChatsSendChatMessageResponses, ChatsSendChatMessageErrors, ThrowOnError> {
+        return (options.client ?? client).post<ChatsSendChatMessageResponses, ChatsSendChatMessageErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/chats/{chat_id}/messages',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+}
+
 export class ServerService {
+    /**
+     * Get Invites
+     */
+    public static getInvites<ThrowOnError extends boolean = false>(options: Options<ServersGetInvitesData, ThrowOnError>): RequestResult<ServersGetInvitesResponses, ServersGetInvitesErrors, ThrowOnError> {
+        return (options.client ?? client).get<ServersGetInvitesResponses, ServersGetInvitesErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/servers/{server_id}/invites',
+            ...options
+        });
+    }
+    
+    /**
+     * Create Invite
+     */
+    public static createInvite<ThrowOnError extends boolean = false>(options: Options<ServersCreateInviteData, ThrowOnError>): RequestResult<ServersCreateInviteResponses, ServersCreateInviteErrors, ThrowOnError> {
+        return (options.client ?? client).post<ServersCreateInviteResponses, ServersCreateInviteErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/servers/{server_id}/invites',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Delete Invite
+     */
+    public static deleteInvite<ThrowOnError extends boolean = false>(options: Options<ServersDeleteInviteData, ThrowOnError>): RequestResult<ServersDeleteInviteResponses, ServersDeleteInviteErrors, ThrowOnError> {
+        return (options.client ?? client).delete<ServersDeleteInviteResponses, ServersDeleteInviteErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/servers/{server_id}/invites/{code}',
+            ...options
+        });
+    }
+    
     /**
      * Get My Servers
      */
@@ -166,7 +235,7 @@ export class ServerService {
             ...options
         });
     }
-
+    
     /**
      * Create Server
      */
@@ -181,7 +250,37 @@ export class ServerService {
             }
         });
     }
-
+    
+    /**
+     * Join Server
+     */
+    public static joinServer<ThrowOnError extends boolean = false>(options: Options<ServersJoinServerData, ThrowOnError>): RequestResult<ServersJoinServerResponses, ServersJoinServerErrors, ThrowOnError> {
+        return (options.client ?? client).post<ServersJoinServerResponses, ServersJoinServerErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/servers/join',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Transfer Ownership
+     */
+    public static transferOwnership<ThrowOnError extends boolean = false>(options: Options<ServersTransferOwnershipData, ThrowOnError>): RequestResult<ServersTransferOwnershipResponses, ServersTransferOwnershipErrors, ThrowOnError> {
+        return (options.client ?? client).post<ServersTransferOwnershipResponses, ServersTransferOwnershipErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/servers/{server_id}/transfer',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
     /**
      * Delete Server
      */
@@ -192,7 +291,7 @@ export class ServerService {
             ...options
         });
     }
-
+    
     /**
      * Get My Server
      */
@@ -203,7 +302,7 @@ export class ServerService {
             ...options
         });
     }
-
+    
     /**
      * Update Server
      */
@@ -211,6 +310,79 @@ export class ServerService {
         return (options.client ?? client).patch<ServersUpdateServerResponses, ServersUpdateServerErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/v1/servers/{server_id}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+}
+
+export class ServerInviteService {
+    /**
+     * Get Invites
+     */
+    public static getInvites<ThrowOnError extends boolean = false>(options: Options<ServersGetInvitesData, ThrowOnError>): RequestResult<ServersGetInvitesResponses, ServersGetInvitesErrors, ThrowOnError> {
+        return (options.client ?? client).get<ServersGetInvitesResponses, ServersGetInvitesErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/servers/{server_id}/invites',
+            ...options
+        });
+    }
+    
+    /**
+     * Create Invite
+     */
+    public static createInvite<ThrowOnError extends boolean = false>(options: Options<ServersCreateInviteData, ThrowOnError>): RequestResult<ServersCreateInviteResponses, ServersCreateInviteErrors, ThrowOnError> {
+        return (options.client ?? client).post<ServersCreateInviteResponses, ServersCreateInviteErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/servers/{server_id}/invites',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Delete Invite
+     */
+    public static deleteInvite<ThrowOnError extends boolean = false>(options: Options<ServersDeleteInviteData, ThrowOnError>): RequestResult<ServersDeleteInviteResponses, ServersDeleteInviteErrors, ThrowOnError> {
+        return (options.client ?? client).delete<ServersDeleteInviteResponses, ServersDeleteInviteErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/servers/{server_id}/invites/{code}',
+            ...options
+        });
+    }
+}
+
+export class ChannelService {
+    /**
+     * Send Channel Message
+     */
+    public static sendChannelMessage<ThrowOnError extends boolean = false>(options: Options<ChannelsSendChannelMessageData, ThrowOnError>): RequestResult<ChannelsSendChannelMessageResponses, ChannelsSendChannelMessageErrors, ThrowOnError> {
+        return (options.client ?? client).post<ChannelsSendChannelMessageResponses, ChannelsSendChannelMessageErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/channels/{channel_id}/messages',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+}
+
+export class ChannelMessageService {
+    /**
+     * Send Channel Message
+     */
+    public static sendChannelMessage<ThrowOnError extends boolean = false>(options: Options<ChannelsSendChannelMessageData, ThrowOnError>): RequestResult<ChannelsSendChannelMessageResponses, ChannelsSendChannelMessageErrors, ThrowOnError> {
+        return (options.client ?? client).post<ChannelsSendChannelMessageResponses, ChannelsSendChannelMessageErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/channels/{channel_id}/messages',
             ...options,
             headers: {
                 'Content-Type': 'application/json',

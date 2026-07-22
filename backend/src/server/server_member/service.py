@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -81,10 +81,10 @@ class ServerMemberService(BaseService):
         if not invite:
             raise ServerInviteNotFoundError
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if invite.expires_at is not None:
             expires_at = (
-                invite.expires_at.replace(tzinfo=timezone.utc)
+                invite.expires_at.replace(tzinfo=UTC)
                 if invite.expires_at.tzinfo is None
                 else invite.expires_at
             )

@@ -1,15 +1,16 @@
-from typing import Sequence, Any
+from collections.abc import Sequence
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
-from sqlalchemy import insert, select, update, delete
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Executable
 
-from src.core.schemas.base_schema import BaseSchema
+from src.core.errors import NotFoundError
 from src.core.postgres import UUIDBase
 from src.core.repositories.base_data_mapper import BaseMapper
-from src.core.errors import NotFoundError
+from src.core.schemas.base_schema import BaseSchema
 
 
 class BaseRepository[T: UUIDBase, R: BaseSchema]:

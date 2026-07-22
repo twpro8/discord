@@ -3,8 +3,8 @@ from typing import Annotated, cast
 from fastapi import Depends
 from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
 from src.core.postgres import get_session

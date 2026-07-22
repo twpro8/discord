@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import UniqueConstraint, Index, UUID, ForeignKey
+from sqlalchemy import UUID, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.channel.enums import ChannelType

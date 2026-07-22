@@ -1,6 +1,6 @@
 from fastapi import status
 
-from src.core.errors import NotFoundError, LumiereError
+from src.core.errors import LumiereError, NotFoundError
 
 
 class ServerError(LumiereError):

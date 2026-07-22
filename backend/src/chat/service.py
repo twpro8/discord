@@ -1,20 +1,19 @@
 from uuid import UUID
 
 from src.chat.enums import ChatMemberRole, ChatType
-from src.chat.schemas import (
-    ChatCreateRequest,
-    ChatCreate,
-    Chat,
-    MemberCreate,
-    ChatSummaryPage,
-)
-from src.core.services.base_service import BaseService
-from src.chat.unit_of_work import ChatUnitOfWork
 from src.chat.exceptions import SelfChatForbiddenError
+from src.chat.schemas import (
+    Chat,
+    ChatCreate,
+    ChatCreateRequest,
+    ChatSummaryPage,
+    MemberCreate,
+)
+from src.chat.unit_of_work import ChatUnitOfWork
+from src.core.services.base_service import BaseService
 
 
 class ChatService(BaseService):
-
     def __init__(self, uow: ChatUnitOfWork):
         self.uow = uow
 

@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from src.channel.dependencies import ChannelRepositoryDep
-from src.chat.dependencies import ChatRepositoryDep, ChatMemberRepositoryDep
+from src.chat.dependencies import ChatMemberRepositoryDep, ChatRepositoryDep
 from src.core.dependencies import SessionDep
 from src.message.repository import MessageRepository
 from src.message.service import MessageService
