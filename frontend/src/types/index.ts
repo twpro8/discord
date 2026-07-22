@@ -1,3 +1,5 @@
+export * from "./chat";
+
 export interface Server {
     id: string;
     label: string;

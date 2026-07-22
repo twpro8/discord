@@ -6,11 +6,12 @@ export interface ChatEntry {
     id: string;
     isGroup: boolean;
     name: string;
-    avatarUrl: string | null;
+    avatarUrl?: string | null;
     initials: string;
     color: string;
     time: string;
     lastMessage: string;
     unread: number;
-    status?: "online" | "offline";
+    status?: "online" | "offline" | "away";
+    members?: string[];
 }
