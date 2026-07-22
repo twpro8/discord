@@ -15,17 +15,18 @@ client.interceptors.request.use((request) => {
 })
 
 client.interceptors.response.use(async (response) => {
-  if (response.status === 401) {
-    localStorage.removeItem("access_token");
-    if (!window.location.pathname.includes("/login")) {
-      window.location.href = ROUTES.LOGIN;
-    }
-    return response;
+  if (response.ok) {
+    return response
   }
 
-  if (!response.ok) {
-    const body = await response.json().catch(() => null)
-    throw new ApiError(response.status, body)
+  const body = await response.json().catch(() => null)
+
+  if (response.status === 401) {
+    localStorage.removeItem("access_token");
+    if (window.location.pathname !== ROUTES.LOGIN) {
+      window.location.replace(ROUTES.LOGIN);
+    }
   }
-  return response
+
+  throw new ApiError(response.status, body)
 })

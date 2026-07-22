@@ -5,7 +5,7 @@ import { useServerRail } from "@/context/ServerRailContext";
 import { Link } from "@tanstack/react-router";
 import { ROUTES } from "@/routes.ts";
 import type { ServerUserBriefSchema } from "@/client";
-import { colorFromId, getInitials } from "@/utils";
+import { colorFromId, getErrorMessage, getInitials } from "@/utils";
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { useState } from "react";
 import { CreateServerDialog } from "@/components/CreateServerDialog.tsx";
@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Trash2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { serversDeleteServerMutation, serversGetMyServersOptions } from "@/client/@tanstack/react-query.gen.ts";
+import useCustomToast from "@/hooks/useCustomToast.tsx";
 
 interface ServerIconProps {
     server: ServerUserBriefSchema;
@@ -93,18 +94,21 @@ export function ServerRail() {
     const { servers, activeServerId, setActiveServerId } = useServerRail();
     const [createOpen, setCreateOpen] = useState(false);
     const queryClient = useQueryClient();
+    const { showErrorToast, showSuccessToast } = useCustomToast();
 
     const { mutate: deleteServer } = useMutation({
         ...serversDeleteServerMutation(),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: serversGetMyServersOptions().queryKey });
+            showSuccessToast("Server deleted");
         },
+        onError: (error) => showErrorToast(getErrorMessage(error)),
     });
 
     return (
         <aside
             className="flex flex-col items-center py-3 px-1.5 shrink-0 min-h-0 overflow-hidden"
-            style={{ width: 56, height: "100vh", backgroundColor: "var(--crust)" }}
+            style={{ width: "var(--layout-server-rail-width)", height: "100vh", backgroundColor: "var(--crust)" }}
         >
             {/* DM button */}
             <Link

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { handleError } from "@/utils";
+import { getErrorMessage } from "@/utils";
 import useCustomToast from "@/hooks/useCustomToast.tsx";
 import { ROUTES } from "@/routes.ts";
 import {
@@ -29,7 +29,7 @@ const useAuth = () => {
             navigate({ to: ROUTES.LOGIN })
             showSuccessToast("You have successfully registered.")
         },
-        onError: handleError.bind(showErrorToast),
+        onError: (error) => showErrorToast(getErrorMessage(error)),
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["users"] })
         },
@@ -42,7 +42,7 @@ const useAuth = () => {
             navigate({ to: ROUTES.DASHBOARD })
             showSuccessToast("You have successfully logged in.")
         },
-        onError: handleError.bind(showErrorToast),
+        onError: (error) => showErrorToast(getErrorMessage(error)),
     })
 
     const logout = () => {

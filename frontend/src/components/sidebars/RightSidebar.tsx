@@ -13,7 +13,7 @@ export function RightSidebar() {
         <aside
             className="flex flex-col shrink-0 overflow-hidden"
             style={{
-                width: 200,
+                width: "var(--layout-right-sidebar-width)",
                 backgroundColor: "var(--mantle)",
                 borderLeft: "1px solid var(--surface1)",
             }}
