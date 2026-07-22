@@ -18,6 +18,7 @@ Now you can open your browser and interact with these URLs:
 
 | Name                                                             | URL                          |
 |------------------------------------------------------------------|------------------------------|
+| Frontend, built with Docker                                      | <http://localhost:5173>      |
 | Backend (JSON API with OpenAPI documentation)                    | <http://localhost:8000>      |
 | Automatic Interactive Docs (Swagger UI)                          | <http://localhost:8000/docs> |
 | Adminer, database web administration                             | <http://localhost:8080>      |
@@ -58,7 +59,19 @@ For the backend, it uses the same port that would be used by its local developme
 
 This way, you could turn off a Docker Compose service and start its local development service, and everything would keep working, because it all uses the same ports.
 
-For example, you can stop the `backend` service in the Docker Compose, in another terminal, run:
+For example, you can stop the `frontend` service in the Docker Compose, in another terminal, run:
+
+```bash
+docker compose stop frontend
+```
+
+And then start the local frontend development server:
+
+```bash
+pnpm run dev
+```
+
+Or you could stop the `backend` Docker Compose service:
 
 ```bash
 docker compose stop backend
