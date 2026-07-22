@@ -89,12 +89,12 @@ docker compose watch
 
 ## Git Hooks
 
-This project uses `pre-commit` to run checks before each commit.
+This project uses `prek`, a modern, Rust-based alternative to `pre-commit`, to run checks before each commit.
 
 Install the Git hooks after cloning the repository:
 
 ```bash
-uv run pre-commit install -f
+uv run prek install -f
 ```
 
 The `-f` flag forces the installation, in case there was already a `pre-commit` hook previously installed.
@@ -102,14 +102,22 @@ The `-f` flag forces the installation, in case there was already a `pre-commit` 
 You can also run all configured hooks manually:
 
 ```bash
-❯ uv run pre-commit run --all-files
-trim trailing whitespace.................................................Passed
-fix end of files.........................................................Passed
-check yaml...............................................................Passed
-check toml...............................................................Passed
-check for added large files..............................................Passed
-black....................................................................Passed
-mypy check...............................................................Passed
+uv run prek run --all-files
 ```
 
-This helps ensure that code formatting, linting, and other automated checks are applied consistently before changes are committed.
+Example output:
+
+```text
+check for added large files..............................................Passed
+check toml...............................................................Passed
+check yaml...............................................................Passed
+fix end of files.........................................................Passed
+trim trailing whitespace.................................................Passed
+typos....................................................................Passed
+ruff check...............................................................Passed
+ruff format..............................................................Passed
+mypy check...............................................................Passed
+Generate Frontend SDK....................................................Passed
+```
+
+Using `prek` ensures that formatting, linting, type checking, frontend SDK generation, and other automated checks are applied consistently before changes are committed.
