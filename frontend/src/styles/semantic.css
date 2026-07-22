@@ -38,4 +38,10 @@
     --sidebar-ring:          var(--mauve);
 
     --radius: 0.5rem;
+
+    /* Shared application layout dimensions. */
+    --layout-server-rail-width: 3.5rem;
+    --layout-left-sidebar-width: 13.75rem;
+    --layout-right-sidebar-width: 12.5rem;
+    --layout-header-height: 3rem;
 }

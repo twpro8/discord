@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, Plus } from "lucide-react";
 import { serversCreateServerMutation, serversGetMyServersOptions } from "@/client/@tanstack/react-query.gen.ts";
 import useCustomToast from "@/hooks/useCustomToast.tsx";
-import { handleError } from "@/utils";
+import { getErrorMessage } from "@/utils";
 
 interface CreateServerDialogProps {
     open: boolean;
@@ -31,7 +30,7 @@ export function CreateServerDialog({ open, onOpenChange }: CreateServerDialogPro
             setName("");
             setDescription("");
         },
-        onError: handleError.bind(showErrorToast),
+        onError: (error) => showErrorToast(getErrorMessage(error)),
     });
 
     function handleSubmit() {
@@ -55,21 +54,6 @@ export function CreateServerDialog({ open, onOpenChange }: CreateServerDialogPro
                 </DialogHeader>
 
                 <div className="flex flex-col items-center gap-5 py-2">
-                    {/* Image upload zone — mocked */}
-                    <button
-                        className="relative w-20 h-20 rounded-full flex items-center justify-center border-2 border-dashed transition-colors hover:border-(--mauve)"
-                        style={{ borderColor: "var(--surface2)", backgroundColor: "var(--surface0)" }}
-                        disabled
-                    >
-                        <Camera size={24} style={{ color: "var(--overlay1)" }} />
-                        <span
-                            className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: "var(--mauve)", color: "var(--base)" }}
-                        >
-                            <Plus size={12} />
-                        </span>
-                    </button>
-
                     {/* Name */}
                     <div className="w-full flex flex-col gap-1.5">
                         <Label className="text-xs font-semibold" style={{ color: "var(--text)" }}>

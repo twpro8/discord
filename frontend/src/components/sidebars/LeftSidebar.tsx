@@ -12,7 +12,7 @@ export function LeftSidebar() {
     return (
         <aside
             className="flex flex-col h-full min-h-0 shrink-0 overflow-hidden"
-            style={{ width: 220, backgroundColor: "var(--mantle)" }}
+            style={{ width: "var(--layout-left-sidebar-width)", backgroundColor: "var(--mantle)" }}
             aria-label="Navigation"
         >
             {leftSidebar.content}

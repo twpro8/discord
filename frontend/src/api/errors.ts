@@ -1,11 +1,15 @@
 export class ApiError extends Error {
-    status: number
-    body: any
+    readonly status: number
+    readonly body: unknown
 
-    constructor(status: number, body: any) {
+    constructor(status: number, body: unknown) {
         super(`API Error: ${status}`)
         this.name = "ApiError"
         this.status = status
         this.body = body
     }
+}
+
+export function isApiError(error: unknown): error is ApiError {
+    return error instanceof ApiError;
 }

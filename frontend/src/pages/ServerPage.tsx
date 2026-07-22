@@ -79,7 +79,7 @@ export default function ServerPage() {
         <>
             {/* Top bar */}
             <div
-                className="flex items-center gap-3 px-4 h-12 shrink-0"
+                className="flex items-center gap-3 px-4 h-(--layout-header-height) shrink-0"
                 style={{ borderBottom: "1px solid var(--surface1)" }}
             >
                 <div
