@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Annotated, Union, Self
+from typing import Annotated, Self
 from uuid import UUID
 
-from pydantic import Field, model_validator, Discriminator, Tag
+from pydantic import Discriminator, Field, Tag, model_validator
 
 from src.core.schemas import BaseSchema
 from src.message.utils import get_discriminator_value
@@ -55,9 +55,6 @@ class ChatMessage(MessageBase):
 
 
 MessageResponse = Annotated[
-    Union[
-        Annotated[ChannelMessage, Tag("channel")],
-        Annotated[ChatMessage, Tag("chat")],
-    ],
+    Annotated[ChannelMessage, Tag("channel")] | Annotated[ChatMessage, Tag("chat")],
     Discriminator(get_discriminator_value),
 ]

@@ -2,10 +2,10 @@ from uuid import UUID
 
 from sqlalchemy import update
 
+from src.auth.mappers import AuthMapper
 from src.auth.models import RefreshTokenOrm
 from src.auth.schemas import RefreshToken
 from src.core.repositories import BaseRepository
-from src.auth.mappers import AuthMapper
 
 
 class RefreshTokenRepository(BaseRepository[RefreshTokenOrm, RefreshToken]):

@@ -1,22 +1,20 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import and_, insert, select, func, desc, tuple_, Executable, update
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy import Executable, and_, desc, func, insert, select, tuple_, update
 from sqlalchemy.orm import aliased
 
-from src.chat.cursor import encode_cursor, decode_cursor
-from src.chat.exceptions import ChatNotFoundError
-from src.core.repositories.base_repository import BaseRepository
-from src.chat.models import ChatOrm, ChatMemberOrm
+from src.chat.cursor import decode_cursor, encode_cursor
+from src.chat.enums import ChatType
+from src.chat.mappers import ChatMapper, ChatSummaryMapper, MemberMapper
+from src.chat.models import ChatMemberOrm, ChatOrm
 from src.chat.schemas import (
     Chat,
     ChatMember,
-    MemberCreate,
     ChatSummaryPage,
+    MemberCreate,
 )
-from src.chat.mappers import ChatMapper, MemberMapper, ChatSummaryMapper
-from src.chat.enums import ChatType
+from src.core.repositories.base_repository import BaseRepository
 from src.message.models import MessageOrm
 from src.user.models import UserOrm
 
@@ -28,7 +26,7 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
     mapper = ChatMapper
 
     async def find_private_chat(self, user_a: UUID, user_b: UUID) -> Chat | None:
-        """Find private chat beetween users"""
+        """Find private chat between users"""
 
         member_a = aliased(ChatMemberOrm)
         member_b = aliased(ChatMemberOrm)

@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.channel.repository import ChannelRepository
-from src.chat.repositories import ChatRepository, ChatMemberRepository
+from src.chat.repositories import ChatMemberRepository, ChatRepository
 from src.core.unit_of_work import BaseUnitOfWork
 from src.message.repository import MessageRepository
 

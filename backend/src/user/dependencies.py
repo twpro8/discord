@@ -1,11 +1,12 @@
+from collections.abc import AsyncGenerator
+from typing import Annotated
 from uuid import UUID
-from typing import Annotated, AsyncGenerator
 
 from fastapi import Depends
 
 from src.auth.exceptions import InvalidAccessTokenError
-from src.core.dependencies import AccessTokenDep, SessionDep
 from src.auth.security import decode_access_token
+from src.core.dependencies import AccessTokenDep, SessionDep
 from src.user.repository import UserRepository
 from src.user.schemas import User
 from src.user.service import UserService

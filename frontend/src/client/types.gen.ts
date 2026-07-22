@@ -55,6 +55,56 @@ export type BodyAuthRefresh = {
 };
 
 /**
+ * ChannelMessage
+ */
+export type ChannelMessage = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Sender Id
+     */
+    sender_id: string;
+    /**
+     * Body
+     */
+    body: string | null;
+    /**
+     * Sequence
+     */
+    sequence: number;
+    /**
+     * Parent Id
+     */
+    parent_id: string | null;
+    /**
+     * Is Edited
+     */
+    is_edited: boolean;
+    /**
+     * Is Deleted
+     */
+    is_deleted: boolean;
+    /**
+     * Deleted At
+     */
+    deleted_at: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Channel Id
+     */
+    channel_id: string;
+};
+
+/**
  * ChatCreateRequest
  */
 export type ChatCreateRequest = {
@@ -75,6 +125,56 @@ export type ChatCreateRequest = {
      * Member Ids
      */
     member_ids?: Array<string> | null;
+};
+
+/**
+ * ChatMessage
+ */
+export type ChatMessage = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Sender Id
+     */
+    sender_id: string;
+    /**
+     * Body
+     */
+    body: string | null;
+    /**
+     * Sequence
+     */
+    sequence: number;
+    /**
+     * Parent Id
+     */
+    parent_id: string | null;
+    /**
+     * Is Edited
+     */
+    is_edited: boolean;
+    /**
+     * Is Deleted
+     */
+    is_deleted: boolean;
+    /**
+     * Deleted At
+     */
+    deleted_at: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Chat Id
+     */
+    chat_id: string;
 };
 
 /**
@@ -108,6 +208,20 @@ export const ChatType = { PRIVATE: 'private', GROUP: 'group' } as const;
  * ChatType
  */
 export type ChatType = typeof ChatType[keyof typeof ChatType];
+
+/**
+ * CreateServerInviteRequest
+ */
+export type CreateServerInviteRequest = {
+    /**
+     * Expires In
+     */
+    expires_in?: number | null;
+    /**
+     * Max Uses
+     */
+    max_uses?: number | null;
+};
 
 /**
  * GroupChatSummary
@@ -162,6 +276,20 @@ export type LastMessagePreview = {
      * Created At
      */
     created_at: string;
+};
+
+/**
+ * MessageCreateRequest
+ */
+export type MessageCreateRequest = {
+    /**
+     * Body
+     */
+    body: string;
+    /**
+     * Parent Id
+     */
+    parent_id?: string | null;
 };
 
 /**
@@ -228,7 +356,97 @@ export type ServerCreateRequestSchema = {
     /**
      * Description
      */
-    description?: string | null;
+    description: string | null;
+};
+
+/**
+ * ServerInvite
+ */
+export type ServerInvite = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Server Id
+     */
+    server_id: string;
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Created By
+     */
+    created_by: string;
+    /**
+     * Max Uses
+     */
+    max_uses: number | null;
+    /**
+     * Use Count
+     */
+    use_count: number;
+    /**
+     * Expires At
+     */
+    expires_at: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
+ * ServerInviteCode
+ */
+export type ServerInviteCode = {
+    /**
+     * Code
+     */
+    code: string;
+};
+
+/**
+ * ServerInviteWithStatus
+ */
+export type ServerInviteWithStatus = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Server Id
+     */
+    server_id: string;
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Created By
+     */
+    created_by: string;
+    /**
+     * Max Uses
+     */
+    max_uses: number | null;
+    /**
+     * Use Count
+     */
+    use_count: number;
+    /**
+     * Expires At
+     */
+    expires_at: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Validity Status
+     */
+    validity_status: 'valid' | 'expired' | 'exhausted';
 };
 
 /**
@@ -240,6 +458,25 @@ export const ServerMemberRole = { OWNER: 'owner', MEMBER: 'member' } as const;
  * ServerMemberRole
  */
 export type ServerMemberRole = typeof ServerMemberRole[keyof typeof ServerMemberRole];
+
+/**
+ * ServerMemberSchema
+ */
+export type ServerMemberSchema = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Server Id
+     */
+    server_id: string;
+    /**
+     * User Id
+     */
+    user_id: string;
+    role: ServerMemberRole;
+};
 
 /**
  * ServerSchema
@@ -340,6 +577,16 @@ export type TokenPair = {
      * Token Type
      */
     token_type?: string;
+};
+
+/**
+ * UpdateOwnerIdSchema
+ */
+export type UpdateOwnerIdSchema = {
+    /**
+     * Owner Id
+     */
+    owner_id: string;
 };
 
 /**
@@ -613,6 +860,36 @@ export type UsersGetUserByIdResponses = {
 
 export type UsersGetUserByIdResponse = UsersGetUserByIdResponses[keyof UsersGetUserByIdResponses];
 
+export type ChatsSendChatMessageData = {
+    body: MessageCreateRequest;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+    };
+    query?: never;
+    url: '/api/v1/chats/{chat_id}/messages';
+};
+
+export type ChatsSendChatMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChatsSendChatMessageError = ChatsSendChatMessageErrors[keyof ChatsSendChatMessageErrors];
+
+export type ChatsSendChatMessageResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatMessage;
+};
+
+export type ChatsSendChatMessageResponse = ChatsSendChatMessageResponses[keyof ChatsSendChatMessageResponses];
+
 export type ChatsGetMyChatsData = {
     body?: never;
     path?: never;
@@ -672,6 +949,111 @@ export type ChatsCreateChatResponses = {
 
 export type ChatsCreateChatResponse = ChatsCreateChatResponses[keyof ChatsCreateChatResponses];
 
+export type ServersGetInvitesData = {
+    body?: never;
+    path: {
+        /**
+         * Server Id
+         */
+        server_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Offset
+         */
+        offset?: number;
+    };
+    url: '/api/v1/servers/{server_id}/invites';
+};
+
+export type ServersGetInvitesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ServersGetInvitesError = ServersGetInvitesErrors[keyof ServersGetInvitesErrors];
+
+export type ServersGetInvitesResponses = {
+    /**
+     * Response Servers-Get Invites
+     *
+     * Successful Response
+     */
+    200: Array<ServerInviteWithStatus>;
+};
+
+export type ServersGetInvitesResponse = ServersGetInvitesResponses[keyof ServersGetInvitesResponses];
+
+export type ServersCreateInviteData = {
+    body: CreateServerInviteRequest;
+    path: {
+        /**
+         * Server Id
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/api/v1/servers/{server_id}/invites';
+};
+
+export type ServersCreateInviteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ServersCreateInviteError = ServersCreateInviteErrors[keyof ServersCreateInviteErrors];
+
+export type ServersCreateInviteResponses = {
+    /**
+     * Successful Response
+     */
+    201: ServerInvite;
+};
+
+export type ServersCreateInviteResponse = ServersCreateInviteResponses[keyof ServersCreateInviteResponses];
+
+export type ServersDeleteInviteData = {
+    body?: never;
+    path: {
+        /**
+         * Server Id
+         */
+        server_id: string;
+        /**
+         * Code
+         */
+        code: string;
+    };
+    query?: never;
+    url: '/api/v1/servers/{server_id}/invites/{code}';
+};
+
+export type ServersDeleteInviteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ServersDeleteInviteError = ServersDeleteInviteErrors[keyof ServersDeleteInviteErrors];
+
+export type ServersDeleteInviteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type ServersDeleteInviteResponse = ServersDeleteInviteResponses[keyof ServersDeleteInviteResponses];
+
 export type ServersGetMyServersData = {
     body?: never;
     path?: never;
@@ -714,6 +1096,61 @@ export type ServersCreateServerResponses = {
 };
 
 export type ServersCreateServerResponse = ServersCreateServerResponses[keyof ServersCreateServerResponses];
+
+export type ServersJoinServerData = {
+    body: ServerInviteCode;
+    path?: never;
+    query?: never;
+    url: '/api/v1/servers/join';
+};
+
+export type ServersJoinServerErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ServersJoinServerError = ServersJoinServerErrors[keyof ServersJoinServerErrors];
+
+export type ServersJoinServerResponses = {
+    /**
+     * Successful Response
+     */
+    201: ServerMemberSchema;
+};
+
+export type ServersJoinServerResponse = ServersJoinServerResponses[keyof ServersJoinServerResponses];
+
+export type ServersTransferOwnershipData = {
+    body: UpdateOwnerIdSchema;
+    path: {
+        /**
+         * Server Id
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/api/v1/servers/{server_id}/transfer';
+};
+
+export type ServersTransferOwnershipErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ServersTransferOwnershipError = ServersTransferOwnershipErrors[keyof ServersTransferOwnershipErrors];
+
+export type ServersTransferOwnershipResponses = {
+    /**
+     * Successful Response
+     */
+    200: ServerSchema;
+};
+
+export type ServersTransferOwnershipResponse = ServersTransferOwnershipResponses[keyof ServersTransferOwnershipResponses];
 
 export type ServersDeleteServerData = {
     body?: never;
@@ -804,3 +1241,33 @@ export type ServersUpdateServerResponses = {
 };
 
 export type ServersUpdateServerResponse = ServersUpdateServerResponses[keyof ServersUpdateServerResponses];
+
+export type ChannelsSendChannelMessageData = {
+    body: MessageCreateRequest;
+    path: {
+        /**
+         * Channel Id
+         */
+        channel_id: string;
+    };
+    query?: never;
+    url: '/api/v1/channels/{channel_id}/messages';
+};
+
+export type ChannelsSendChannelMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChannelsSendChannelMessageError = ChannelsSendChannelMessageErrors[keyof ChannelsSendChannelMessageErrors];
+
+export type ChannelsSendChannelMessageResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChannelMessage;
+};
+
+export type ChannelsSendChannelMessageResponse = ChannelsSendChannelMessageResponses[keyof ChannelsSendChannelMessageResponses];

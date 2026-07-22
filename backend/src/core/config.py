@@ -1,6 +1,6 @@
-from typing import Literal, Annotated
+from typing import Annotated, Literal
 
-from pydantic import computed_field, PostgresDsn, AnyUrl, BeforeValidator
+from pydantic import AnyUrl, BeforeValidator, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core.utils import parse_cors

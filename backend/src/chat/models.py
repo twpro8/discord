@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import UUID, ForeignKey, UniqueConstraint, Index, DateTime
+from sqlalchemy import UUID, DateTime, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.core.postgres import UUIDBase, str_128, str_512, timestamp
 from src.chat.enums import ChatMemberRole, ChatType
+from src.core.postgres import UUIDBase, str_128, str_512, timestamp
 
 
 class ChatOrm(UUIDBase):

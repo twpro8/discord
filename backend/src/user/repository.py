@@ -7,9 +7,9 @@ from sqlalchemy.exc import IntegrityError
 
 from src.core.repositories import BaseRepository
 from src.user.exceptions import UserAlreadyExistsError
+from src.user.mappers import UserMapper
 from src.user.models import UserOrm
 from src.user.schemas import User
-from src.user.mappers import UserMapper
 
 
 class UserRepository(BaseRepository[UserOrm, User]):

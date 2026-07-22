@@ -5,3 +5,17 @@ members = ["backend"]
 dev = [
     "pre-commit>=4.5.1",
 ]
+
+[tool.typos.files]
+extend-exclude = [
+    "uv.lock",
+    "pnpm-lock.yaml",
+    "backend/coverage/",
+    "backend/htmlcov/",
+    "frontend/dist/",
+]
+
+[tool.typos.default]
+extend-ignore-re = [
+    "selectin",
+]

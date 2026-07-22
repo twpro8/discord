@@ -1,4 +1,4 @@
-from .base import LumiereError, NotFoundError, ConflictError
+from .base import ConflictError, LumiereError, NotFoundError
 from .interceptor import app_exception_handler
 
 __all__ = [

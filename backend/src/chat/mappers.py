@@ -3,16 +3,16 @@ from typing import Any
 from sqlalchemy import Row
 
 from src.chat.enums import ChatType
-from src.core.repositories.base_data_mapper import BaseMapper
+from src.chat.models import ChatMemberOrm, ChatOrm
 from src.chat.schemas import (
     Chat,
     ChatMember,
     ChatSummary,
-    LastMessagePreview,
     GroupChatSummary,
+    LastMessagePreview,
     PrivateChatSummary,
 )
-from src.chat.models import ChatOrm, ChatMemberOrm
+from src.core.repositories.base_data_mapper import BaseMapper
 
 
 class ChatMapper(BaseMapper[ChatOrm, Chat]):

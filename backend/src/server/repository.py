@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import update, select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, update
+
 from src.core.repositories import BaseRepository
 from src.server.mappers import ServerMapper, ServerUserBriefMapper
 from src.server.models import ServerMemberOrm, ServerOrm

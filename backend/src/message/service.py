@@ -2,10 +2,10 @@ from uuid import UUID
 
 from src.core.permissions import assert_is_chat_member
 from src.message.schemas import (
-    MessageCreateRequest,
-    MessageCreate,
     ChannelMessage,
     ChatMessage,
+    MessageCreate,
+    MessageCreateRequest,
 )
 from src.message.unit_of_work import MessageUnitOfWork
 

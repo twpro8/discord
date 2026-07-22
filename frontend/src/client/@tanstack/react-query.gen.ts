@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { AuthService, ChatService, type Options, ServerService, UserService } from '../sdk.gen';
-import type { AuthLoginData, AuthLoginError, AuthLoginResponse, AuthLogoutData, AuthLogoutError, AuthLogoutResponse, AuthRefreshData, AuthRefreshError, AuthRefreshResponse, AuthRegisterData, AuthRegisterError, AuthRegisterResponse, ChatsCreateChatData, ChatsCreateChatError, ChatsCreateChatResponse, ChatsGetMyChatsData, ChatsGetMyChatsError, ChatsGetMyChatsResponse, ServersCreateServerData, ServersCreateServerError, ServersCreateServerResponse, ServersDeleteServerData, ServersDeleteServerError, ServersDeleteServerResponse, ServersGetMyServerData, ServersGetMyServerError, ServersGetMyServerResponse, ServersGetMyServersData, ServersGetMyServersResponse, ServersUpdateServerData, ServersUpdateServerError, ServersUpdateServerResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersGetCurrentUserData, UsersGetCurrentUserResponse, UsersGetUserByIdData, UsersGetUserByIdError, UsersGetUserByIdResponse, UsersUpdateUserData, UsersUpdateUserError, UsersUpdateUserResponse } from '../types.gen';
+import { AuthService, ChannelService, ChatService, type Options, ServerService, UserService } from '../sdk.gen';
+import type { AuthLoginData, AuthLoginError, AuthLoginResponse, AuthLogoutData, AuthLogoutError, AuthLogoutResponse, AuthRefreshData, AuthRefreshError, AuthRefreshResponse, AuthRegisterData, AuthRegisterError, AuthRegisterResponse, ChannelsSendChannelMessageData, ChannelsSendChannelMessageError, ChannelsSendChannelMessageResponse, ChatsCreateChatData, ChatsCreateChatError, ChatsCreateChatResponse, ChatsGetMyChatsData, ChatsGetMyChatsError, ChatsGetMyChatsResponse, ChatsSendChatMessageData, ChatsSendChatMessageError, ChatsSendChatMessageResponse, ServersCreateInviteData, ServersCreateInviteError, ServersCreateInviteResponse, ServersCreateServerData, ServersCreateServerError, ServersCreateServerResponse, ServersDeleteInviteData, ServersDeleteInviteError, ServersDeleteInviteResponse, ServersDeleteServerData, ServersDeleteServerError, ServersDeleteServerResponse, ServersGetInvitesData, ServersGetInvitesError, ServersGetInvitesResponse, ServersGetMyServerData, ServersGetMyServerError, ServersGetMyServerResponse, ServersGetMyServersData, ServersGetMyServersResponse, ServersJoinServerData, ServersJoinServerError, ServersJoinServerResponse, ServersTransferOwnershipData, ServersTransferOwnershipError, ServersTransferOwnershipResponse, ServersUpdateServerData, ServersUpdateServerError, ServersUpdateServerResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersGetCurrentUserData, UsersGetCurrentUserResponse, UsersGetUserByIdData, UsersGetUserByIdError, UsersGetUserByIdResponse, UsersUpdateUserData, UsersUpdateUserError, UsersUpdateUserResponse } from '../types.gen';
 
 /**
  * Register
@@ -177,6 +177,23 @@ export const usersGetUserByIdOptions = (options: Options<UsersGetUserByIdData>) 
     queryKey: usersGetUserByIdQueryKey(options)
 });
 
+/**
+ * Send Chat Message
+ */
+export const chatsSendChatMessageMutation = (options?: Partial<Options<ChatsSendChatMessageData>>): UseMutationOptions<ChatsSendChatMessageResponse, ChatsSendChatMessageError, Options<ChatsSendChatMessageData>> => {
+    const mutationOptions: UseMutationOptions<ChatsSendChatMessageResponse, ChatsSendChatMessageError, Options<ChatsSendChatMessageData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ChatService.sendChatMessage({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const chatsGetMyChatsQueryKey = (options?: Options<ChatsGetMyChatsData>) => createQueryKey('chatsGetMyChats', options);
 
 /**
@@ -268,6 +285,85 @@ export const chatsCreateChatMutation = (options?: Partial<Options<ChatsCreateCha
     return mutationOptions;
 };
 
+export const serversGetInvitesQueryKey = (options: Options<ServersGetInvitesData>) => createQueryKey('serversGetInvites', options);
+
+/**
+ * Get Invites
+ */
+export const serversGetInvitesOptions = (options: Options<ServersGetInvitesData>) => queryOptions<ServersGetInvitesResponse, ServersGetInvitesError, ServersGetInvitesResponse, ReturnType<typeof serversGetInvitesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ServerService.getInvites({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: serversGetInvitesQueryKey(options)
+});
+
+export const serversGetInvitesInfiniteQueryKey = (options: Options<ServersGetInvitesData>): QueryKey<Options<ServersGetInvitesData>> => createQueryKey('serversGetInvites', options, true);
+
+/**
+ * Get Invites
+ */
+export const serversGetInvitesInfiniteOptions = (options: Options<ServersGetInvitesData>) => infiniteQueryOptions<ServersGetInvitesResponse, ServersGetInvitesError, InfiniteData<ServersGetInvitesResponse>, QueryKey<Options<ServersGetInvitesData>>, number | Pick<QueryKey<Options<ServersGetInvitesData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<ServersGetInvitesData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                offset: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ServerService.getInvites({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: serversGetInvitesInfiniteQueryKey(options)
+});
+
+/**
+ * Create Invite
+ */
+export const serversCreateInviteMutation = (options?: Partial<Options<ServersCreateInviteData>>): UseMutationOptions<ServersCreateInviteResponse, ServersCreateInviteError, Options<ServersCreateInviteData>> => {
+    const mutationOptions: UseMutationOptions<ServersCreateInviteResponse, ServersCreateInviteError, Options<ServersCreateInviteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ServerService.createInvite({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete Invite
+ */
+export const serversDeleteInviteMutation = (options?: Partial<Options<ServersDeleteInviteData>>): UseMutationOptions<ServersDeleteInviteResponse, ServersDeleteInviteError, Options<ServersDeleteInviteData>> => {
+    const mutationOptions: UseMutationOptions<ServersDeleteInviteResponse, ServersDeleteInviteError, Options<ServersDeleteInviteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ServerService.deleteInvite({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const serversGetMyServersQueryKey = (options?: Options<ServersGetMyServersData>) => createQueryKey('serversGetMyServers', options);
 
 /**
@@ -293,6 +389,40 @@ export const serversCreateServerMutation = (options?: Partial<Options<ServersCre
     const mutationOptions: UseMutationOptions<ServersCreateServerResponse, ServersCreateServerError, Options<ServersCreateServerData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await ServerService.createServer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Join Server
+ */
+export const serversJoinServerMutation = (options?: Partial<Options<ServersJoinServerData>>): UseMutationOptions<ServersJoinServerResponse, ServersJoinServerError, Options<ServersJoinServerData>> => {
+    const mutationOptions: UseMutationOptions<ServersJoinServerResponse, ServersJoinServerError, Options<ServersJoinServerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ServerService.joinServer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Transfer Ownership
+ */
+export const serversTransferOwnershipMutation = (options?: Partial<Options<ServersTransferOwnershipData>>): UseMutationOptions<ServersTransferOwnershipResponse, ServersTransferOwnershipError, Options<ServersTransferOwnershipData>> => {
+    const mutationOptions: UseMutationOptions<ServersTransferOwnershipResponse, ServersTransferOwnershipError, Options<ServersTransferOwnershipData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ServerService.transferOwnership({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -345,6 +475,23 @@ export const serversUpdateServerMutation = (options?: Partial<Options<ServersUpd
     const mutationOptions: UseMutationOptions<ServersUpdateServerResponse, ServersUpdateServerError, Options<ServersUpdateServerData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await ServerService.updateServer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Send Channel Message
+ */
+export const channelsSendChannelMessageMutation = (options?: Partial<Options<ChannelsSendChannelMessageData>>): UseMutationOptions<ChannelsSendChannelMessageResponse, ChannelsSendChannelMessageError, Options<ChannelsSendChannelMessageData>> => {
+    const mutationOptions: UseMutationOptions<ChannelsSendChannelMessageResponse, ChannelsSendChannelMessageError, Options<ChannelsSendChannelMessageData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ChannelService.sendChannelMessage({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.unit_of_work.base_unit_of_work import BaseUnitOfWork
 from src.channel.repository import ChannelRepository
+from src.core.unit_of_work.base_unit_of_work import BaseUnitOfWork
 
 
 class ChannelUnitOfWork(BaseUnitOfWork):
