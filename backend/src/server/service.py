@@ -1,10 +1,21 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.channel.service import ChannelService
 from src.core.services import BaseService
 from src.server.enums import ServerMemberRole
+from src.server.exceptions import (
+    CannotKickSelfError,
+    CannotTransferToSelfError,
+    MemberNotFoundError,
+    OnlyOwnerCanKickError,
+    OwnerCannotLeaveServerError,
+    ServerNotEmptyError,
+    ServerNotFoundError,
+    YouAreNotOwnerError,
+)
 from src.server.schemas import (
     ServerCreateRequestSchema,
     ServerCreateSchema,
@@ -12,22 +23,10 @@ from src.server.schemas import (
     ServerUpdateRequestSchema,
     ServerUpdateSchema,
     ServerUserBriefSchema,
-    UpdateServerOwner,
     UpdateOwnerIdSchema,
+    UpdateServerOwner,
 )
-from src.channel.service import ChannelService
-from src.server.server_member.schemas import ServerMemberSchema
 from src.server.server_member.service import ServerMemberService
-from src.server.exceptions import (
-    CannotKickSelfError,
-    CannotTransferToSelfError,
-    MemberNotFoundError,
-    OnlyOwnerCanKickError,
-    OwnerCannotLeaveServerError,
-    ServerNotFoundError,
-    ServerNotEmptyError,
-    YouAreNotOwnerError,
-)
 from src.server.unit_of_work import ServerUnitOfWork
 
 
@@ -145,7 +144,7 @@ class ServerService(BaseService):
 
         await self.server_member_service.mark_as_left(
             server_member_id=member.id,
-            left_at=datetime.now(timezone.utc),
+            left_at=datetime.now(UTC),
         )
         await self.uow.servers.decrement_member_count(server.id)
         await self.uow.commit()
@@ -184,13 +183,14 @@ class ServerService(BaseService):
 
         await self.server_member_service.mark_as_left(
             server_member_id=member.id,
-            left_at=datetime.now(timezone.utc),
+            left_at=datetime.now(UTC),
         )
         await self.uow.servers.decrement_member_count(server.id)
         await self.uow.commit()
 
-    async def get_servers_where_user_memeber(
-        self, user_id: UUID
+    async def get_servers_where_user_member(
+        self,
+        user_id: UUID,
     ) -> list[ServerUserBriefSchema]:
         return await self.uow.servers.get_servers_where_user_is_member(user_id)
 

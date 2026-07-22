@@ -1,11 +1,12 @@
-from typing import Annotated, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends
 
-from src.chat.repositories import ChatRepository, ChatMemberRepository
+from src.chat.repositories import ChatMemberRepository, ChatRepository
+from src.chat.service import ChatService
 from src.chat.unit_of_work import ChatUnitOfWork
 from src.core.dependencies import SessionDep
-from src.chat.service import ChatService
 
 
 def get_chat_repository(session: SessionDep) -> ChatRepository:

@@ -1,31 +1,30 @@
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import IncorrectPasswordError, InvalidRefreshTokenError
-from src.auth.unit_of_work import AuthUnitOfWork
-from src.core.config import settings
-from src.user.exceptions import UserNotFoundError
-from src.user.schemas import User, UserCreate
-from src.core.services import BaseService
 from src.auth.schemas import (
+    RefreshToken,
+    RefreshTokenCreate,
     RegisterForm,
     TokenPair,
-    RefreshTokenCreate,
-    RefreshToken,
 )
 from src.auth.security import (
-    hash_password,
-    verify_password,
     create_access_token,
     create_refresh_token,
+    hash_password,
     hash_refresh_token,
+    verify_password,
 )
+from src.auth.unit_of_work import AuthUnitOfWork
+from src.core.config import settings
+from src.core.services import BaseService
+from src.user.exceptions import UserNotFoundError
+from src.user.schemas import User, UserCreate
 
 
 class AuthService(BaseService):
-
     def __init__(
         self,
         session: AsyncSession,
@@ -75,7 +74,7 @@ class AuthService(BaseService):
     async def _issue_tokens(self, user_id: UUID) -> TokenPair:
         access_token = create_access_token(user_id)
         refresh_token, refresh_token_hash = create_refresh_token()
-        expires_at = datetime.now(timezone.utc) + timedelta(
+        expires_at = datetime.now(UTC) + timedelta(
             days=settings.REFRESH_TOKEN_EXPIRE_DAYS
         )
         await self.uow.refresh_tokens.create(
@@ -90,7 +89,7 @@ class AuthService(BaseService):
     async def _get_valid_refresh_token(self, refresh_token: str) -> RefreshToken:
         token_hash = hash_refresh_token(refresh_token)
         stored = await self.uow.refresh_tokens.get_one(token_hash=token_hash)
-        if not stored or stored.expires_at <= datetime.now(timezone.utc):
+        if not stored or stored.expires_at <= datetime.now(UTC):
             raise InvalidRefreshTokenError
         if stored.is_revoked:
             # Reuse detected - potential token theft, revoke all user sessions

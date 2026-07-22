@@ -1,9 +1,9 @@
-from fastapi import APIRouter, status, Query
+from fastapi import APIRouter, Query, status
 
 from src.chat.dependencies import ChatServiceDep
 from src.chat.schemas import ChatCreateRequest, ChatSummaryPage
-from src.user.dependencies import UserIdDep
 from src.message.router import chat_message_router
+from src.user.dependencies import UserIdDep
 
 router = APIRouter(prefix="/chats", tags=["Chats"])
 router.include_router(chat_message_router, prefix="/{chat_id}")

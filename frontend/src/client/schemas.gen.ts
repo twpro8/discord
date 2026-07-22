@@ -88,6 +88,98 @@ export const Body_Auth_refreshSchema = {
     title: 'Body_Auth-refresh'
 } as const;
 
+export const ChannelMessageSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        sender_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Sender Id'
+        },
+        body: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Body'
+        },
+        sequence: {
+            type: 'integer',
+            title: 'Sequence'
+        },
+        parent_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Parent Id'
+        },
+        is_edited: {
+            type: 'boolean',
+            title: 'Is Edited'
+        },
+        is_deleted: {
+            type: 'boolean',
+            title: 'Is Deleted'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        },
+        channel_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Channel Id'
+        }
+    },
+    type: 'object',
+    required: [
+        'id',
+        'sender_id',
+        'body',
+        'sequence',
+        'parent_id',
+        'is_edited',
+        'is_deleted',
+        'deleted_at',
+        'created_at',
+        'updated_at',
+        'channel_id'
+    ],
+    title: 'ChannelMessage'
+} as const;
+
 export const ChatCreateRequestSchema = {
     properties: {
         type: {
@@ -154,6 +246,98 @@ export const ChatCreateRequestSchema = {
     title: 'ChatCreateRequest'
 } as const;
 
+export const ChatMessageSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        sender_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Sender Id'
+        },
+        body: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Body'
+        },
+        sequence: {
+            type: 'integer',
+            title: 'Sequence'
+        },
+        parent_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Parent Id'
+        },
+        is_edited: {
+            type: 'boolean',
+            title: 'Is Edited'
+        },
+        is_deleted: {
+            type: 'boolean',
+            title: 'Is Deleted'
+        },
+        deleted_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Deleted At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        },
+        chat_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Chat Id'
+        }
+    },
+    type: 'object',
+    required: [
+        'id',
+        'sender_id',
+        'body',
+        'sequence',
+        'parent_id',
+        'is_edited',
+        'is_deleted',
+        'deleted_at',
+        'created_at',
+        'updated_at',
+        'chat_id'
+    ],
+    title: 'ChatMessage'
+} as const;
+
 export const ChatSummaryPageSchema = {
     properties: {
         items: {
@@ -209,6 +393,35 @@ export const ChatTypeSchema = {
         'group'
     ],
     title: 'ChatType'
+} as const;
+
+export const CreateServerInviteRequestSchema = {
+    properties: {
+        expires_in: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Expires In'
+        },
+        max_uses: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Max Uses'
+        }
+    },
+    type: 'object',
+    title: 'CreateServerInviteRequest'
 } as const;
 
 export const GroupChatSummarySchema = {
@@ -310,6 +523,34 @@ export const LastMessagePreviewSchema = {
         'created_at'
     ],
     title: 'LastMessagePreview'
+} as const;
+
+export const MessageCreateRequestSchema = {
+    properties: {
+        body: {
+            type: 'string',
+            maxLength: 2000,
+            minLength: 1,
+            title: 'Body'
+        },
+        parent_id: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'uuid'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Parent Id'
+        }
+    },
+    type: 'object',
+    required: [
+        'body'
+    ],
+    title: 'MessageCreateRequest'
 } as const;
 
 export const PrivateChatSummarySchema = {
@@ -433,9 +674,170 @@ export const ServerCreateRequestSchemaSchema = {
     },
     type: 'object',
     required: [
-        'name'
+        'name',
+        'description'
     ],
     title: 'ServerCreateRequestSchema'
+} as const;
+
+export const ServerInviteSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        server_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Server Id'
+        },
+        code: {
+            type: 'string',
+            title: 'Code'
+        },
+        created_by: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Created By'
+        },
+        max_uses: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Max Uses'
+        },
+        use_count: {
+            type: 'integer',
+            title: 'Use Count'
+        },
+        expires_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Expires At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        }
+    },
+    type: 'object',
+    required: [
+        'id',
+        'server_id',
+        'code',
+        'created_by',
+        'max_uses',
+        'use_count',
+        'expires_at',
+        'created_at'
+    ],
+    title: 'ServerInvite'
+} as const;
+
+export const ServerInviteCodeSchema = {
+    properties: {
+        code: {
+            type: 'string',
+            title: 'Code'
+        }
+    },
+    type: 'object',
+    required: [
+        'code'
+    ],
+    title: 'ServerInviteCode'
+} as const;
+
+export const ServerInviteWithStatusSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        server_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Server Id'
+        },
+        code: {
+            type: 'string',
+            title: 'Code'
+        },
+        created_by: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Created By'
+        },
+        max_uses: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Max Uses'
+        },
+        use_count: {
+            type: 'integer',
+            title: 'Use Count'
+        },
+        expires_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Expires At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        validity_status: {
+            type: 'string',
+            enum: [
+                'valid',
+                'expired',
+                'exhausted'
+            ],
+            title: 'Validity Status'
+        }
+    },
+    type: 'object',
+    required: [
+        'id',
+        'server_id',
+        'code',
+        'created_by',
+        'max_uses',
+        'use_count',
+        'expires_at',
+        'created_at',
+        'validity_status'
+    ],
+    title: 'ServerInviteWithStatus'
 } as const;
 
 export const ServerMemberRoleSchema = {
@@ -445,6 +847,37 @@ export const ServerMemberRoleSchema = {
         'member'
     ],
     title: 'ServerMemberRole'
+} as const;
+
+export const ServerMemberSchemaSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        server_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Server Id'
+        },
+        user_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'User Id'
+        },
+        role: {
+            $ref: '#/components/schemas/ServerMemberRole'
+        }
+    },
+    type: 'object',
+    required: [
+        'id',
+        'server_id',
+        'user_id',
+        'role'
+    ],
+    title: 'ServerMemberSchema'
 } as const;
 
 export const ServerSchemaSchema = {
@@ -533,7 +966,8 @@ export const ServerUpdateRequestSchemaSchema = {
             anyOf: [
                 {
                     type: 'string',
-                    maxLength: 300
+                    maxLength: 300,
+                    minLength: 1
                 },
                 {
                     type: 'null'
@@ -621,6 +1055,21 @@ export const TokenPairSchema = {
         'refresh_token'
     ],
     title: 'TokenPair'
+} as const;
+
+export const UpdateOwnerIdSchemaSchema = {
+    properties: {
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        }
+    },
+    type: 'object',
+    required: [
+        'owner_id'
+    ],
+    title: 'UpdateOwnerIdSchema'
 } as const;
 
 export const UserReadSchema = {

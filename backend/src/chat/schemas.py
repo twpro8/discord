@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Annotated, Union
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import Field, model_validator
@@ -98,7 +98,7 @@ class PrivateChatSummary(BaseSchema):
 
 
 ChatSummary = Annotated[
-    Union[GroupChatSummary, PrivateChatSummary],
+    GroupChatSummary | PrivateChatSummary,
     Field(discriminator="type"),
 ]
 

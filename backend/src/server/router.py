@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, status
 
 from src.server.dependencies import ServerMemberServiceDep, ServerServiceDep
+from src.server.invite.router import router as invite_router
 from src.server.schemas import (
     ServerCreateRequestSchema,
     ServerInviteCode,
@@ -13,7 +14,6 @@ from src.server.schemas import (
 )
 from src.server.server_member.schemas import ServerMemberSchema
 from src.user.dependencies import UserIdDep
-from src.server.invite.router import router as invite_router
 
 router = APIRouter(prefix="/servers", tags=["Servers"])
 router.include_router(invite_router, prefix="/{server_id}")
@@ -60,7 +60,7 @@ async def get_my_servers(
     current_user_id: UserIdDep,
     service: ServerServiceDep,
 ) -> list[ServerUserBriefSchema]:
-    return await service.get_servers_where_user_memeber(user_id=current_user_id)
+    return await service.get_servers_where_user_member(user_id=current_user_id)
 
 
 @router.get("/{server_id}", response_model=ServerSchema)

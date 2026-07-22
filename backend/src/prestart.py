@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_fixed
 
 from src.core.postgres.engine import engine
-from src.core.redis import init_redis as connect_redis, close_redis
+from src.core.redis import close_redis
+from src.core.redis import init_redis as connect_redis
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

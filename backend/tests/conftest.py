@@ -1,15 +1,16 @@
-from typing import AsyncGenerator, Any
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
+from src.core.models import *  # noqa
+from src.core.postgres import Base, get_session
 from src.core.postgres.engine import null_pool_engine
 from src.core.postgres.session import null_pool_session_maker
 from src.main import app
-from src.core.postgres import Base, get_session
-from src.core.models import *  # noqa
 from src.user.schemas import User
 from tests.dependency_overrides.redis_client import get_fake_redis_client
 from tests.dependency_overrides.session import get_null_pool_session
@@ -23,7 +24,9 @@ def check_test_mode() -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def override_dependencies(check_test_mode: None) -> None:
+def override_dependencies(
+    check_test_mode: None,  # noqa
+) -> None:
     """Override dependencies once for all tests"""
     from src.core.dependencies import get_redis
 
@@ -32,7 +35,9 @@ def override_dependencies(check_test_mode: None) -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def setup_database(check_test_mode: None) -> None:
+async def setup_database(
+    check_test_mode: None,  # noqa
+) -> None:
     """Setup database tables"""
     async with null_pool_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -40,7 +45,9 @@ async def setup_database(check_test_mode: None) -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def populated_database(setup_database: None) -> AsyncGenerator[AsyncSession]:
+async def populated_database(
+    setup_database: None,  # noqa
+) -> AsyncGenerator[AsyncSession]:
     """Populate database"""
     async with null_pool_session_maker() as session:
         await populate_database(session)

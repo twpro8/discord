@@ -1,4 +1,4 @@
-from src.core.errors import LumiereError, NotFoundError, ConflictError
+from src.core.errors import ConflictError, LumiereError, NotFoundError
 
 
 class UserError(LumiereError): ...

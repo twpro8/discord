@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from sqlalchemy import String, DateTime, text
-from sqlalchemy.orm import mapped_column
+from sqlalchemy import DateTime, String, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import mapped_column
 
 int_pk = Annotated[int, mapped_column(primary_key=True)]
 uuid_pk = Annotated[

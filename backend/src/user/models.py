@@ -21,7 +21,7 @@ class UserOrm(UUIDBase):
     # Make sure you have added the trigger to the migration.
     updated_at: Mapped[timestamp]
 
-    refresh_tokens: Mapped[list["RefreshTokenOrm"]] = relationship(
+    refresh_tokens: Mapped[list[RefreshTokenOrm]] = relationship(
         back_populates="user",
         lazy="selectin",
         cascade="all, delete-orphan",

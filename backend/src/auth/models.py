@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-
 from uuid import UUID
 
 from sqlalchemy import ForeignKey
@@ -25,7 +24,7 @@ class RefreshTokenOrm(UUIDBase):
     expires_at: Mapped[timestamp]
     created_at: Mapped[timestamp]
 
-    user: Mapped["UserOrm"] = relationship(
+    user: Mapped[UserOrm] = relationship(
         back_populates="refresh_tokens",
         lazy="joined",
     )

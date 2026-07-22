@@ -1,6 +1,8 @@
-from typing import Annotated, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends
+
 from src.channel.dependencies import ChannelServiceDep
 from src.core.dependencies import SessionDep
 from src.server.invite.repository import ServerInviteRepository
@@ -13,20 +15,13 @@ from src.server.server_member.unit_of_work import ServerMemberUnitOfWork
 from src.server.service import ServerService
 from src.server.unit_of_work import ServerUnitOfWork
 
-# 1. SERVER MODULE
 
-
-# --- Repository ---
 def get_server_repository(
     session: SessionDep,
 ) -> ServerRepository:
     return ServerRepository(session=session)
 
 
-ServerRepositoryDep = Annotated[ServerRepository, Depends(get_server_repository)]
-
-
-# --- Unit of Work ---
 async def get_server_unit_of_work(
     session: SessionDep,
     server_repository: ServerRepositoryDep,
@@ -35,25 +30,12 @@ async def get_server_unit_of_work(
         yield server_unit_of_work
 
 
-ServerUnitOfWorkDep = Annotated[ServerUnitOfWork, Depends(get_server_unit_of_work)]
-
-
-# 2. SERVER INVITE MODULE
-
-
-# --- Repository ---
 def get_server_invite_repository(
     session: SessionDep,
 ) -> ServerInviteRepository:
     return ServerInviteRepository(session=session)
 
 
-ServerInviteRepositoryDep = Annotated[
-    ServerInviteRepository, Depends(get_server_invite_repository)
-]
-
-
-# --- Unit of Work ---
 async def get_server_invite_unit_of_work(
     session: SessionDep,
     server_repository: ServerRepositoryDep,
@@ -67,12 +49,6 @@ async def get_server_invite_unit_of_work(
         yield server_invite_unit_of_work
 
 
-ServerInviteUnitOfWorkDep = Annotated[
-    ServerInviteUnitOfWork, Depends(get_server_invite_unit_of_work)
-]
-
-
-# --- Service ---
 def get_server_invite_service(
     session: SessionDep,
     server_invite_unit_of_work: ServerInviteUnitOfWorkDep,
@@ -83,27 +59,12 @@ def get_server_invite_service(
     )
 
 
-ServerInviteServiceDep = Annotated[
-    ServerInviteService, Depends(get_server_invite_service)
-]
-
-
-# 3. SERVER MEMBER MODULE
-
-
-# --- Repository ---
 def get_server_member_repository(
     session: SessionDep,
 ) -> ServerMemberRepository:
     return ServerMemberRepository(session=session)
 
 
-ServerMemberRepositoryDep = Annotated[
-    ServerMemberRepository, Depends(get_server_member_repository)
-]
-
-
-# --- Unit of Work ---
 async def get_server_member_unit_of_work(
     session: SessionDep,
     server_member_repository: ServerMemberRepositoryDep,
@@ -119,12 +80,6 @@ async def get_server_member_unit_of_work(
         yield server_member_unit_of_work
 
 
-ServerMemberUnitOfWorkDep = Annotated[
-    ServerMemberUnitOfWork, Depends(get_server_member_unit_of_work)
-]
-
-
-# --- Service ---
 def get_server_member_service(
     session: SessionDep,
     server_member_unit_of_work: ServerMemberUnitOfWorkDep,
@@ -133,14 +88,6 @@ def get_server_member_service(
         session=session,
         server_member_unit_of_work=server_member_unit_of_work,
     )
-
-
-ServerMemberServiceDep = Annotated[
-    ServerMemberService, Depends(get_server_member_service)
-]
-
-
-# 4. SERVER SERVICE
 
 
 def get_server_service(
@@ -157,4 +104,24 @@ def get_server_service(
     )
 
 
+ServerRepositoryDep = Annotated[ServerRepository, Depends(get_server_repository)]
+ServerInviteRepositoryDep = Annotated[
+    ServerInviteRepository, Depends(get_server_invite_repository)
+]
+ServerMemberRepositoryDep = Annotated[
+    ServerMemberRepository, Depends(get_server_member_repository)
+]
+ServerUnitOfWorkDep = Annotated[ServerUnitOfWork, Depends(get_server_unit_of_work)]
+ServerInviteUnitOfWorkDep = Annotated[
+    ServerInviteUnitOfWork, Depends(get_server_invite_unit_of_work)
+]
+ServerMemberUnitOfWorkDep = Annotated[
+    ServerMemberUnitOfWork, Depends(get_server_member_unit_of_work)
+]
 ServerServiceDep = Annotated[ServerService, Depends(get_server_service)]
+ServerInviteServiceDep = Annotated[
+    ServerInviteService, Depends(get_server_invite_service)
+]
+ServerMemberServiceDep = Annotated[
+    ServerMemberService, Depends(get_server_member_service)
+]
