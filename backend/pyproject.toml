@@ -33,6 +33,7 @@ packages = ["src"]
 dev = [
     "asgi-lifespan>=2.1.0",
     "black>=26.3.1",
+    "coverage>=7.15.2",
     "fakeredis>=2.35.1",
     "mypy>=1.20.1",
     "pytest>=9.0.3",
@@ -73,3 +74,15 @@ ignore = [
 [tool.ruff.lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
+
+
+[tool.coverage.run]
+source = ["src"]
+dynamic_context = "test_function"
+
+[tool.coverage.report]
+show_missing = true
+sort = "-Cover"
+
+[tool.coverage.html]
+show_contexts = true
