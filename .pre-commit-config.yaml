@@ -46,3 +46,11 @@ repos:
         pass_filenames: false
         language: unsupported
         files: ^backend/.*$|^scripts/generate-client\.sh$
+
+      - id: zizmor
+        name: zizmor
+        language: python
+        entry: uv run zizmor .
+        files: ^\.github\/workflows\/
+        require_serial: true
+        pass_filenames: false
