@@ -1,11 +1,9 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { getAccessToken } from '@/shared/lib/tokens'
+import { hasAuthToken } from '@/shared/lib/auth'
 
 export const Route = createFileRoute('/')({
   beforeLoad: () => {
-    const accessToken = getAccessToken()
-
-    if (accessToken) {
+    if (hasAuthToken()) {
       throw redirect({ to: '/home' })
     }
 
