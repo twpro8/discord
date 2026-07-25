@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getCurrentUser } from '../api/get-me'
 import { useUserStore } from '@/shared/model/user-store'
-import { clearAuthState } from '@/shared/lib/auth'
+import { clearAuthState } from '@/shared/helpers/auth'
 
 export function useCurrentUser() {
   const { setUser, setLoading, setError, clear } = useUserStore()

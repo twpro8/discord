@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from 'react'
-import { cn } from '@/shared/lib/utils'
+import { cn } from '@/shared/helpers/utils'
 
 type AuthFormShellProps = {
   title: string
