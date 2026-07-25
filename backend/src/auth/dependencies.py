@@ -3,7 +3,9 @@ from typing import Annotated
 
 from fastapi import Depends
 from fastapi.security import APIKeyCookie
+from fastapi.security import APIKeyCookie
 
+from src.auth.exceptions import AuthenticationError
 from src.auth.exceptions import AuthenticationError
 from src.auth.repository import RefreshTokenRepository
 from src.auth.service import AuthService
@@ -50,4 +52,4 @@ RefreshTokenRepositoryDep = Annotated[
 AuthUnitOfWorkDep = Annotated[AuthUnitOfWork, Depends(get_auth_unit_of_work)]
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 OptionalRefreshTokenDep = Annotated[str | None, Depends(refresh_cookie_scheme)]
-RefreshTokenDep = Annotated[str, Depends(refresh_cookie_scheme)]
+RefreshTokenDep = Annotated[str, Depends(get_refresh_token_cookie)]
