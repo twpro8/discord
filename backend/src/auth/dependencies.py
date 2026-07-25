@@ -3,9 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends
 from fastapi.security import APIKeyCookie
-from fastapi.security import APIKeyCookie
 
-from src.auth.exceptions import AuthenticationError
 from src.auth.exceptions import AuthenticationError
 from src.auth.repository import RefreshTokenRepository
 from src.auth.service import AuthService
