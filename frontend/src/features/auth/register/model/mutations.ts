@@ -3,7 +3,6 @@ import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { loginUser } from '../../api/login'
 import { registerUser } from '../../api/register'
-import { setTokens } from '@/shared/lib/tokens'
 
 type RegisterPayload = {
   name: string
@@ -20,8 +19,7 @@ export function useRegisterMutation() {
       await registerUser({ name, username, email, password })
       return loginUser(username, password)
     },
-    onSuccess: (tokens) => {
-      setTokens(tokens.access_token, tokens.refresh_token)
+    onSuccess: () => {
       toast.success('Account created successfully')
       router.navigate({ to: '/home' })
     },
