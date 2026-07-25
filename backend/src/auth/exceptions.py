@@ -3,22 +3,22 @@ from fastapi import status
 from src.core.errors import LumiereError
 
 
-class AuthorizationError(LumiereError):
+class AuthenticationError(LumiereError):
     detail = "Authorization error"
     status_code = status.HTTP_401_UNAUTHORIZED
 
 
-class IncorrectPasswordError(AuthorizationError):
+class IncorrectPasswordError(AuthenticationError):
     detail = "Incorrect password"
 
 
-class InvalidAccessTokenError(AuthorizationError):
+class InvalidAccessTokenError(AuthenticationError):
     detail = "Invalid access token"
 
 
-class InvalidRefreshTokenError(AuthorizationError):
+class InvalidRefreshTokenError(AuthenticationError):
     detail = "Invalid refresh token"
 
 
-class NoRefreshTokenError(AuthorizationError):
+class NoRefreshTokenError(AuthenticationError):
     detail = "No refresh token"
