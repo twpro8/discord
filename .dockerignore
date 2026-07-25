@@ -1,0 +1,11 @@
+node_modules
+.git
+.gitignore
+.vscode
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/.cache
+**/.pytest_cache
+**/__pycache__
