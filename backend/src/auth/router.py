@@ -1,15 +1,32 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Body, Depends, status
+from fastapi import APIRouter, status
 from fastapi.requests import Request
 from fastapi.responses import Response
-from fastapi.security import OAuth2PasswordRequestForm
 
-from src.auth.dependencies import AuthServiceDep
-from src.auth.schemas import RegisterForm, TokenPair
+from src.auth.dependencies import (
+    AuthServiceDep,
+    OptionalRefreshTokenDep,
+    RefreshTokenDep,
+)
+from src.auth.schemas import LoginForm, RegisterForm
+from src.auth.utils import delete_token_cookies, set_token_cookies
+from src.core.schemas import SuccessResponse
 from src.user.schemas import UserRead
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+@router.post(
+    "/login",
+    status_code=status.HTTP_200_OK,
+)
+async def authenticate(
+    form_data: LoginForm,
+    service: AuthServiceDep,
+    response: Response,
+) -> SuccessResponse:
+    result = await service.login(form_data.username, form_data.password)
+    set_token_cookies(response, result.access_token, result.refresh_token)
+    return SuccessResponse()
 
 
 @router.post(
@@ -27,28 +44,24 @@ async def register(
     return UserRead.model_validate(user)
 
 
-@router.post("/login")
-async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    service: AuthServiceDep,
-) -> TokenPair:
-    return await service.login(
-        username=form_data.username,
-        password=form_data.password,
-    )
-
-
-@router.post("/refresh", summary="Refresh token")
+@router.post("/refresh", status_code=status.HTTP_200_OK)
 async def refresh(
-    refresh_token: Annotated[str, Body(embed=True)],
+    refresh_token: RefreshTokenDep,
     service: AuthServiceDep,
-) -> TokenPair:
-    return await service.refresh(refresh_token)
+    response: Response,
+) -> SuccessResponse:
+    tokens = await service.refresh(refresh_token)
+    set_token_cookies(response, tokens.access_token, tokens.refresh_token)
+    return SuccessResponse()
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
-    refresh_token: Annotated[str, Body(embed=True)],
+    refresh_token: OptionalRefreshTokenDep,
     service: AuthServiceDep,
+    response: Response,
 ) -> None:
+    delete_token_cookies(response)
+    if refresh_token is None:
+        return
     await service.logout(refresh_token)

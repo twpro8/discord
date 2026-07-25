@@ -72,27 +72,14 @@ async def authed_client(
     """Authenticated async http client fixture"""
     response = await ac.post(
         f"{settings.API_V1_STR}/auth/login",
-        data={
+        json={
             "username": current_user.username,
             "password": "12345678",
         },
     )
     assert response.status_code == 200
-
-    auth_result = response.json()
-
-    access_token = auth_result.get("access_token")
-    refresh_token = auth_result.get("refresh_token")
-
-    assert access_token, "No access token in response body"
-    assert refresh_token, "No refresh token in response body"
-
-    ac.headers.update(
-        {
-            "Authorization": f"Bearer {access_token}",
-        }
-    )
-
+    assert ac.cookies.get("access_token")
+    assert ac.cookies.get("refresh_token")
     yield ac
 
 
