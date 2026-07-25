@@ -13,6 +13,11 @@ class RegisterForm(BaseSchema):
     password: str = Field(min_length=3, max_length=128)
 
 
+class LoginForm(BaseSchema):
+    username: str = Field(min_length=3, max_length=32)
+    password: str = Field(min_length=3, max_length=128)
+
+
 class TokenPair(BaseSchema):
     access_token: str
     refresh_token: str
