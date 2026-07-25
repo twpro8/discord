@@ -1,12 +1,14 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { hasAuthToken } from '@/shared/lib/auth'
+import { hasAuthToken } from '@/shared/helpers/auth'
 
 export const Route = createFileRoute('/')({
-  beforeLoad: () => {
-    if (hasAuthToken()) {
+  beforeLoad: async () => {
+    const isAuthenticated = await hasAuthToken()
+
+    if (isAuthenticated) {
       throw redirect({ to: '/home' })
     }
 
-    throw redirect({ to: '/register' })
+    throw redirect({ to: '/login' })
   },
 })
