@@ -1,26 +1,28 @@
-FROM node:22-alpine AS builder
+# Stage 0, "build-stage", based on Node, to build and compile the frontend
+FROM node:22-alpine AS build-stage
+
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
+
+COPY frontend/package.json /app/frontend/
+
+WORKDIR /app/frontend
+
 RUN pnpm install --frozen-lockfile
 
-COPY frontend/ ./
+COPY ./frontend /app/frontend
+ARG VITE_API_URL
 
-ARG VITE_API_URL=http://localhost:8000
-ENV VITE_API_BASE_URL=$VITE_API_URL
+RUN pnpm run build
 
-RUN pnpm build
 
-FROM node:22-alpine
-WORKDIR /app
+# Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx
+FROM nginx:1
 
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+COPY --from=build-stage /app/frontend/dist/ /usr/share/nginx/html
 
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-
-EXPOSE 80
-CMD ["pnpm", "vite", "preview", "--host", "0.0.0.0", "--port", "80"]
+COPY ./frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./frontend/nginx-backend-not-found.conf /etc/nginx/extra-conf.d/backend-not-found.conf
