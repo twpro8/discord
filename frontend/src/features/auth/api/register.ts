@@ -1,5 +1,5 @@
 import { api } from '@/shared/api/axios'
-import type { User } from '@/entities/user'
+import type { User } from '@/entities/user/model/types'
 
 export interface RegisterForm {
   name: string
