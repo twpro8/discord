@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { User } from '@/entities/user'
+import type { User } from '@/entities/user/model/types'
 
 type UserStoreState = {
   user: User | null
