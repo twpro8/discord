@@ -2,16 +2,13 @@ from typing import Annotated, cast
 
 from fastapi import Depends
 from fastapi.requests import Request
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import APIKeyCookie
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.config import settings
 from src.core.postgres import get_session
 
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/auth/login",
-)
+access_cookie_scheme = APIKeyCookie(name="access_token")
 
 
 def get_redis(request: Request) -> Redis:
@@ -20,4 +17,4 @@ def get_redis(request: Request) -> Redis:
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 RedisDep = Annotated[Redis, Depends(get_redis)]
-AccessTokenDep = Annotated[str, Depends(reusable_oauth2)]
+AccessTokenDep = Annotated[str, Depends(access_cookie_scheme)]
