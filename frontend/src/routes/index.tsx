@@ -1,6 +1,14 @@
-import { createFileRoute } from '@tanstack/react-router'
-import HomePage from '@/pages/home'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { getAccessToken } from '@/shared/lib/tokens'
 
 export const Route = createFileRoute('/')({
-  component: HomePage,
+  beforeLoad: () => {
+    const accessToken = getAccessToken()
+
+    if (accessToken) {
+      throw redirect({ to: '/home' })
+    }
+
+    throw redirect({ to: '/register' })
+  },
 })
