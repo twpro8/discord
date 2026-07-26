@@ -18,7 +18,7 @@ export function useRegisterMutation() {
   return useMutation({
     mutationFn: async ({ name, username, email, password }: RegisterPayload) => {
       await registerUser({ name, username, email, password })
-      return loginUser(username, password)
+      await loginUser(username, password).catch(() => {})
     },
     onSuccess: () => {
       toast.success('Account created successfully')

@@ -1,6 +1,6 @@
 import { api } from '@/shared/api/axios'
 
-export async function hasAuthToken(): Promise<boolean> {
+export async function checkAuth(): Promise<boolean> {
   try {
     await api.get('/users/me')
     return true

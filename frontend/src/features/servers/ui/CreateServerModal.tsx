@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Modal } from '@/shared/ui/modal'
+import { Button } from '@/shared/ui/button'
+import { Input } from '@/shared/ui/input'
 import { createServer } from '../api/create-server'
 import { useServers } from '../model/use-servers'
 
@@ -47,19 +49,19 @@ export function CreateServerModal({ open, onClose }: { open: boolean; onClose: (
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
           <label className="mb-1 block text-sm font-medium text-foreground" htmlFor="server-name">Server name</label>
-          <input id="server-name" value={name} onChange={(event) => setName(event.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none ring-0" placeholder="My server" />
+          <Input id="server-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="My server" />
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-foreground" htmlFor="server-description">Description</label>
-          <textarea id="server-description" value={description} onChange={(event) => setDescription(event.target.value)} className="min-h-24 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none ring-0" placeholder="What is this server about?" />
+          <textarea id="server-description" value={description} onChange={(event) => setDescription(event.target.value)} className="min-h-24 w-full rounded-lg border border-input bg-surface-raised px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" placeholder="What is this server about?" />
         </div>
 
         <div className="flex justify-end gap-2">
-          <button type="button" className="rounded-lg border border-border px-3 py-2 text-sm text-foreground" onClick={onClose}>Cancel</button>
-          <button type="submit" disabled={isSubmitting} className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60">
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Creating...' : 'Create server'}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

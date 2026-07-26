@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { UserPlus } from 'lucide-react'
 import { Modal } from '@/shared/ui/modal'
+import { Button } from '@/shared/ui/button'
+import { Input } from '@/shared/ui/input'
 import { sendFriendRequest } from '../api/send-friend-request'
 import { getApiError } from '@/shared/api/errors'
 
@@ -46,20 +48,19 @@ export function AddFriendModal({ open, onClose }: { open: boolean; onClose: () =
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
           <label className="mb-1 block text-sm font-medium text-foreground" htmlFor="friend-username">Username</label>
-          <input
+          <Input
             id="friend-username"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none ring-0"
             placeholder="Enter a username"
           />
         </div>
 
         <div className="flex justify-end gap-2">
-          <button type="button" className="rounded-lg border border-border px-3 py-2 text-sm text-foreground" onClick={onClose}>Cancel</button>
-          <button type="submit" disabled={isSubmitting} className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60">
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Sending...' : 'Send request'}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>
