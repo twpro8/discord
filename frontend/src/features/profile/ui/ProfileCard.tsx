@@ -1,7 +1,9 @@
-import { useCurrentUser } from '../model/use-current-user'
+// relative
+import { useCurrentUser } from "../model/use-current-user";
 
+/** Displays the current user's profile information. */
 export function ProfileCard() {
-  const { data: user, isLoading, error } = useCurrentUser()
+  const { data: user, isLoading, error } = useCurrentUser();
 
   if (isLoading) {
     return (
@@ -12,15 +14,17 @@ export function ProfileCard() {
           <div className="h-4 w-56 rounded bg-muted" />
         </div>
       </div>
-    )
+    );
   }
 
   if (error || !user) {
     return (
       <div className="w-full max-w-2xl rounded-2xl border border-destructive/20 bg-background/80 p-8 shadow-sm">
-        <p className="text-sm text-destructive">Unable to load your profile right now.</p>
+        <p className="text-sm text-destructive">
+          Unable to load your profile right now.
+        </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -30,8 +34,12 @@ export function ProfileCard() {
           {user.name.charAt(0).toUpperCase()}
         </div>
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Signed in as</p>
-          <h1 className="text-2xl font-semibold text-foreground">{user.name}</h1>
+          <p className="text-sm font-medium text-muted-foreground">
+            Signed in as
+          </p>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {user.name}
+          </h1>
         </div>
       </div>
 
@@ -46,5 +54,5 @@ export function ProfileCard() {
         </div>
       </div>
     </div>
-  )
+  );
 }

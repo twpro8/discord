@@ -1,22 +1,30 @@
-import { useState } from 'react'
-import { Link } from '@tanstack/react-router'
-import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
-import { Label } from '@/shared/ui/label'
-import { AuthFormShell } from '../../shared/ui/AuthFormShell'
-import { useRegisterMutation } from '../model/mutations'
+// react
+import { useState } from "react";
 
+// third party
+import { Link } from "@tanstack/react-router";
+
+// shared
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+
+// relative
+import { AuthFormShell } from "../../shared/ui/AuthFormShell";
+import { useRegisterMutation } from "../model/mutations";
+
+/** Registration form with name, username, email, and password fields. */
 export function RegisterForm() {
-  const [name, setName] = useState('')
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const registerMutation = useRegisterMutation()
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const registerMutation = useRegisterMutation();
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    registerMutation.mutate({ name, username, email, password })
-  }
+    e.preventDefault();
+    registerMutation.mutate({ name, username, email, password });
+  };
 
   return (
     <AuthFormShell
@@ -79,16 +87,20 @@ export function RegisterForm() {
         <p className="text-sm text-destructive">
           {registerMutation.error instanceof Error
             ? registerMutation.error.message
-            : 'Registration failed'}
+            : "Registration failed"}
         </p>
       )}
 
-      <Button type="submit" disabled={registerMutation.isPending} className="w-full">
-        {registerMutation.isPending ? 'Creating account...' : 'Create account'}
+      <Button
+        type="submit"
+        disabled={registerMutation.isPending}
+        className="w-full"
+      >
+        {registerMutation.isPending ? "Creating account..." : "Create account"}
       </Button>
 
       <p className="text-center text-sm text-text-tertiary">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <Link
           to="/login"
           className="font-medium text-primary hover:text-accent-hover"
@@ -97,5 +109,5 @@ export function RegisterForm() {
         </Link>
       </p>
     </AuthFormShell>
-  )
+  );
 }

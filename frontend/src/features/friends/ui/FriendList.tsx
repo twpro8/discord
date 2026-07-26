@@ -1,22 +1,29 @@
-import { Trash2 } from 'lucide-react'
-import { AvatarInitial } from './avatar-initial'
-import type { FriendRequestWithUser } from '../model/types'
+// third party
+import { Trash2 } from "lucide-react";
+
+// relative
+import type { FriendRequestWithUser } from "../model/types";
+import { AvatarInitial } from "./avatar-initial";
 
 function FriendItem({
   request,
   disabled,
   onRemove,
 }: {
-  request: FriendRequestWithUser
-  disabled: boolean
-  onRemove: (id: string) => void
+  request: FriendRequestWithUser;
+  disabled: boolean;
+  onRemove: (id: string) => void;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50">
       <AvatarInitial username={request.username} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{request.username}</p>
-        <p className="text-xs text-muted-foreground">Friend since {new Date(request.updated_at).toLocaleDateString()}</p>
+        <p className="truncate text-sm font-medium text-foreground">
+          {request.username}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Friend since {new Date(request.updated_at).toLocaleDateString()}
+        </p>
       </div>
       <button
         type="button"
@@ -28,7 +35,7 @@ function FriendItem({
         <Trash2 className="h-4 w-4" />
       </button>
     </div>
-  )
+  );
 }
 
 function Skeleton() {
@@ -44,28 +51,31 @@ function Skeleton() {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function EmptyState() {
   return (
-    <p className="px-3 pt-6 text-center text-sm text-muted-foreground">No friends yet. Add some!</p>
-  )
+    <p className="px-3 pt-6 text-center text-sm text-muted-foreground">
+      No friends yet. Add some!
+    </p>
+  );
 }
 
+/** Lists friends with remove actions. */
 export function FriendList({
   friends,
   isLoading,
   disabled,
   onRemove,
 }: {
-  friends: FriendRequestWithUser[]
-  isLoading: boolean
-  disabled: boolean
-  onRemove: (id: string) => void
+  friends: FriendRequestWithUser[];
+  isLoading: boolean;
+  disabled: boolean;
+  onRemove: (id: string) => void;
 }) {
-  if (isLoading) return <Skeleton />
-  if (friends.length === 0) return <EmptyState />
+  if (isLoading) return <Skeleton />;
+  if (friends.length === 0) return <EmptyState />;
 
   return (
     <div className="space-y-0.5">
@@ -78,5 +88,5 @@ export function FriendList({
         />
       ))}
     </div>
-  )
+  );
 }

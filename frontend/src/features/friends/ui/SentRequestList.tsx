@@ -1,23 +1,32 @@
-import { Ban } from 'lucide-react'
-import { AvatarInitial } from './avatar-initial'
-import { timeAgo } from '@/shared/helpers/utils'
-import type { FriendRequestWithUser } from '../model/types'
+// third party
+import { Ban } from "lucide-react";
+
+// shared
+import { timeAgo } from "@/shared/helpers/utils";
+
+// relative
+import type { FriendRequestWithUser } from "../model/types";
+import { AvatarInitial } from "./avatar-initial";
 
 function SentItem({
   request,
   disabled,
   onCancel,
 }: {
-  request: FriendRequestWithUser
-  disabled: boolean
-  onCancel: (id: string) => void
+  request: FriendRequestWithUser;
+  disabled: boolean;
+  onCancel: (id: string) => void;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50">
       <AvatarInitial username={request.username} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{request.username}</p>
-        <p className="text-xs text-muted-foreground">{timeAgo(request.created_at)}</p>
+        <p className="truncate text-sm font-medium text-foreground">
+          {request.username}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {timeAgo(request.created_at)}
+        </p>
       </div>
       <button
         type="button"
@@ -29,7 +38,7 @@ function SentItem({
         <Ban className="h-4 w-4" />
       </button>
     </div>
-  )
+  );
 }
 
 function Skeleton() {
@@ -45,28 +54,31 @@ function Skeleton() {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function EmptyState() {
   return (
-    <p className="px-3 pt-6 text-center text-sm text-muted-foreground">No sent requests</p>
-  )
+    <p className="px-3 pt-6 text-center text-sm text-muted-foreground">
+      No sent requests
+    </p>
+  );
 }
 
+/** Lists sent friend requests with cancel actions. */
 export function SentRequestList({
   requests,
   isLoading,
   disabled,
   onCancel,
 }: {
-  requests: FriendRequestWithUser[]
-  isLoading: boolean
-  disabled: boolean
-  onCancel: (id: string) => void
+  requests: FriendRequestWithUser[];
+  isLoading: boolean;
+  disabled: boolean;
+  onCancel: (id: string) => void;
 }) {
-  if (isLoading) return <Skeleton />
-  if (requests.length === 0) return <EmptyState />
+  if (isLoading) return <Skeleton />;
+  if (requests.length === 0) return <EmptyState />;
 
   return (
     <div className="space-y-0.5">
@@ -79,5 +91,5 @@ export function SentRequestList({
         />
       ))}
     </div>
-  )
+  );
 }
