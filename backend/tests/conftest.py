@@ -11,7 +11,7 @@ from src.core.postgres import Base, get_session
 from src.core.postgres.engine import null_pool_engine
 from src.core.postgres.session import null_pool_session_maker
 from src.main import app
-from src.user.schemas import User
+from src.modules.user.schemas import User
 from tests.dependency_overrides.redis_client import get_fake_redis_client
 from tests.dependency_overrides.session import get_null_pool_session
 from tests.seeder import populate_database

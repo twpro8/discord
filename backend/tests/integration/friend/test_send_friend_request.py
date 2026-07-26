@@ -8,10 +8,11 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.friend.enums import FriendStatus
+
 # Project modules
-from src.friend.enums import FriendStatus
-from src.friend.models import FriendOrm
-from src.user.schemas import User
+from src.modules.friend.models import FriendOrm
+from src.modules.user.schemas import User
 
 
 async def test_send_friend_request_creates_pending_relationship(

@@ -1,11 +1,15 @@
 from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
-from src.chat.exceptions import ChatNotFoundError, NotChatMemberError, NotChatOwnerError
+from src.modules.chat.exceptions import (
+    ChatNotFoundError,
+    NotChatMemberError,
+    NotChatOwnerError,
+)
 
 if TYPE_CHECKING:
-    from src.chat.repositories import ChatMemberRepository, ChatRepository
-    from src.chat.schemas import Chat
+    from src.modules.chat.repositories import ChatMemberRepository, ChatRepository
+    from src.modules.chat.schemas import Chat
 
 
 class SupportsChatPermissions(Protocol):

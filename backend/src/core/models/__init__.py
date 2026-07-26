@@ -9,13 +9,13 @@ Do not remove or bypass these imports unless you update Alembic's
 model discovery logic accordingly.
 """
 
-from src.auth.models import RefreshTokenOrm
-from src.channel.models import ChannelOrm
-from src.chat.models import ChatOrm
-from src.friend.models import FriendOrm
-from src.message.models import MessageOrm
-from src.server.models import ServerOrm
-from src.user.models import UserOrm
+from src.modules.auth.models import RefreshTokenOrm
+from src.modules.channel.models import ChannelOrm
+from src.modules.chat.models import ChatOrm
+from src.modules.friend.models import FriendOrm
+from src.modules.message.models import MessageOrm
+from src.modules.server.models import ServerOrm
+from src.modules.user.models import UserOrm
 
 __all__ = [
     "UserOrm",
