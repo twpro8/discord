@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Annotated, Literal
 
 from pydantic import AnyUrl, BeforeValidator, PostgresDsn, computed_field
@@ -73,4 +74,9 @@ class Settings(BaseSettings):
         ]
 
 
-settings = Settings()  # type: ignore
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()  # type: ignore
+
+
+settings = get_settings()
