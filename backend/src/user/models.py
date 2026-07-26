@@ -6,7 +6,7 @@ from src.core.postgres import UUIDBase, str_128, str_255, str_512, timestamp
 
 if TYPE_CHECKING:
     from src.auth.models import RefreshTokenOrm
-    from src.friends.models import FriendOrm
+    from src.friend.models import FriendOrm
 
 
 class UserOrm(UUIDBase):

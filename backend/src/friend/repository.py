@@ -9,10 +9,10 @@ from sqlalchemy.orm import joinedload
 
 # Project modules
 from src.core.repositories import BaseRepository
-from src.friends.enums import FriendStatus
-from src.friends.mappers import FriendMapper
-from src.friends.models import FriendOrm
-from src.friends.schemas import FriendRequest, FriendRequestWithUser
+from src.friend.enums import FriendStatus
+from src.friend.mappers import FriendMapper
+from src.friend.models import FriendOrm
+from src.friend.schemas import FriendRequest, FriendRequestWithUser
 
 
 class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
