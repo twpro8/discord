@@ -42,6 +42,12 @@ class FriendRequest(BaseSchema):
     created_at: datetime
     updated_at: datetime
 
+class FriendRequestUpdate(BaseSchema):
+    """Payload to update a friend request's status."""
+
+    status: FriendStatus
+
+
 class FriendRequestWithUser(BaseSchema):
     id: UUID
     user_id: UUID
