@@ -12,6 +12,7 @@ model discovery logic accordingly.
 from src.auth.models import RefreshTokenOrm
 from src.channel.models import ChannelOrm
 from src.chat.models import ChatOrm
+from src.friends.models import FriendOrm
 from src.message.models import MessageOrm
 from src.server.models import ServerOrm
 from src.user.models import UserOrm
@@ -23,4 +24,5 @@ __all__ = [
     "ChatOrm",
     "MessageOrm",
     "RefreshTokenOrm",
+    "FriendOrm",
 ]
