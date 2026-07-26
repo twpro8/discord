@@ -1,8 +1,13 @@
-import * as React from "react"
-import { Label as LabelPrimitive } from "radix-ui"
+// react
+import * as React from "react";
 
-import { cn } from "@/shared/helpers/utils"
+// third party
+import { Label as LabelPrimitive } from "radix-ui";
 
+// shared
+import { cn } from "@/shared/helpers/utils";
+
+/** Form label with disabled and peer-disabled state styling. */
 function Label({
   className,
   ...props
@@ -12,11 +17,11 @@ function Label({
       data-slot="label"
       className={cn(
         "flex items-center gap-2 text-xs leading-4 font-semibold select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
-export { Label }
+export { Label };

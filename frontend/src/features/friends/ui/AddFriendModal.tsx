@@ -1,37 +1,51 @@
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { UserPlus } from 'lucide-react'
-import { Modal } from '@/shared/ui/modal'
-import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
-import { sendFriendRequest } from '../api/send-friend-request'
-import { getApiError } from '@/shared/api/errors'
+// react
+import { useState } from "react";
 
-export function AddFriendModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [username, setUsername] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+// third party
+import { UserPlus } from "lucide-react";
+import { toast } from "sonner";
+
+// shared
+import { getApiError } from "@/shared/api/errors";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Modal } from "@/shared/ui/modal";
+
+// relative
+import { sendFriendRequest } from "../api/send-friend-request";
+
+/** Modal for sending a friend request by username. */
+export function AddFriendModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [username, setUsername] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+    event.preventDefault();
 
     if (!username.trim()) {
-      toast.error('Username is required')
-      return
+      toast.error("Username is required");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      await sendFriendRequest({ username: username.trim() })
-      toast.success('Friend request sent')
-      setUsername('')
-      onClose()
+      await sendFriendRequest({ username: username.trim() });
+      toast.success("Friend request sent");
+      setUsername("");
+      onClose();
     } catch (error: unknown) {
-      toast.error(getApiError(error))
+      toast.error(getApiError(error));
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -41,13 +55,20 @@ export function AddFriendModal({ open, onClose }: { open: boolean; onClose: () =
         </div>
         <div>
           <h2 className="text-xl font-semibold text-foreground">Add friend</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">Send a friend request by username.</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Send a friend request by username.
+          </p>
         </div>
       </div>
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="mb-1 block text-sm font-medium text-foreground" htmlFor="friend-username">Username</label>
+          <label
+            className="mb-1 block text-sm font-medium text-foreground"
+            htmlFor="friend-username"
+          >
+            Username
+          </label>
           <Input
             id="friend-username"
             value={username}
@@ -57,12 +78,14 @@ export function AddFriendModal({ open, onClose }: { open: boolean; onClose: () =
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Sending...' : 'Send request'}
+            {isSubmitting ? "Sending..." : "Send request"}
           </Button>
         </div>
       </form>
     </Modal>
-  )
+  );
 }

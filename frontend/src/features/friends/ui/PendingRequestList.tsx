@@ -1,7 +1,12 @@
-import { Check, X } from 'lucide-react'
-import { AvatarInitial } from './avatar-initial'
-import { timeAgo } from '@/shared/helpers/utils'
-import type { FriendRequestWithUser } from '../model/types'
+// third party
+import { Check, X } from "lucide-react";
+
+// shared
+import { timeAgo } from "@/shared/helpers/utils";
+
+// relative
+import type { FriendRequestWithUser } from "../model/types";
+import { AvatarInitial } from "./avatar-initial";
 
 function PendingItem({
   request,
@@ -9,17 +14,21 @@ function PendingItem({
   onAccept,
   onDecline,
 }: {
-  request: FriendRequestWithUser
-  disabled: boolean
-  onAccept: (id: string) => void
-  onDecline: (id: string) => void
+  request: FriendRequestWithUser;
+  disabled: boolean;
+  onAccept: (id: string) => void;
+  onDecline: (id: string) => void;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50">
       <AvatarInitial username={request.username} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{request.username}</p>
-        <p className="text-xs text-muted-foreground">{timeAgo(request.created_at)}</p>
+        <p className="truncate text-sm font-medium text-foreground">
+          {request.username}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {timeAgo(request.created_at)}
+        </p>
       </div>
       <div className="flex shrink-0 gap-1">
         <button
@@ -42,7 +51,7 @@ function PendingItem({
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 function Skeleton() {
@@ -58,15 +67,18 @@ function Skeleton() {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function EmptyState() {
   return (
-    <p className="px-3 pt-6 text-center text-sm text-muted-foreground">No pending requests</p>
-  )
+    <p className="px-3 pt-6 text-center text-sm text-muted-foreground">
+      No pending requests
+    </p>
+  );
 }
 
+/** Lists incoming friend requests with accept/decline actions. */
 export function PendingRequestList({
   requests,
   isLoading,
@@ -74,14 +86,14 @@ export function PendingRequestList({
   onAccept,
   onDecline,
 }: {
-  requests: FriendRequestWithUser[]
-  isLoading: boolean
-  disabled: boolean
-  onAccept: (id: string) => void
-  onDecline: (id: string) => void
+  requests: FriendRequestWithUser[];
+  isLoading: boolean;
+  disabled: boolean;
+  onAccept: (id: string) => void;
+  onDecline: (id: string) => void;
 }) {
-  if (isLoading) return <Skeleton />
-  if (requests.length === 0) return <EmptyState />
+  if (isLoading) return <Skeleton />;
+  if (requests.length === 0) return <EmptyState />;
 
   return (
     <div className="space-y-0.5">
@@ -95,5 +107,5 @@ export function PendingRequestList({
         />
       ))}
     </div>
-  )
+  );
 }
