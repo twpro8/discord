@@ -44,7 +44,6 @@ async def test_send_friend_request_creates_pending_relationship(
 
 async def test_send_friend_request_rejects_duplicate_relationship(
     authed_client: AsyncClient,
-    current_user: User,
     get_all_users: list[User],
 ) -> None:
     """The same users cannot create multiple requests in either direction."""
