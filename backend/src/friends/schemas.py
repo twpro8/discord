@@ -41,3 +41,14 @@ class FriendRequest(BaseSchema):
     status: FriendStatus
     created_at: datetime
     updated_at: datetime
+
+class FriendRequestWithUser(BaseSchema):
+    id: UUID
+    user_id: UUID
+    target_user_id: UUID
+    status: FriendStatus
+    created_at: datetime
+    updated_at: datetime
+
+    username: str
+    avatar_url: str | None

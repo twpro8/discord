@@ -47,14 +47,6 @@ export function LoginForm() {
         />
       </div>
 
-      {loginMutation.isError && (
-        <p className="text-sm text-destructive">
-          {loginMutation.error instanceof Error
-            ? loginMutation.error.message
-            : 'Invalid credentials'}
-        </p>
-      )}
-
       <Button type="submit" disabled={loginMutation.isPending} className="w-full">
         {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
       </Button>

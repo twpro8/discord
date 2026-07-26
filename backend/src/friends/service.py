@@ -9,7 +9,12 @@ from src.friends.exceptions import (
     CannotSendFriendRequestToSelfError,
     FriendRequestAlreadyExistsError,
 )
-from src.friends.schemas import FriendRequest, FriendRequestCreate, SendFriendRequest
+from src.friends.schemas import (
+    FriendRequest, 
+    FriendRequestCreate, 
+    FriendRequestWithUser, 
+    SendFriendRequest,
+)
 from src.friends.unit_of_work import FriendUnitOfWork
 from src.user.exceptions import UserNotFoundError
 
@@ -54,3 +59,11 @@ class FriendService(BaseService):
         )
         await self.uow.commit()
         return request
+
+    async def get_requests(self, user_id: UUID) -> list[FriendRequestWithUser]:
+        """Get all pending friend requests for the user with *user_id*."""
+        return await self.uow.friends.get_for_user(user_id)
+
+    async def get_user_sent_requests(self, user_id: UUID) -> list[FriendRequestWithUser]:
+        """Get all pending friend requests sent by the user with *user_id*."""
+        return await self.uow.friends.get_user_sent_requests(user_id)
