@@ -37,14 +37,22 @@ class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
         )
         return await self._execute_and_map_one_or_none(statement)
 
-    async def get_for_user(self, user_id: UUID) -> list[FriendRequestWithUser]:
-        """Return all pending friend requests targeted at *user_id*."""
+    async def get_by_id(self, request_id: UUID) -> FriendRequest | None:
+        """Return a single relationship by its primary key."""
+        return await self.get_one(id=request_id)
+
+    async def get_for_user(
+        self,
+        user_id: UUID,
+        status: FriendStatus = FriendStatus.PENDING,
+    ) -> list[FriendRequestWithUser]:
+        """Return all friend relationships targeted at *user_id* for the given *status*."""
         statement = (
             select(self.model)
             .options(joinedload(self.model.user))
             .where(
                 self.model.target_user_id == user_id,
-                self.model.status == FriendStatus.PENDING,
+                self.model.status == status,
             )
         )
         result = await self.session.execute(statement)
@@ -64,14 +72,18 @@ class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
             for obj in orm_objects
         ]
 
-    async def get_user_sent_requests(self, user_id: UUID) -> list[FriendRequestWithUser]:
-        """Return all pending friend requests sent by the user with *user_id*."""
+    async def get_user_sent_requests(
+        self,
+        user_id: UUID,
+        status: FriendStatus = FriendStatus.PENDING,
+    ) -> list[FriendRequestWithUser]:
+        """Return all friend relationships sent by the user with *user_id* for the given *status*."""
         statement = (
             select(self.model)
             .options(joinedload(self.model.target_user))
             .where(
                 self.model.user_id == user_id,
-                self.model.status == FriendStatus.PENDING,
+                self.model.status == status,
             )
         )
         result = await self.session.execute(statement)
@@ -87,6 +99,36 @@ class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
                 updated_at=obj.updated_at,
                 username=obj.target_user.username,
                 avatar_url=obj.target_user.avatar_url,
+            )
+            for obj in orm_objects
+        ]
+
+    async def get_friends(self, user_id: UUID) -> list[FriendRequestWithUser]:
+        """Return all accepted friend relationships for the user in either direction."""
+        statement = (
+            select(self.model)
+            .options(joinedload(self.model.user), joinedload(self.model.target_user))
+            .where(
+                or_(
+                    self.model.user_id == user_id,
+                    self.model.target_user_id == user_id,
+                ),
+                self.model.status == FriendStatus.FRIENDS,
+            )
+        )
+        result = await self.session.execute(statement)
+        orm_objects = result.scalars().unique().all()
+
+        return [
+            FriendRequestWithUser(
+                id=obj.id,
+                user_id=obj.user_id,
+                target_user_id=obj.target_user_id,
+                status=obj.status,
+                created_at=obj.created_at,
+                updated_at=obj.updated_at,
+                username=obj.target_user.username if obj.user_id == user_id else obj.user.username,
+                avatar_url=obj.target_user.avatar_url if obj.user_id == user_id else obj.user.avatar_url,
             )
             for obj in orm_objects
         ]
