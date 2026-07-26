@@ -48,7 +48,7 @@ async def test_send_friend_request_rejects_duplicate_relationship(
     get_all_users: list[User],
 ) -> None:
     """The same users cannot create multiple requests in either direction."""
-    target_user = next(user for user in get_all_users if user.id != current_user.id)
+    target_user = get_all_users[2]
     payload = {"username": target_user.username}
 
     first_response = await authed_client.post("/api/v1/friends/requests", json=payload)
