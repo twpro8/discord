@@ -32,18 +32,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await close_redis(app.state.redis)
 
 
-app = FastAPI(
-    title=settings.APP_NAME,
-    lifespan=lifespan,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    generate_unique_id_function=custom_generate_unique_id,
-)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.ALL_CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-app.add_exception_handler(LumiereError, app_exception_handler)  # type: ignore
-app.include_router(api_router, prefix=settings.API_V1_STR)
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=settings.APP_NAME,
+        lifespan=lifespan,
+        openapi_url=f"{settings.API_V1_STR}/openapi.json",
+        generate_unique_id_function=custom_generate_unique_id,
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.ALL_CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_exception_handler(LumiereError, app_exception_handler)  # type: ignore
+    app.include_router(api_router, prefix=settings.API_V1_STR)
+
+    return app
+
+
+app = create_app()
