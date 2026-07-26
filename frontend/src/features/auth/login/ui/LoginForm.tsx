@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
@@ -53,12 +54,12 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-text-tertiary">
         Don&apos;t have an account?{' '}
-        <a
-          href="/register"
+        <Link
+          to="/register"
           className="font-medium text-primary hover:text-accent-hover"
         >
           Sign up
-        </a>
+        </Link>
       </p>
     </AuthFormShell>
   )

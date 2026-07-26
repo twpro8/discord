@@ -1,12 +1,12 @@
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getMyServers } from '../api/get-servers'
-import { useUserStore } from '@/shared/model/user-store'
+import { useCurrentUser } from '@/features/profile/model/use-current-user'
 import { toast } from 'sonner'
 
 export function useServers() {
   const queryClient = useQueryClient()
-  const { user } = useUserStore()
+  const { data: user } = useCurrentUser()
 
   const query = useQuery({
     queryKey: ['servers', user?.id],
@@ -24,6 +24,6 @@ export function useServers() {
 
   return {
     ...query,
-    invalidate: () => queryClient.invalidateQueries({ queryKey: ['servers'] }),
+    invalidate: () => queryClient.invalidateQueries({ queryKey: ['servers', user?.id] }),
   }
 }
