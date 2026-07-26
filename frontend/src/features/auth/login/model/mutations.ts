@@ -11,7 +11,7 @@ export function useLoginMutation() {
     mutationFn: ({ username, password }: { username: string; password: string }) =>
       loginUser(username, password),
     onSuccess: () => {
-      router.navigate({ to: '/' })
+      router.navigate({ to: '/home' })
     },
     onError: (error: unknown) => {
       toast.error(getApiError(error))

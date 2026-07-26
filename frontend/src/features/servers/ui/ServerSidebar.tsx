@@ -1,13 +1,13 @@
 import { Plus, Compass } from 'lucide-react'
 import { useServers } from '../model/use-servers'
-import { useUserStore } from '@/shared/model/user-store'
+import { useCurrentUser } from '@/features/profile/model/use-current-user'
 
 type ServerSidebarProps = {
   onCreateServerClick: () => void
 }
 
 export function ServerSidebar({ onCreateServerClick }: ServerSidebarProps) {
-  const { user } = useUserStore()
+  const { data: user } = useCurrentUser()
   const { data: servers = [], isLoading } = useServers()
 
   return (

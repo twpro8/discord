@@ -19,7 +19,7 @@ export function AuthFormShell({
   return (
     <form onSubmit={onSubmit} className={cn('flex w-full max-w-sm flex-col gap-5', className)}>
       <div className="flex flex-col gap-1">
-        <h1 className="text-[28px]/[34px] font-[650] text-foreground">{title}</h1>
+        <h1 className="text-[28px]/[34px] font-semibold text-foreground">{title}</h1>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 

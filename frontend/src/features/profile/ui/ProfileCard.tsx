@@ -1,11 +1,9 @@
 import { useCurrentUser } from '../model/use-current-user'
-import { useUserStore } from '@/shared/model/user-store'
 
 export function ProfileCard() {
-  const query = useCurrentUser()
-  const { user, isLoading, error } = useUserStore()
+  const { data: user, isLoading, error } = useCurrentUser()
 
-  if (isLoading || query.isLoading) {
+  if (isLoading) {
     return (
       <div className="w-full max-w-2xl rounded-2xl border border-border bg-background/80 p-8 shadow-sm">
         <div className="animate-pulse space-y-3">
