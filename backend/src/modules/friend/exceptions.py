@@ -4,7 +4,7 @@
 from fastapi import status
 
 # Project modules
-from src.core.errors import ConflictError, LumiereError, NotFoundError
+from src.kernel.errors import ConflictError, LumiereError, NotFoundError
 
 
 class FriendError(LumiereError):

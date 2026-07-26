@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import CursorResult, or_, update
 
-from src.core.repositories.base_repository import BaseRepository
+from src.kernel.repositories.base_repository import BaseRepository
 from src.modules.server.invite.mappers import ServerInviteMapper
 from src.modules.server.invite.schemas import ServerInvite
 from src.modules.server.models import ServerInviteOrm

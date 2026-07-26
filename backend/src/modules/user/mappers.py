@@ -1,4 +1,4 @@
-from src.core.repositories.base_data_mapper import BaseMapper
+from src.kernel.repositories.base_data_mapper import BaseMapper
 from src.modules.user.models import UserOrm
 from src.modules.user.schemas import User
 

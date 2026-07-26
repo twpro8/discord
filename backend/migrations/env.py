@@ -7,11 +7,11 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from src.core.config import settings
-from src.core.postgres import Base
+from src.kernel.config import settings
+from src.kernel.postgres import Base
 
 # required to load all ORM models for Alembic autogenerate
-import src.core.models  # noqa
+import src.kernel.models  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

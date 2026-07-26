@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import Depends
 
-from src.core.dependencies import AccessTokenDep, SessionDep
+from src.kernel.dependencies import AccessTokenDep, SessionDep
 from src.modules.auth.exceptions import InvalidAccessTokenError
 from src.modules.auth.security import decode_access_token
 from src.modules.user.repository import UserRepository

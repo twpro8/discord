@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import update
 
-from src.core.repositories import BaseRepository
+from src.kernel.repositories import BaseRepository
 from src.modules.channel.mappers import ChannelMapper
 from src.modules.channel.models import ChannelOrm
 from src.modules.channel.schemas import ChannelSchema

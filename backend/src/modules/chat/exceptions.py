@@ -1,6 +1,6 @@
 from fastapi import status
 
-from src.core.errors.base import LumiereError, NotFoundError
+from src.kernel.errors.base import LumiereError, NotFoundError
 
 
 class ChatError(LumiereError): ...

@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import Executable, and_, desc, func, insert, select, tuple_, update
 from sqlalchemy.orm import aliased
 
-from src.core.repositories.base_repository import BaseRepository
+from src.kernel.repositories.base_repository import BaseRepository
 from src.modules.chat.cursor import decode_cursor, encode_cursor
 from src.modules.chat.enums import ChatType
 from src.modules.chat.mappers import ChatMapper, ChatSummaryMapper, MemberMapper

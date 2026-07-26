@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.security import APIKeyCookie
 
-from src.core.dependencies import SessionDep
+from src.kernel.dependencies import SessionDep
 from src.modules.auth.exceptions import AuthenticationError
 from src.modules.auth.repository import RefreshTokenRepository
 from src.modules.auth.service import AuthService

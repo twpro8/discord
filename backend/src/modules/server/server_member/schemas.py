@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from src.core.schemas.base_schema import BaseSchema
+from src.kernel.schemas.base_schema import BaseSchema
 from src.modules.server.enums import ServerMemberRole
 
 

@@ -1,4 +1,4 @@
-from src.core.repositories.base_data_mapper import BaseMapper
+from src.kernel.repositories.base_data_mapper import BaseMapper
 from src.modules.auth.models import RefreshTokenOrm
 from src.modules.auth.schemas import RefreshToken
 

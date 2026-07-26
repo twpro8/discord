@@ -5,7 +5,7 @@ from typing import Any, cast
 
 import structlog
 
-from src.core.config import settings
+from src.kernel.config import settings
 
 
 def configure_logging() -> None:

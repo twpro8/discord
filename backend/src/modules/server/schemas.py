@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import Field
 
-from src.core.schemas import BaseSchema
+from src.kernel.schemas import BaseSchema
 from src.modules.server.enums import ServerMemberRole
 
 

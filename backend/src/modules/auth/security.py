@@ -8,7 +8,7 @@ import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 
-from src.core.config import settings
+from src.kernel.config import settings
 from src.modules.auth.exceptions import InvalidAccessTokenError
 
 password_hasher = PasswordHash((Argon2Hasher(),))

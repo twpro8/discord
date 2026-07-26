@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from src.core.permissions import assert_is_chat_member
+from src.kernel.permissions import assert_is_chat_member
 from src.modules.message.schemas import (
     ChannelMessage,
     ChatMessage,

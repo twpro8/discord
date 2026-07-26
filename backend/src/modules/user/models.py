@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.postgres import UUIDBase, str_128, str_255, str_512, timestamp
+from src.kernel.postgres import UUIDBase, str_128, str_255, str_512, timestamp
 
 if TYPE_CHECKING:
     from src.modules.auth.models import RefreshTokenOrm

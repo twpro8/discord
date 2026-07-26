@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import select, update
 
-from src.core.repositories import BaseRepository
+from src.kernel.repositories import BaseRepository
 from src.modules.server.mappers import ServerMapper, ServerUserBriefMapper
 from src.modules.server.models import ServerMemberOrm, ServerOrm
 from src.modules.server.schemas import ServerSchema, ServerUserBriefSchema

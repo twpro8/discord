@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from src.core.dependencies import SessionDep
+from src.kernel.dependencies import SessionDep
 from src.modules.channel.repository import ChannelRepository
 from src.modules.channel.service import ChannelService
 from src.modules.channel.unit_of_work import ChannelUnitOfWork

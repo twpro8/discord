@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from pydantic import AnyUrl, BeforeValidator, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from src.core.utils import parse_cors
+from src.kernel.utils import parse_cors
 
 
 class Settings(BaseSettings):

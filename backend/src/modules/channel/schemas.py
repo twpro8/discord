@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import Field, field_validator
 
-from src.core.schemas import BaseSchema
+from src.kernel.schemas import BaseSchema
 from src.modules.channel.enums import ChannelType
 
 

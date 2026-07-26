@@ -3,8 +3,8 @@ from typing import Any
 
 from sqlalchemy import inspect as sa_inspect
 
-from src.core.postgres import Base
-from src.core.schemas import BaseSchema
+from src.kernel.postgres import Base
+from src.kernel.schemas import BaseSchema
 
 
 class BaseMapper[OrmModel: Base, Schema: BaseSchema]:

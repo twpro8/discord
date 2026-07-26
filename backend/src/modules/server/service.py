@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.services import BaseService
+from src.kernel.services import BaseService
 from src.modules.channel.service import ChannelService
 from src.modules.server.enums import ServerMemberRole
 from src.modules.server.exceptions import (

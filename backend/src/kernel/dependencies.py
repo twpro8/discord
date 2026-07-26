@@ -6,7 +6,7 @@ from fastapi.security import APIKeyCookie
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.postgres import get_session
+from src.kernel.postgres import get_session
 
 access_cookie_scheme = APIKeyCookie(name="access_token")
 

@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import UUID, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.core.postgres import UUIDBase, str_128, str_1024, timestamp
+from src.kernel.postgres import UUIDBase, str_128, str_1024, timestamp
 from src.modules.channel.enums import ChannelType
 
 

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from src.core.services import BaseService
+from src.kernel.services import BaseService
 from src.modules.user.exceptions import UserNotFoundError
 from src.modules.user.schemas import User, UserUpdateRequest
 from src.modules.user.unit_of_work import UserUnitOfWork

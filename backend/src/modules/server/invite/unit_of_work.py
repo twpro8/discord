@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.unit_of_work.base_unit_of_work import BaseUnitOfWork
+from src.kernel.unit_of_work.base_unit_of_work import BaseUnitOfWork
 from src.modules.server.invite.repository import ServerInviteRepository
 from src.modules.server.repository import ServerRepository
 

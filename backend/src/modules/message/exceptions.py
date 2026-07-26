@@ -1,4 +1,4 @@
-from src.core.errors import LumiereError, NotFoundError
+from src.kernel.errors import LumiereError, NotFoundError
 
 
 class MessageError(LumiereError): ...

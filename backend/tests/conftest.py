@@ -5,11 +5,11 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.config import settings
-from src.core.models import *  # noqa
-from src.core.postgres import Base, get_session
-from src.core.postgres.engine import null_pool_engine
-from src.core.postgres.session import null_pool_session_maker
+from src.kernel.config import settings
+from src.kernel.models import *  # noqa
+from src.kernel.postgres import Base, get_session
+from src.kernel.postgres.engine import null_pool_engine
+from src.kernel.postgres.session import null_pool_session_maker
 from src.main import app
 from src.modules.user.schemas import User
 from tests.dependency_overrides.redis_client import get_fake_redis_client
@@ -28,7 +28,7 @@ def override_dependencies(
     check_test_mode: None,  # noqa
 ) -> None:
     """Override dependencies once for all tests"""
-    from src.core.dependencies import get_redis
+    from src.kernel.dependencies import get_redis
 
     app.dependency_overrides[get_session] = get_null_pool_session
     app.dependency_overrides[get_redis] = get_fake_redis_client

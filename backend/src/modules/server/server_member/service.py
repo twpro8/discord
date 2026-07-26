@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.services import BaseService
+from src.kernel.services import BaseService
 from src.modules.server.enums import ServerMemberRole
 from src.modules.server.exceptions import MemberNotFoundError
 from src.modules.server.invite.exceptions import ServerInviteNotFoundError

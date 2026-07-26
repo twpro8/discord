@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from src.core.dependencies import SessionDep
+from src.kernel.dependencies import SessionDep
 from src.modules.channel.dependencies import ChannelServiceDep
 from src.modules.server.invite.repository import ServerInviteRepository
 from src.modules.server.invite.service import ServerInviteService

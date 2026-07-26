@@ -8,7 +8,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import joinedload
 
 # Project modules
-from src.core.repositories import BaseRepository
+from src.kernel.repositories import BaseRepository
 from src.modules.friend.enums import FriendStatus
 from src.modules.friend.mappers import FriendMapper
 from src.modules.friend.models import FriendOrm

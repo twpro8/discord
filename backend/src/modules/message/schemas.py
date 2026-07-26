@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import Discriminator, Field, Tag, model_validator
 
-from src.core.schemas import BaseSchema
+from src.kernel.schemas import BaseSchema
 from src.modules.message.utils import get_discriminator_value
 from src.modules.message.validators import validate_target
 

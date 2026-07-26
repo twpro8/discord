@@ -2,7 +2,7 @@ from typing import Any
 
 from sqlalchemy import Row
 
-from src.core.repositories.base_data_mapper import BaseMapper
+from src.kernel.repositories.base_data_mapper import BaseMapper
 from src.modules.server.models import ServerOrm
 from src.modules.server.schemas import ServerSchema, ServerUserBriefSchema
 

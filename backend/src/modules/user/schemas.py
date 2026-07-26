@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import EmailStr, Field
 
-from src.core.schemas import BaseSchema
+from src.kernel.schemas import BaseSchema
 
 
 class User(BaseSchema):

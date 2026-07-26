@@ -4,11 +4,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.core.config import settings
-from src.core.errors import LumiereError, app_exception_handler
-from src.core.logging import configure_logging, get_logger
-from src.core.redis import close_redis, init_redis
-from src.core.router import api_router
+from src.kernel.config import settings
+from src.kernel.errors import LumiereError, app_exception_handler
+from src.kernel.logging import configure_logging, get_logger
+from src.kernel.redis import close_redis, init_redis
+from src.kernel.router import api_router
 from src.utils import custom_generate_unique_id
 
 logger = get_logger(__name__)

@@ -1,7 +1,7 @@
 """Mappers for friend persistence models."""
 
 # Project modules
-from src.core.repositories.base_data_mapper import BaseMapper
+from src.kernel.repositories.base_data_mapper import BaseMapper
 from src.modules.friend.models import FriendOrm
 from src.modules.friend.schemas import FriendRequest
 

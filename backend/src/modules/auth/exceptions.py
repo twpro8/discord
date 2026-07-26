@@ -1,6 +1,6 @@
 from fastapi import status
 
-from src.core.errors import LumiereError
+from src.kernel.errors import LumiereError
 
 
 class AuthenticationError(LumiereError):

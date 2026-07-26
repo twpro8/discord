@@ -3,8 +3,8 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.config import settings
-from src.core.services import BaseService
+from src.kernel.config import settings
+from src.kernel.services import BaseService
 from src.modules.auth.exceptions import IncorrectPasswordError, InvalidRefreshTokenError
 from src.modules.auth.schemas import (
     RefreshToken,
