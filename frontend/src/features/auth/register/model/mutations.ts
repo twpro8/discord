@@ -3,6 +3,7 @@ import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { loginUser } from '../../api/login'
 import { registerUser } from '../../api/register'
+import { getApiError } from '@/shared/api/errors'
 
 type RegisterPayload = {
   name: string
@@ -23,9 +24,8 @@ export function useRegisterMutation() {
       toast.success('Account created successfully')
       router.navigate({ to: '/home' })
     },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : 'Registration failed'
-      toast.error(message)
+    onError: (error: unknown) => {
+      toast.error(getApiError(error))
     },
   })
 }
