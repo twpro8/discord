@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.kernel.postgres import Base
 from src.kernel.schemas import BaseSchema
-from src.modules.user.models import UserOrm
-from src.modules.user.schemas import User
+from src.modules.users.models import UserOrm
+from src.modules.users.schemas import User
 from tests.data import users
 
 

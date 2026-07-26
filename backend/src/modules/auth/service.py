@@ -20,8 +20,8 @@ from src.modules.auth.security import (
     verify_password,
 )
 from src.modules.auth.unit_of_work import AuthUnitOfWork
-from src.modules.user.exceptions import UserNotFoundError
-from src.modules.user.schemas import User, UserCreate
+from src.modules.users.exceptions import UserNotFoundError
+from src.modules.users.schemas import User, UserCreate
 
 
 class AuthService(BaseService):

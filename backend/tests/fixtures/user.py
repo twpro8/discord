@@ -2,8 +2,8 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.user.models import UserOrm
-from src.modules.user.schemas import User
+from src.modules.users.models import UserOrm
+from src.modules.users.schemas import User
 from tests.data import users
 
 

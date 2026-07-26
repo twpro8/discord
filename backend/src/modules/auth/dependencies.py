@@ -9,7 +9,7 @@ from src.modules.auth.exceptions import AuthenticationError
 from src.modules.auth.repository import RefreshTokenRepository
 from src.modules.auth.service import AuthService
 from src.modules.auth.unit_of_work import AuthUnitOfWork
-from src.modules.user.dependencies import UserRepositoryDep
+from src.modules.users.dependencies import UserRepositoryDep
 
 refresh_cookie_scheme = APIKeyCookie(name="refresh_token", auto_error=False)
 

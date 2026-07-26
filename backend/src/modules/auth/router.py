@@ -10,7 +10,7 @@ from src.modules.auth.dependencies import (
 )
 from src.modules.auth.schemas import LoginForm, RegisterForm
 from src.modules.auth.utils import delete_token_cookies, set_token_cookies
-from src.modules.user.schemas import UserRead
+from src.modules.users.schemas import UserRead
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 

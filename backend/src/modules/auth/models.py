@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.kernel.postgres import UUIDBase, str_128, timestamp
 
 if TYPE_CHECKING:
-    from src.modules.user.models import UserOrm
+    from src.modules.users.models import UserOrm
 
 
 class RefreshTokenOrm(UUIDBase):

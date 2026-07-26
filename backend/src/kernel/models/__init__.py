@@ -10,12 +10,12 @@ model discovery logic accordingly.
 """
 
 from src.modules.auth.models import RefreshTokenOrm
-from src.modules.channel.models import ChannelOrm
-from src.modules.chat.models import ChatOrm
-from src.modules.friend.models import FriendOrm
-from src.modules.message.models import MessageOrm
-from src.modules.server.models import ServerOrm
-from src.modules.user.models import UserOrm
+from src.modules.channels.models import ChannelOrm
+from src.modules.chats.models import ChatOrm
+from src.modules.friends.models import FriendOrm
+from src.modules.messages.models import MessageOrm
+from src.modules.servers.models import ServerOrm
+from src.modules.users.models import UserOrm
 
 __all__ = [
     "UserOrm",

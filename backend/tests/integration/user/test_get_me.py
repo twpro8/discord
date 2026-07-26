@@ -1,6 +1,6 @@
 from httpx import AsyncClient
 
-from src.modules.user.schemas import User
+from src.modules.users.schemas import User
 
 
 async def test_get_me(authed_client: AsyncClient, current_user: User) -> None:
