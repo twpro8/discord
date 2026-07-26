@@ -11,8 +11,8 @@ from src.friends.dependencies import FriendServiceDep
 from src.friends.enums import FriendStatus
 from src.friends.schemas import (
     FriendRequest,
-    SendFriendRequest,
     FriendRequestWithUser,
+    SendFriendRequest,
 )
 from src.user.dependencies import UserIdDep
 

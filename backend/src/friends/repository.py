@@ -127,8 +127,12 @@ class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
                 status=obj.status,
                 created_at=obj.created_at,
                 updated_at=obj.updated_at,
-                username=obj.target_user.username if obj.user_id == user_id else obj.user.username,
-                avatar_url=obj.target_user.avatar_url if obj.user_id == user_id else obj.user.avatar_url,
+                username=obj.target_user.username
+                if obj.user_id == user_id
+                else obj.user.username,
+                avatar_url=obj.target_user.avatar_url
+                if obj.user_id == user_id
+                else obj.user.avatar_url,
             )
             for obj in orm_objects
         ]

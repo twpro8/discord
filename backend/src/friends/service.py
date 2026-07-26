@@ -125,7 +125,10 @@ class FriendService(BaseService):
         if request is None:
             raise FriendRequestNotFoundError
 
-        if request.user_id != current_user_id and request.target_user_id != current_user_id:
+        if (
+            request.user_id != current_user_id
+            and request.target_user_id != current_user_id
+        ):
             raise NotParticipantError
 
         await self.uow.friends.delete(request_id)
@@ -147,7 +150,10 @@ class FriendService(BaseService):
         if request is None:
             raise FriendRequestNotFoundError
 
-        if request.user_id != current_user_id and request.target_user_id != current_user_id:
+        if (
+            request.user_id != current_user_id
+            and request.target_user_id != current_user_id
+        ):
             raise NotParticipantError
 
         if request.status != FriendStatus.FRIENDS:
