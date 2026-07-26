@@ -4,5 +4,6 @@
   "rules": {
     "react/rules-of-hooks": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+  },
+  "ignorePatterns": ["src/**/__tests__/**", "src/testing/**"]
 }
