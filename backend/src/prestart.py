@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_fixed
 
-from src.kernel.postgres.engine import engine
+from src.kernel.database.session import get_engine
 from src.kernel.redis import close_redis
 from src.kernel.redis import init_redis as connect_redis
 
@@ -51,6 +51,7 @@ async def init_redis() -> None:
 
 async def main() -> None:
     logger.info("Initializing services")
+    engine = get_engine()
     await init_postgres(engine)
     await init_redis()
     logger.info("Services finished initializing")

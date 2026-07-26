@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from src.kernel.config import settings
-from src.kernel.postgres import Base
+from src.kernel.database import Base
 
 # required to load all ORM models for Alembic autogenerate
 import src.kernel.models  # noqa

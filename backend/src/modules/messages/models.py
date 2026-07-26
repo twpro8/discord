@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import UUID, CheckConstraint, DateTime, ForeignKey, Index, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.kernel.postgres import UUIDBase, timestamp
+from src.kernel.database import UUIDBase, timestamp
 
 
 class MessageOrm(UUIDBase):

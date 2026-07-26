@@ -6,10 +6,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.kernel.config import settings
+from src.kernel.database import Base, get_session
+from src.kernel.database.session import (
+    get_null_pool_engine,
+    get_null_pool_session_factory,
+)
 from src.kernel.models import *  # noqa
-from src.kernel.postgres import Base, get_session
-from src.kernel.postgres.engine import null_pool_engine
-from src.kernel.postgres.session import null_pool_session_maker
 from src.main import app
 from src.modules.users.schemas import User
 from tests.dependency_overrides.redis_client import get_fake_redis_client
@@ -39,7 +41,8 @@ async def setup_database(
     check_test_mode: None,  # noqa
 ) -> None:
     """Setup database tables"""
-    async with null_pool_engine.begin() as conn:
+    engine = get_null_pool_engine()
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
@@ -49,7 +52,8 @@ async def populated_database(
     setup_database: None,  # noqa
 ) -> AsyncGenerator[AsyncSession]:
     """Populate database"""
-    async with null_pool_session_maker() as session:
+    session_factory = get_null_pool_session_factory()
+    async with session_factory() as session:
         await populate_database(session)
         yield session
 

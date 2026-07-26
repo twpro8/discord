@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.kernel.postgres import UUIDBase, str_128, timestamp
+from src.kernel.database import UUIDBase, str_128, timestamp
 
 if TYPE_CHECKING:
     from src.modules.users.models import UserOrm
