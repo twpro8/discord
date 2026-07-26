@@ -2,8 +2,8 @@
 
 # Project modules
 from src.core.repositories.base_data_mapper import BaseMapper
-from src.friends.models import FriendOrm
-from src.friends.schemas import FriendRequest
+from src.friend.models import FriendOrm
+from src.friend.schemas import FriendRequest
 
 
 class FriendMapper(BaseMapper[FriendOrm, FriendRequest]):

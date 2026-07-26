@@ -9,9 +9,9 @@ from fastapi import Depends
 
 # Project modules
 from src.core.dependencies import SessionDep
-from src.friends.repository import FriendRepository
-from src.friends.service import FriendService
-from src.friends.unit_of_work import FriendUnitOfWork
+from src.friend.repository import FriendRepository
+from src.friend.service import FriendService
+from src.friend.unit_of_work import FriendUnitOfWork
 from src.user.repository import UserRepository
 
 

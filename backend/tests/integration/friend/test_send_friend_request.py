@@ -9,8 +9,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Project modules
-from src.friends.enums import FriendStatus
-from src.friends.models import FriendOrm
+from src.friend.enums import FriendStatus
+from src.friend.models import FriendOrm
 from src.user.schemas import User
 
 

@@ -5,22 +5,22 @@ from uuid import UUID
 
 # Project modules
 from src.core.services import BaseService
-from src.friends.enums import FriendStatus
-from src.friends.exceptions import (
+from src.friend.enums import FriendStatus
+from src.friend.exceptions import (
     CannotSendFriendRequestToSelfError,
     FriendRequestAlreadyExistsError,
     FriendRequestNotFoundError,
     FriendRequestNotPendingError,
     NotParticipantError,
 )
-from src.friends.schemas import (
+from src.friend.schemas import (
     FriendRequest,
     FriendRequestCreate,
     FriendRequestUpdate,
     FriendRequestWithUser,
     SendFriendRequest,
 )
-from src.friends.unit_of_work import FriendUnitOfWork
+from src.friend.unit_of_work import FriendUnitOfWork
 from src.user.exceptions import UserNotFoundError
 
 
@@ -52,14 +52,14 @@ class FriendService(BaseService):
         if sender_id == target_user.id:
             raise CannotSendFriendRequestToSelfError
 
-        relationship = await self.uow.friends.get_between_users(
+        relationship = await self.uow.friend.get_between_users(
             sender_id,
             target_user.id,
         )
         if relationship is not None:
             raise FriendRequestAlreadyExistsError
 
-        request = await self.uow.friends.create(
+        request = await self.uow.friend.create(
             FriendRequestCreate(user_id=sender_id, target_user_id=target_user.id)
         )
         await self.uow.commit()
@@ -71,7 +71,7 @@ class FriendService(BaseService):
         status: FriendStatus = FriendStatus.PENDING,
     ) -> list[FriendRequestWithUser]:
         """Get friend requests targeted at *user_id* for the given *status*."""
-        return await self.uow.friends.get_for_user(user_id, status)
+        return await self.uow.friend.get_for_user(user_id, status)
 
     async def get_user_sent_requests(
         self,
@@ -79,7 +79,7 @@ class FriendService(BaseService):
         status: FriendStatus = FriendStatus.PENDING,
     ) -> list[FriendRequestWithUser]:
         """Get friend requests sent by *user_id* for the given *status*."""
-        return await self.uow.friends.get_user_sent_requests(user_id, status)
+        return await self.uow.friend.get_user_sent_requests(user_id, status)
 
     async def accept_request(
         self,
@@ -93,7 +93,7 @@ class FriendService(BaseService):
             NotParticipantError: If the current user is not the target.
             FriendRequestNotPendingError: If the request is not pending.
         """
-        request = await self.uow.friends.get_by_id(request_id)
+        request = await self.uow.friend.get_by_id(request_id)
         if request is None:
             raise FriendRequestNotFoundError
 
@@ -103,7 +103,7 @@ class FriendService(BaseService):
         if request.status != FriendStatus.PENDING:
             raise FriendRequestNotPendingError
 
-        updated = await self.uow.friends.update(
+        updated = await self.uow.friend.update(
             request_id,
             FriendRequestUpdate(status=FriendStatus.FRIENDS),
         )
@@ -121,7 +121,7 @@ class FriendService(BaseService):
             FriendRequestNotFoundError: If the request does not exist.
             NotParticipantError: If the current user is not a participant.
         """
-        request = await self.uow.friends.get_by_id(request_id)
+        request = await self.uow.friend.get_by_id(request_id)
         if request is None:
             raise FriendRequestNotFoundError
 
@@ -131,7 +131,7 @@ class FriendService(BaseService):
         ):
             raise NotParticipantError
 
-        await self.uow.friends.delete(request_id)
+        await self.uow.friend.delete(request_id)
         await self.uow.commit()
 
     async def remove_friend(
@@ -146,7 +146,7 @@ class FriendService(BaseService):
             NotParticipantError: If the current user is not a participant.
             FriendRequestNotPendingError: If the status is not FRIENDS.
         """
-        request = await self.uow.friends.get_by_id(relationship_id)
+        request = await self.uow.friend.get_by_id(relationship_id)
         if request is None:
             raise FriendRequestNotFoundError
 
@@ -159,9 +159,9 @@ class FriendService(BaseService):
         if request.status != FriendStatus.FRIENDS:
             raise FriendRequestNotPendingError
 
-        await self.uow.friends.delete(relationship_id)
+        await self.uow.friend.delete(relationship_id)
         await self.uow.commit()
 
     async def get_friends(self, user_id: UUID) -> list[FriendRequestWithUser]:
         """Get all accepted friends for the user (both directions)."""
-        return await self.uow.friends.get_friends(user_id)
+        return await self.uow.friend.get_friends(user_id)
