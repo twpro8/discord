@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # Project modules
 from src.core.unit_of_work import BaseUnitOfWork
-from src.friends.repository import FriendRepository
+from src.friend.repository import FriendRepository
 from src.user.repository import UserRepository
 
 

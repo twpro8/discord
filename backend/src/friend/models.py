@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 # Project modules
 from src.core.postgres import UUIDBase, timestamp
-from src.friends.enums import FriendStatus
+from src.friend.enums import FriendStatus
 
 if TYPE_CHECKING:
     from src.user.models import UserOrm

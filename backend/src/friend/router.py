@@ -7,9 +7,9 @@ from uuid import UUID
 from fastapi import APIRouter, status
 
 # Project modules
-from src.friends.dependencies import FriendServiceDep
-from src.friends.enums import FriendStatus
-from src.friends.schemas import (
+from src.friend.dependencies import FriendServiceDep
+from src.friend.enums import FriendStatus
+from src.friend.schemas import (
     FriendRequest,
     FriendRequestWithUser,
     SendFriendRequest,

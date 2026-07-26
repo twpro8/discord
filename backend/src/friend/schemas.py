@@ -9,7 +9,7 @@ from pydantic import Field
 
 # Project modules
 from src.core.schemas import BaseSchema
-from src.friends.enums import FriendStatus
+from src.friend.enums import FriendStatus
 
 MIN_USERNAME_LENGTH = 3
 MAX_USERNAME_LENGTH = 32
