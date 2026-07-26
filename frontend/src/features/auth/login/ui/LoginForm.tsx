@@ -1,20 +1,28 @@
-import { useState } from 'react'
-import { Link } from '@tanstack/react-router'
-import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
-import { Label } from '@/shared/ui/label'
-import { AuthFormShell } from '../../shared/ui/AuthFormShell'
-import { useLoginMutation } from '../model/mutations'
+// react
+import { useState } from "react";
 
+// third party
+import { Link } from "@tanstack/react-router";
+
+// shared
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+
+// relative
+import { AuthFormShell } from "../../shared/ui/AuthFormShell";
+import { useLoginMutation } from "../model/mutations";
+
+/** Login form with username and password fields. */
 export function LoginForm() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const loginMutation = useLoginMutation()
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const loginMutation = useLoginMutation();
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    loginMutation.mutate({ username, password })
-  }
+    e.preventDefault();
+    loginMutation.mutate({ username, password });
+  };
 
   return (
     <AuthFormShell
@@ -48,12 +56,16 @@ export function LoginForm() {
         />
       </div>
 
-      <Button type="submit" disabled={loginMutation.isPending} className="w-full">
-        {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
+      <Button
+        type="submit"
+        disabled={loginMutation.isPending}
+        className="w-full"
+      >
+        {loginMutation.isPending ? "Signing in..." : "Sign in"}
       </Button>
 
       <p className="text-center text-sm text-text-tertiary">
-        Don&apos;t have an account?{' '}
+        Don&apos;t have an account?{" "}
         <Link
           to="/register"
           className="font-medium text-primary hover:text-accent-hover"
@@ -62,5 +74,5 @@ export function LoginForm() {
         </Link>
       </p>
     </AuthFormShell>
-  )
+  );
 }

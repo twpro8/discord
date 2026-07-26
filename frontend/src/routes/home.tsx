@@ -1,6 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
-import HomePage from '@/pages/home/HomePage'
+// third party
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/home')({
+// features
+import HomePage from "@/pages/home/HomePage";
+
+/** Home route rendering the main application page. */
+export const Route = createFileRoute("/home")({
   component: HomePage,
-})
+});
