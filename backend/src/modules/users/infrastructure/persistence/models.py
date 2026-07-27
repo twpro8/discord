@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.platform.database import UUIDBase, str_128, str_255, str_512, timestamp
+from src.core.database import UUIDBase, str_128, str_255, str_512, timestamp
 
 if TYPE_CHECKING:
     from src.modules.auth.models import RefreshTokenOrm

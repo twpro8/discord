@@ -9,13 +9,12 @@ from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+# Project modules
+from src.core.database import UUIDBase, timestamp
 from src.modules.friends.enums import FriendStatus
 
-# Project modules
-from src.platform.database import UUIDBase, timestamp
-
 if TYPE_CHECKING:
-    from src.modules.users.Infrastructure.persistence.models import UserOrm
+    from src.modules.users.infrastructure.persistence.models import UserOrm
 
 
 class FriendOrm(UUIDBase):

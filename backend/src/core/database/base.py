@@ -1,6 +1,6 @@
 from sqlalchemy.orm import DeclarativeBase
 
-from src.platform.database.mixins import UUIDMixin
+from src.core.database.mixins import UUIDMixin
 
 
 class Base(DeclarativeBase):

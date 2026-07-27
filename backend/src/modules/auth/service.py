@@ -3,6 +3,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.config import settings
 from src.modules.auth.exceptions import IncorrectPasswordError, InvalidRefreshTokenError
 from src.modules.auth.schemas import (
     RefreshToken,
@@ -18,9 +19,9 @@ from src.modules.auth.security import (
     verify_password,
 )
 from src.modules.auth.unit_of_work import AuthUnitOfWork
+from src.modules.users.domain.entities.user import User
 from src.modules.users.domain.exceptions import UserNotFoundError
-from src.modules.users.domain.schemas import User, UserCreate
-from src.platform.config import settings
+from src.modules.users.domain.schemas import UserCreate
 from src.shared.services import BaseService
 
 
@@ -43,8 +44,8 @@ class AuthService(BaseService):
         return user
 
     async def login(self, username: str, password: str) -> TokenPair:
-        user = await self.uow.users.get_one(username=username, is_active=True)
-        if not user:
+        user = await self.uow.users.get_by_username(username)
+        if not user or not user.is_active:
             raise UserNotFoundError
         if not verify_password(password, user.password_hash):
             raise IncorrectPasswordError

@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.platform.database.session import get_null_pool_session_factory
+from src.core.database.session import get_null_pool_session_factory
 
 
 @pytest.fixture

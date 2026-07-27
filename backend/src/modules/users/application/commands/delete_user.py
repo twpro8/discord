@@ -1,0 +1,14 @@
+from src.modules.users.domain.entities.user import User
+from src.modules.users.domain.repositories.user_unit_of_work import (
+    AbstractUserUnitOfWork,
+)
+
+
+class DeleteUserCommand:
+    def __init__(self, uow: AbstractUserUnitOfWork) -> None:
+        self._uow = uow
+
+    async def __call__(self, user: User) -> None:
+        user.mark_as_inactive()
+        await self._uow.users.update(user.id, user)
+        await self._uow.commit()

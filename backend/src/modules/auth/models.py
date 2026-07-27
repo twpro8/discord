@@ -4,10 +4,10 @@ from uuid import UUID
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.platform.database import UUIDBase, str_128, timestamp
+from src.core.database import UUIDBase, str_128, timestamp
 
 if TYPE_CHECKING:
-    from src.modules.users.Infrastructure.persistence.models import UserOrm
+    from src.modules.users.infrastructure.persistence.models import UserOrm
 
 
 class RefreshTokenOrm(UUIDBase):

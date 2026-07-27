@@ -2,7 +2,7 @@ import uuid
 
 from httpx import AsyncClient
 
-from src.modules.users.domain.schemas import User
+from src.modules.users.domain.entities.user import User
 
 
 class TestUsersAPI:

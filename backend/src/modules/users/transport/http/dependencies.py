@@ -7,26 +7,44 @@ from fastapi import Depends
 from src.api.v1.dependencies import AccessTokenDep, SessionDep
 from src.modules.auth.exceptions import InvalidAccessTokenError
 from src.modules.auth.security import decode_access_token
-from src.modules.users.application.unit_of_work import UserUnitOfWork
-from src.modules.users.domain.schemas import User
-from src.modules.users.domain.service import UserService
-from src.modules.users.Infrastructure.persistence.repository import UserRepository
+from src.modules.users.application.commands.delete_user import DeleteUserCommand
+from src.modules.users.application.commands.update_user import UpdateUserCommand
+from src.modules.users.application.queries.get_user_by_id import (
+    GetUserByIDQuery,
+)
+from src.modules.users.domain.entities.user import User
+from src.modules.users.domain.repositories.user_repository import UserRepository
+from src.modules.users.domain.repositories.user_unit_of_work import (
+    AbstractUserUnitOfWork,
+)
+from src.modules.users.infrastructure.persistence.repository import (
+    SqlAlchemyUserRepository,
+)
+from src.modules.users.infrastructure.unit_of_work import UserUnitOfWork
 
 
 def get_user_repository(session: SessionDep) -> UserRepository:
-    return UserRepository(session)
+    return SqlAlchemyUserRepository(session)
 
 
 async def get_user_unit_of_work(
     session: SessionDep,
     user_repository: UserRepositoryDep,
-) -> AsyncGenerator[UserUnitOfWork]:
+) -> AsyncGenerator[AbstractUserUnitOfWork]:
     async with UserUnitOfWork(session, user_repository) as user_unit_of_work:
         yield user_unit_of_work
 
 
-def get_user_service(user_unit_of_work: UserUnitOfWorkDep) -> UserService:
-    return UserService(user_unit_of_work)
+def get_user_by_id_query(user_repository: UserRepositoryDep) -> GetUserByIDQuery:
+    return GetUserByIDQuery(user_repository)
+
+
+def get_update_user_command(uow: UserUnitOfWorkDep) -> UpdateUserCommand:
+    return UpdateUserCommand(uow)
+
+
+def get_delete_user_command(uow: UserUnitOfWorkDep) -> DeleteUserCommand:
+    return DeleteUserCommand(uow)
 
 
 def get_current_user_id(access_token: AccessTokenDep) -> UUID:
@@ -38,13 +56,15 @@ def get_current_user_id(access_token: AccessTokenDep) -> UUID:
 
 async def get_current_user(
     user_id: UserIdDep,
-    user_service: UserServiceDep,
+    user_use_case: GetUserByIDQueryDep,
 ) -> User:
-    return await user_service.get_user(user_id)
+    return await user_use_case(user_id)
 
 
-UserRepositoryDep = Annotated[UserRepository, Depends(get_user_repository)]
+UserRepositoryDep = Annotated[SqlAlchemyUserRepository, Depends(get_user_repository)]
 UserUnitOfWorkDep = Annotated[UserUnitOfWork, Depends(get_user_unit_of_work)]
-UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 UserIdDep = Annotated[UUID, Depends(get_current_user_id)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+GetUserByIDQueryDep = Annotated[GetUserByIDQuery, Depends(get_user_by_id_query)]
+UpdateUserCommandDep = Annotated[UpdateUserCommand, Depends(get_update_user_command)]
+DeleteUserCommandDep = Annotated[DeleteUserCommand, Depends(get_delete_user_command)]

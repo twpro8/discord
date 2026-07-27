@@ -4,8 +4,8 @@ from datetime import datetime
 from sqlalchemy import UUID, DateTime, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.core.database import UUIDBase, str_128, str_512, timestamp
 from src.modules.chats.enums import ChatMemberRole, ChatType
-from src.platform.database import UUIDBase, str_128, str_512, timestamp
 
 
 class ChatOrm(UUIDBase):

@@ -1,7 +1,7 @@
 from httpx import AsyncClient
 
 from src.modules.chats.enums import ChatType
-from src.modules.users.domain.schemas import User
+from src.modules.users.domain.entities.user import User
 
 
 async def test_create_private_chat_valid(

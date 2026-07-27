@@ -15,7 +15,7 @@ from src.modules.chats.models import ChatOrm
 from src.modules.friends.models import FriendOrm
 from src.modules.messages.models import MessageOrm
 from src.modules.servers.models import ServerOrm
-from src.modules.users.Infrastructure.persistence.models import UserOrm
+from src.modules.users.infrastructure.persistence.models import UserOrm
 
 __all__ = [
     "UserOrm",

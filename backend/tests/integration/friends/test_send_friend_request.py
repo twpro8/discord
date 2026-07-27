@@ -12,7 +12,7 @@ from src.modules.friends.enums import FriendStatus
 
 # Project modules
 from src.modules.friends.models import FriendOrm
-from src.modules.users.domain.schemas import User
+from src.modules.users.domain.entities.user import User
 
 
 async def test_send_friend_request_creates_pending_relationship(

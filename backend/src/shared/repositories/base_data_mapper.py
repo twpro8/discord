@@ -3,7 +3,7 @@ from typing import Any
 
 from sqlalchemy import inspect as sa_inspect
 
-from src.platform.database import Base
+from src.core.database import Base
 from src.shared.schemas import BaseSchema
 
 

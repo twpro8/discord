@@ -12,7 +12,9 @@ from src.api.v1.dependencies import SessionDep
 from src.modules.friends.repository import FriendRepository
 from src.modules.friends.service import FriendService
 from src.modules.friends.unit_of_work import FriendUnitOfWork
-from src.modules.users.Infrastructure.persistence.repository import UserRepository
+from src.modules.users.infrastructure.persistence.repository import (
+    SqlAlchemyUserRepository,
+)
 
 
 def get_friend_repository(session: SessionDep) -> FriendRepository:
@@ -25,7 +27,7 @@ async def get_friend_unit_of_work(
     friend_repository: FriendRepositoryDep,
 ) -> AsyncGenerator[FriendUnitOfWork]:
     """Provide a transactional unit of work for a friend request."""
-    user_repository = UserRepository(session)
+    user_repository = SqlAlchemyUserRepository(session)
     async with FriendUnitOfWork(
         session,
         friend_repository,

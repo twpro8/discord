@@ -43,11 +43,8 @@ class FriendService(BaseService):
             CannotSendFriendRequestToSelfError: If sender and target are identical.
             FriendRequestAlreadyExistsError: If the users already have a relationship.
         """
-        target_user = await self.uow.users.get_one(
-            username=data.username,
-            is_active=True,
-        )
-        if target_user is None:
+        target_user = await self.uow.users.get_by_username(username=data.username)
+        if not target_user or not target_user.is_active:
             raise UserNotFoundError
 
         if sender_id == target_user.id:

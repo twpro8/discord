@@ -7,9 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.errors import register_exception_handlers
 from src.api.v1.router import build_api_v1_router
 from src.composition.container import build_container
-from src.platform.config import settings
-from src.platform.logging import configure_logging, get_logger
-from src.platform.redis import close_redis, init_redis
+from src.core.config import settings
+from src.core.logging import configure_logging, get_logger
+from src.core.redis import close_redis, init_redis
 from src.utils import custom_generate_unique_id
 
 logger = get_logger(__name__)

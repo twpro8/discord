@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.repository import RefreshTokenRepository
-from src.modules.users.Infrastructure.persistence.repository import UserRepository
+from src.modules.users.domain.repositories.user_repository import UserRepository
 from src.shared.unit_of_work import BaseUnitOfWork
 
 

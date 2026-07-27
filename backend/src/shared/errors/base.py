@@ -27,3 +27,8 @@ class NotFoundError(LumiereError):
 class ConflictError(LumiereError):
     detail = "Object already exists"
     status_code = status.HTTP_409_CONFLICT
+
+
+class ValidationError(LumiereError):
+    detail = "Validation error"
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT

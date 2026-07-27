@@ -4,7 +4,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.friends.repository import FriendRepository
-from src.modules.users.Infrastructure.persistence.repository import UserRepository
+from src.modules.users.infrastructure.persistence.repository import (
+    SqlAlchemyUserRepository,
+)
 
 # Project modules
 from src.shared.unit_of_work import BaseUnitOfWork
@@ -17,7 +19,7 @@ class FriendUnitOfWork(BaseUnitOfWork):
         self,
         session: AsyncSession,
         friend_repository: FriendRepository,
-        user_repository: UserRepository,
+        user_repository: SqlAlchemyUserRepository,
     ) -> None:
         super().__init__(session)
         self.friends = friend_repository

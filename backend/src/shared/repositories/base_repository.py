@@ -7,7 +7,7 @@ from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Executable
 
-from src.platform.database import UUIDBase
+from src.core.database import UUIDBase
 from src.shared.errors import NotFoundError
 from src.shared.repositories.base_data_mapper import BaseMapper
 from src.shared.schemas.base_schema import BaseSchema

@@ -3,9 +3,9 @@ from typing import Any
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.users.domain.schemas import User
+from src.core.database import Base
+from src.modules.users.domain.entities.user import User
 from src.modules.users.infrastructure.persistence.models import UserOrm
-from src.platform.database import Base
 from src.shared.schemas import BaseSchema
 from tests.data import users
 
