@@ -30,7 +30,7 @@ def override_dependencies(
     check_test_mode: None,  # noqa
 ) -> None:
     """Override dependencies once for all tests"""
-    from src.kernel.dependencies import get_redis
+    from src.api.v1.dependencies import get_redis
 
     app.dependency_overrides[get_session] = get_null_pool_session
     app.dependency_overrides[get_redis] = get_fake_redis_client

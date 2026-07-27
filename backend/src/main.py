@@ -4,11 +4,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.v1.router import build_api_v1_router
 from src.common.errors import LumiereError, app_exception_handler
 from src.kernel.config import settings
 from src.kernel.logging import configure_logging, get_logger
 from src.kernel.redis import close_redis, init_redis
-from src.kernel.router import api_router
 from src.utils import custom_generate_unique_id
 
 logger = get_logger(__name__)
@@ -47,7 +47,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.add_exception_handler(LumiereError, app_exception_handler)  # type: ignore
-    app.include_router(api_router, prefix=settings.API_V1_STR)
+    app.include_router(build_api_v1_router())
 
     return app
 

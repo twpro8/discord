@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import Depends
 
 # Project modules
-from src.kernel.dependencies import SessionDep
+from src.api.v1.dependencies import SessionDep
 from src.modules.friends.repository import FriendRepository
 from src.modules.friends.service import FriendService
 from src.modules.friends.unit_of_work import FriendUnitOfWork

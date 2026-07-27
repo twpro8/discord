@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from src.kernel.dependencies import SessionDep
+from src.api.v1.dependencies import SessionDep
 from src.modules.channels.dependencies import ChannelRepositoryDep
 from src.modules.chats.dependencies import ChatMemberRepositoryDep, ChatRepositoryDep
 from src.modules.messages.repository import MessageRepository
