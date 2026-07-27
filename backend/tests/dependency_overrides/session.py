@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.kernel.database.session import get_null_pool_session_factory
+from src.platform.database.session import get_null_pool_session_factory
 
 
 async def get_null_pool_session() -> AsyncGenerator[AsyncSession]:

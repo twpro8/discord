@@ -3,10 +3,11 @@
 # Third-party modules
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Project modules
-from src.common.unit_of_work import BaseUnitOfWork
 from src.modules.friends.repository import FriendRepository
 from src.modules.users.repository import UserRepository
+
+# Project modules
+from src.shared.unit_of_work import BaseUnitOfWork
 
 
 class FriendUnitOfWork(BaseUnitOfWork):

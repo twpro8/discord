@@ -7,12 +7,13 @@ from uuid import UUID
 from sqlalchemy import or_, select
 from sqlalchemy.orm import joinedload
 
-# Project modules
-from src.common.repositories import BaseRepository
 from src.modules.friends.enums import FriendStatus
 from src.modules.friends.mappers import FriendMapper
 from src.modules.friends.models import FriendOrm
 from src.modules.friends.schemas import FriendRequest, FriendRequestWithUser
+
+# Project modules
+from src.shared.repositories import BaseRepository
 
 
 class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):

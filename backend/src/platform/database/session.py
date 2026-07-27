@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from src.kernel.config import settings
+from src.platform.config import settings
 
 
 @lru_cache

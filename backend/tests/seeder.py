@@ -3,10 +3,10 @@ from typing import Any
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.common.schemas import BaseSchema
-from src.kernel.database import Base
 from src.modules.users.models import UserOrm
 from src.modules.users.schemas import User
+from src.platform.database import Base
+from src.shared.schemas import BaseSchema
 from tests.data import users
 
 

@@ -2,11 +2,11 @@ from asyncpg.exceptions import ForeignKeyViolationError
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
-from src.common.repositories import BaseRepository
 from src.modules.messages.exceptions import MessageNotFoundError
 from src.modules.messages.mappers import MessageMapper
 from src.modules.messages.models import MessageOrm
 from src.modules.messages.schemas import Message
+from src.shared.repositories import BaseRepository
 
 
 class MessageRepository(BaseRepository[MessageOrm, Message]):

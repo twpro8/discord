@@ -1,8 +1,8 @@
 from datetime import datetime
 from uuid import UUID
 
-from src.common.schemas.base_schema import BaseSchema
 from src.modules.servers.enums import ServerMemberRole
+from src.shared.schemas.base_schema import BaseSchema
 
 
 class ServerMemberSchema(BaseSchema):

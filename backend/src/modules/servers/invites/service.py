@@ -6,7 +6,6 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.common.services.base_service import BaseService
 from src.modules.servers.invites.exceptions import (
     ServerInviteCannotDeleteError,
     ServerInviteGenerationFailedError,
@@ -20,6 +19,7 @@ from src.modules.servers.invites.schemas import (
     ServerInviteWithStatus,
 )
 from src.modules.servers.invites.unit_of_work import ServerInviteUnitOfWork
+from src.shared.services.base_service import BaseService
 
 
 class ServerInviteService(BaseService):

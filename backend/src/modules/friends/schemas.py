@@ -7,9 +7,10 @@ from uuid import UUID
 # Third-party modules
 from pydantic import Field
 
-# Project modules
-from src.common.schemas import BaseSchema
 from src.modules.friends.enums import FriendStatus
+
+# Project modules
+from src.shared.schemas import BaseSchema
 
 MIN_USERNAME_LENGTH = 3
 MAX_USERNAME_LENGTH = 32

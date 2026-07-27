@@ -1,6 +1,6 @@
 from fastapi import status
 
-from src.common.errors import LumiereError, NotFoundError
+from src.shared.errors import LumiereError, NotFoundError
 
 
 class ServerError(LumiereError):

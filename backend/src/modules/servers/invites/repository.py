@@ -2,10 +2,10 @@ from uuid import UUID
 
 from sqlalchemy import CursorResult, or_, update
 
-from src.common.repositories import BaseRepository
 from src.modules.servers.invites.mappers import ServerInviteMapper
 from src.modules.servers.invites.schemas import ServerInvite
 from src.modules.servers.models import ServerInviteOrm
+from src.shared.repositories import BaseRepository
 
 
 class ServerInviteRepository(BaseRepository[ServerInviteOrm, ServerInvite]):

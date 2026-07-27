@@ -1,6 +1,6 @@
-from src.common.repositories import BaseMapper
 from src.modules.users.models import UserOrm
 from src.modules.users.schemas import User
+from src.shared.repositories import BaseMapper
 
 
 class UserMapper(BaseMapper[UserOrm, User]):

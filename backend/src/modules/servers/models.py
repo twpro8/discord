@@ -4,8 +4,8 @@ from datetime import datetime
 from sqlalchemy import UUID, DateTime, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.kernel.database import UUIDBase, str_128, str_512, timestamp
 from src.modules.servers.enums import ServerMemberRole
+from src.platform.database import UUIDBase, str_128, str_512, timestamp
 
 
 class ServerOrm(UUIDBase):

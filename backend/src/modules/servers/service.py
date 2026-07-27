@@ -3,7 +3,6 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.common.services import BaseService
 from src.modules.channels.service import ChannelService
 from src.modules.servers.enums import ServerMemberRole
 from src.modules.servers.exceptions import (
@@ -28,6 +27,7 @@ from src.modules.servers.schemas import (
 )
 from src.modules.servers.server_members.service import ServerMemberService
 from src.modules.servers.unit_of_work import ServerUnitOfWork
+from src.shared.services import BaseService
 
 
 class ServerService(BaseService):

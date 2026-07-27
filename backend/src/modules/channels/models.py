@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import UUID, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.kernel.database import UUIDBase, str_128, str_1024, timestamp
 from src.modules.channels.enums import ChannelType
+from src.platform.database import UUIDBase, str_128, str_1024, timestamp
 
 
 class ChannelOrm(UUIDBase):

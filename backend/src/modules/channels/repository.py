@@ -2,10 +2,10 @@ from uuid import UUID
 
 from sqlalchemy import update
 
-from src.common.repositories import BaseRepository
 from src.modules.channels.mappers import ChannelMapper
 from src.modules.channels.models import ChannelOrm
 from src.modules.channels.schemas import ChannelSchema
+from src.shared.repositories import BaseRepository
 
 
 class ChannelRepository(BaseRepository[ChannelOrm, ChannelSchema]):

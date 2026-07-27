@@ -1,6 +1,5 @@
 from uuid import UUID
 
-from src.common.permissions import assert_is_chat_member
 from src.modules.messages.schemas import (
     ChannelMessage,
     ChatMessage,
@@ -8,6 +7,7 @@ from src.modules.messages.schemas import (
     MessageCreateRequest,
 )
 from src.modules.messages.unit_of_work import MessageUnitOfWork
+from src.shared.permissions import assert_is_chat_member
 
 
 class MessageService:

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import EmailStr, Field
 
-from src.common.schemas import BaseSchema
+from src.shared.schemas import BaseSchema
 
 
 class RegisterForm(BaseSchema):

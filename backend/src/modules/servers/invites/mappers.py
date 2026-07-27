@@ -1,6 +1,6 @@
-from src.common.repositories import BaseMapper
 from src.modules.servers.invites.schemas import ServerInvite
 from src.modules.servers.models import ServerInviteOrm
+from src.shared.repositories import BaseMapper
 
 
 class ServerInviteMapper(BaseMapper[ServerInviteOrm, ServerInvite]):

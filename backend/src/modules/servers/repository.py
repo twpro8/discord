@@ -2,10 +2,10 @@ from uuid import UUID
 
 from sqlalchemy import select, update
 
-from src.common.repositories import BaseRepository
 from src.modules.servers.mappers import ServerMapper, ServerUserBriefMapper
 from src.modules.servers.models import ServerMemberOrm, ServerOrm
 from src.modules.servers.schemas import ServerSchema, ServerUserBriefSchema
+from src.shared.repositories import BaseRepository
 
 
 class ServerRepository(BaseRepository[ServerOrm, ServerSchema]):

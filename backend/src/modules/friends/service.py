@@ -3,8 +3,6 @@
 # Python modules
 from uuid import UUID
 
-# Project modules
-from src.common.services import BaseService
 from src.modules.friends.enums import FriendStatus
 from src.modules.friends.exceptions import (
     CannotSendFriendRequestToSelfError,
@@ -22,6 +20,9 @@ from src.modules.friends.schemas import (
 )
 from src.modules.friends.unit_of_work import FriendUnitOfWork
 from src.modules.users.exceptions import UserNotFoundError
+
+# Project modules
+from src.shared.services import BaseService
 
 
 class FriendService(BaseService):

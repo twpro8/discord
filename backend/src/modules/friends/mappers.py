@@ -1,9 +1,9 @@
 """Mappers for friend persistence models."""
 
 # Project modules
-from src.common.repositories import BaseMapper
 from src.modules.friends.models import FriendOrm
 from src.modules.friends.schemas import FriendRequest
+from src.shared.repositories import BaseMapper
 
 
 class FriendMapper(BaseMapper[FriendOrm, FriendRequest]):

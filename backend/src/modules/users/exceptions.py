@@ -1,4 +1,4 @@
-from src.common.errors import ConflictError, LumiereError, NotFoundError
+from src.shared.errors import ConflictError, LumiereError, NotFoundError
 
 
 class UserError(LumiereError): ...

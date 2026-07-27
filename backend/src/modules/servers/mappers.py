@@ -2,9 +2,9 @@ from typing import Any
 
 from sqlalchemy import Row
 
-from src.common.repositories import BaseMapper
 from src.modules.servers.models import ServerOrm
 from src.modules.servers.schemas import ServerSchema, ServerUserBriefSchema
+from src.shared.repositories import BaseMapper
 
 
 class ServerMapper(BaseMapper[ServerOrm, ServerSchema]):

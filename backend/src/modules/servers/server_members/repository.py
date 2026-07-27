@@ -1,9 +1,9 @@
-from src.common.repositories import BaseRepository
 from src.modules.servers.models import ServerMemberOrm
 from src.modules.servers.server_members.mappers import ServerMemberMapper
 from src.modules.servers.server_members.schemas import (
     ServerMemberSchema,
 )
+from src.shared.repositories import BaseRepository
 
 
 class ServerMemberRepository(BaseRepository[ServerMemberOrm, ServerMemberSchema]):

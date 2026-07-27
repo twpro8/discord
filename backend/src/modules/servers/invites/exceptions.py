@@ -1,6 +1,6 @@
 from fastapi import status
 
-from src.common.errors.base import LumiereError, NotFoundError
+from src.shared.errors.base import LumiereError, NotFoundError
 
 
 class ServerInviteError(LumiereError):

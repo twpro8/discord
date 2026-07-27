@@ -2,7 +2,6 @@ from typing import Any
 
 from sqlalchemy import Row
 
-from src.common.repositories import BaseMapper
 from src.modules.chats.enums import ChatType
 from src.modules.chats.models import ChatMemberOrm, ChatOrm
 from src.modules.chats.schemas import (
@@ -13,6 +12,7 @@ from src.modules.chats.schemas import (
     LastMessagePreview,
     PrivateChatSummary,
 )
+from src.shared.repositories import BaseMapper
 
 
 class ChatMapper(BaseMapper[ChatOrm, Chat]):

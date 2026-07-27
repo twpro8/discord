@@ -2,7 +2,6 @@ from fastapi import APIRouter, status
 from fastapi.requests import Request
 from fastapi.responses import Response
 
-from src.common.schemas import SuccessResponse
 from src.modules.auth.dependencies import (
     AuthServiceDep,
     OptionalRefreshTokenDep,
@@ -11,6 +10,7 @@ from src.modules.auth.dependencies import (
 from src.modules.auth.schemas import LoginForm, RegisterForm
 from src.modules.auth.utils import delete_token_cookies, set_token_cookies
 from src.modules.users.schemas import UserRead
+from src.shared.schemas import SuccessResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 

@@ -1,6 +1,6 @@
-from src.common.repositories import BaseMapper
 from src.modules.channels.models import ChannelOrm
 from src.modules.channels.schemas import ChannelSchema
+from src.shared.repositories import BaseMapper
 
 
 class ChannelMapper(BaseMapper[ChannelOrm, ChannelSchema]):

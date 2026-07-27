@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 
-from src.common.errors import LumiereError
-from src.kernel.logging import get_logger
+from src.platform.logging import get_logger
+from src.shared.errors import LumiereError
 
 logger = get_logger(__name__)
 

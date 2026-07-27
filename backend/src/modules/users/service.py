@@ -1,9 +1,9 @@
 from uuid import UUID
 
-from src.common.services import BaseService
 from src.modules.users.exceptions import UserNotFoundError
 from src.modules.users.schemas import User, UserUpdateRequest
 from src.modules.users.unit_of_work import UserUnitOfWork
+from src.shared.services import BaseService
 
 
 class UserService(BaseService):

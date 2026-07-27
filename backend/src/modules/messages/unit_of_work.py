@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.common.unit_of_work import BaseUnitOfWork
 from src.modules.channels.repository import ChannelRepository
 from src.modules.chats.repositories import ChatMemberRepository, ChatRepository
 from src.modules.messages.repository import MessageRepository
+from src.shared.unit_of_work import BaseUnitOfWork
 
 
 class MessageUnitOfWork(BaseUnitOfWork):

@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.common.unit_of_work.base_unit_of_work import BaseUnitOfWork
 from src.modules.servers.invites.repository import ServerInviteRepository
 from src.modules.servers.repository import ServerRepository
+from src.shared.unit_of_work.base_unit_of_work import BaseUnitOfWork
 
 
 class ServerInviteUnitOfWork(BaseUnitOfWork):

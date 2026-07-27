@@ -4,9 +4,9 @@ from uuid import UUID
 
 from pydantic import Discriminator, Field, Tag, model_validator
 
-from src.common.schemas import BaseSchema
 from src.modules.messages.utils import get_discriminator_value
 from src.modules.messages.validators import validate_target
+from src.shared.schemas import BaseSchema
 
 
 class MessageBase(BaseSchema):
