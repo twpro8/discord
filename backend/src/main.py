@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.v1.router import build_api_v1_router
 from src.common.errors import LumiereError, app_exception_handler
+from src.composition.container import build_container
 from src.kernel.config import settings
 from src.kernel.logging import configure_logging, get_logger
 from src.kernel.redis import close_redis, init_redis
@@ -47,7 +48,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.add_exception_handler(LumiereError, app_exception_handler)  # type: ignore
-    app.include_router(build_api_v1_router())
+
+    container = build_container()
+    app.state.container = container
+    app.include_router(build_api_v1_router(container))
 
     return app
 
