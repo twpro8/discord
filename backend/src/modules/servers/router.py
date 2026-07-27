@@ -13,7 +13,7 @@ from src.modules.servers.schemas import (
     UpdateOwnerIdSchema,
 )
 from src.modules.servers.server_members.schemas import ServerMemberSchema
-from src.modules.users.dependencies import UserIdDep
+from src.modules.users.transport.http.dependencies import UserIdDep
 
 router = APIRouter(prefix="/servers", tags=["Servers"])
 router.include_router(invite_router, prefix="/{server_id}")

@@ -6,7 +6,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.main import app
-from src.modules.users.schemas import User
+from src.modules.users.domain.schemas import User
 from src.platform.config import settings
 from src.platform.database import Base, get_session
 from src.platform.database.session import (

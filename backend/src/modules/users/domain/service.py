@@ -1,8 +1,9 @@
 from uuid import UUID
 
-from src.modules.users.exceptions import UserNotFoundError
-from src.modules.users.schemas import User, UserUpdateRequest
-from src.modules.users.unit_of_work import UserUnitOfWork
+from src.modules.users.application.unit_of_work import UserUnitOfWork
+from src.modules.users.domain.exceptions import UserNotFoundError
+from src.modules.users.domain.schemas import User
+from src.modules.users.transport.http.schemas import UserUpdateRequest
 from src.shared.services import BaseService
 
 

@@ -8,7 +8,7 @@ from src.modules.messages.schemas import (
     ChatMessage,
     MessageCreateRequest,
 )
-from src.modules.users.dependencies import UserIdDep
+from src.modules.users.transport.http.dependencies import UserIdDep
 
 channel_message_router = APIRouter(prefix="/messages", tags=["Channel Messages"])
 chat_message_router = APIRouter(prefix="/messages", tags=["Chat Messages"])

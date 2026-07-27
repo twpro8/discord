@@ -7,10 +7,10 @@ from fastapi import Depends
 from src.api.v1.dependencies import AccessTokenDep, SessionDep
 from src.modules.auth.exceptions import InvalidAccessTokenError
 from src.modules.auth.security import decode_access_token
-from src.modules.users.repository import UserRepository
-from src.modules.users.schemas import User
-from src.modules.users.service import UserService
-from src.modules.users.unit_of_work import UserUnitOfWork
+from src.modules.users.application.unit_of_work import UserUnitOfWork
+from src.modules.users.domain.schemas import User
+from src.modules.users.domain.service import UserService
+from src.modules.users.Infrastructure.persistence.repository import UserRepository
 
 
 def get_user_repository(session: SessionDep) -> UserRepository:

@@ -15,7 +15,7 @@ from src.modules.chats.schemas import (
     MemberCreate,
 )
 from src.modules.messages.models import MessageOrm
-from src.modules.users.models import UserOrm
+from src.modules.users.Infrastructure.persistence.models import UserOrm
 from src.shared.repositories import BaseRepository
 
 SNIPPET_LEN = 120

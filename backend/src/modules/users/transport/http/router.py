@@ -2,8 +2,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from src.modules.users.dependencies import CurrentUserDep, UserIdDep, UserServiceDep
-from src.modules.users.schemas import UserRead, UserUpdateRequest
+from src.modules.users.domain.schemas import UserRead
+from src.modules.users.transport.http.dependencies import (
+    CurrentUserDep,
+    UserIdDep,
+    UserServiceDep,
+)
+from src.modules.users.transport.http.schemas import UserUpdateRequest
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

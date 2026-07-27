@@ -14,7 +14,7 @@ from src.modules.friends.schemas import (
     FriendRequestWithUser,
     SendFriendRequest,
 )
-from src.modules.users.dependencies import UserIdDep
+from src.modules.users.transport.http.dependencies import UserIdDep
 
 router = APIRouter(prefix="/friends", tags=["Friends"])
 

@@ -12,7 +12,7 @@ from src.api.v1.dependencies import SessionDep
 from src.modules.friends.repository import FriendRepository
 from src.modules.friends.service import FriendService
 from src.modules.friends.unit_of_work import FriendUnitOfWork
-from src.modules.users.repository import UserRepository
+from src.modules.users.Infrastructure.persistence.repository import UserRepository
 
 
 def get_friend_repository(session: SessionDep) -> FriendRepository:

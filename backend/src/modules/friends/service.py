@@ -19,7 +19,7 @@ from src.modules.friends.schemas import (
     SendFriendRequest,
 )
 from src.modules.friends.unit_of_work import FriendUnitOfWork
-from src.modules.users.exceptions import UserNotFoundError
+from src.modules.users.domain.exceptions import UserNotFoundError
 
 # Project modules
 from src.shared.services import BaseService

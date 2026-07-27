@@ -1,5 +1,5 @@
-from src.modules.users.models import UserOrm
-from src.modules.users.schemas import User
+from src.modules.users.domain.schemas import User
+from src.modules.users.Infrastructure.persistence.models import UserOrm
 from src.shared.repositories import BaseMapper
 
 

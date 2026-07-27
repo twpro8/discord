@@ -1,8 +1,6 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import EmailStr, Field
-
 from src.shared.schemas import BaseSchema
 
 
@@ -37,9 +35,3 @@ class UserCreate(BaseSchema):
     username: str
     email: str
     password_hash: str
-
-
-class UserUpdateRequest(BaseSchema):
-    name: str | None = Field(None, max_length=64)
-    username: str | None = Field(None, min_length=3, max_length=32)
-    email: EmailStr | None = Field(None, min_length=3, max_length=32)

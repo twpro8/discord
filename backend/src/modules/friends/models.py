@@ -15,7 +15,7 @@ from src.modules.friends.enums import FriendStatus
 from src.platform.database import UUIDBase, timestamp
 
 if TYPE_CHECKING:
-    from src.modules.users.models import UserOrm
+    from src.modules.users.Infrastructure.persistence.models import UserOrm
 
 
 class FriendOrm(UUIDBase):

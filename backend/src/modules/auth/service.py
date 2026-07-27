@@ -18,8 +18,8 @@ from src.modules.auth.security import (
     verify_password,
 )
 from src.modules.auth.unit_of_work import AuthUnitOfWork
-from src.modules.users.exceptions import UserNotFoundError
-from src.modules.users.schemas import User, UserCreate
+from src.modules.users.domain.exceptions import UserNotFoundError
+from src.modules.users.domain.schemas import User, UserCreate
 from src.platform.config import settings
 from src.shared.services import BaseService
 

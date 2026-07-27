@@ -8,7 +8,7 @@ from src.modules.servers.invites.schemas import (
     ServerInvite,
     ServerInviteWithStatus,
 )
-from src.modules.users.dependencies import UserIdDep
+from src.modules.users.transport.http.dependencies import UserIdDep
 
 router = APIRouter(prefix="/invites", tags=["Server Invites"])
 
