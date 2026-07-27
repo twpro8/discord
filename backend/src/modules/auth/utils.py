@@ -31,7 +31,7 @@ def set_token_cookies(
         secure=settings.secure_cookies,
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-        path=f"{settings.API_V1_STR}/auth",
+        path="/api/v1/auth",
     )
 
 
@@ -53,5 +53,5 @@ def delete_token_cookies(response: Response) -> None:
         httponly=True,
         secure=settings.secure_cookies,
         samesite="lax",
-        path=f"{settings.API_V1_STR}/auth",
+        path="/api/v1/auth",
     )

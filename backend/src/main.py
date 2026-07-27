@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.errors import register_exception_handlers
 from src.api.v1.router import build_api_v1_router
-from src.common.errors import LumiereError, app_exception_handler
 from src.composition.container import build_container
 from src.kernel.config import settings
 from src.kernel.logging import configure_logging, get_logger
@@ -17,19 +17,15 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # --- Startup ---
     configure_logging()
     logger.info("app.startup", env=settings.ENVIRONMENT)
-
     # Initialize Redis connection pool
     app.state.redis = await init_redis()
 
     yield
 
-    # --- Shutdown ---
     logger.info("app.shutdown")
-
-    # Gracefully close Redis connection
+    # Close Redis connection
     await close_redis(app.state.redis)
 
 
@@ -37,7 +33,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.APP_NAME,
         lifespan=lifespan,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json",
+        openapi_url="/api/v1/openapi.json",
         generate_unique_id_function=custom_generate_unique_id,
     )
     app.add_middleware(
@@ -47,7 +43,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.add_exception_handler(LumiereError, app_exception_handler)  # type: ignore
+
+    register_exception_handlers(app)
 
     container = build_container()
     app.state.container = container

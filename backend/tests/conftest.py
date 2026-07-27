@@ -75,7 +75,7 @@ async def authed_client(
 ) -> AsyncGenerator[AsyncClient, Any]:
     """Authenticated async http client fixture"""
     response = await ac.post(
-        f"{settings.API_V1_STR}/auth/login",
+        "/api/v1/auth/login",
         json={
             "username": current_user.username,
             "password": "12345678",
