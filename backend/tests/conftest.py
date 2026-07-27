@@ -89,5 +89,5 @@ async def authed_client(
 
 pytest_plugins = [
     "tests.fixtures.session",
-    "tests.fixtures.user",
+    "tests.fixtures.users",
 ]

@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.users.domain.schemas import User
-from src.modules.users.Infrastructure.persistence.models import UserOrm
+from src.modules.users.infrastructure.persistence.models import UserOrm
 from tests.data import users
 
 
