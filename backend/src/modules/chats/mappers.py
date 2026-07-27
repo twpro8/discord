@@ -2,7 +2,7 @@ from typing import Any
 
 from sqlalchemy import Row
 
-from src.kernel.repositories.base_data_mapper import BaseMapper
+from src.common.repositories import BaseMapper
 from src.modules.chats.enums import ChatType
 from src.modules.chats.models import ChatMemberOrm, ChatOrm
 from src.modules.chats.schemas import (

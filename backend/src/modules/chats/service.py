@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from src.kernel.services.base_service import BaseService
+from src.common.services.base_service import BaseService
 from src.modules.chats.enums import ChatMemberRole, ChatType
 from src.modules.chats.exceptions import SelfChatForbiddenError
 from src.modules.chats.schemas import (

@@ -5,7 +5,7 @@ from asyncpg.exceptions import UniqueViolationError
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
-from src.kernel.repositories import BaseRepository
+from src.common.repositories import BaseRepository
 from src.modules.users.exceptions import UserAlreadyExistsError
 from src.modules.users.mappers import UserMapper
 from src.modules.users.models import UserOrm

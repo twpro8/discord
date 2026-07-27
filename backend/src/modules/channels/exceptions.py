@@ -1,4 +1,4 @@
-from src.kernel.errors import LumiereError, NotFoundError
+from src.common.errors import LumiereError, NotFoundError
 
 
 class ChannelError(LumiereError): ...

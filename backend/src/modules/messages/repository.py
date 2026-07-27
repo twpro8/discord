@@ -2,7 +2,7 @@ from asyncpg.exceptions import ForeignKeyViolationError
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
-from src.kernel.repositories import BaseRepository
+from src.common.repositories import BaseRepository
 from src.modules.messages.exceptions import MessageNotFoundError
 from src.modules.messages.mappers import MessageMapper
 from src.modules.messages.models import MessageOrm

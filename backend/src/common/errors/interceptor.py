@@ -1,7 +1,7 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from src.kernel.errors.base import LumiereError
+from src.common.errors.base import LumiereError
 
 
 async def app_exception_handler(

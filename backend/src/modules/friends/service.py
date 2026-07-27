@@ -4,7 +4,7 @@
 from uuid import UUID
 
 # Project modules
-from src.kernel.services import BaseService
+from src.common.services import BaseService
 from src.modules.friends.enums import FriendStatus
 from src.modules.friends.exceptions import (
     CannotSendFriendRequestToSelfError,

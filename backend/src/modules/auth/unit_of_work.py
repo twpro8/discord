@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.kernel.unit_of_work import BaseUnitOfWork
+from src.common.unit_of_work import BaseUnitOfWork
 from src.modules.auth.repository import RefreshTokenRepository
 from src.modules.users.repository import UserRepository
 

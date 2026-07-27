@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.kernel.services.base_service import BaseService
+from src.common.services.base_service import BaseService
 from src.modules.channels.enums import ChannelType
 from src.modules.channels.schemas import ChannelCreateSchema, ChannelSchema
 from src.modules.channels.unit_of_work import ChannelUnitOfWork

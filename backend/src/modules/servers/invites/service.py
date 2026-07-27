@@ -6,7 +6,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.kernel.services.base_service import BaseService
+from src.common.services.base_service import BaseService
 from src.modules.servers.invites.exceptions import (
     ServerInviteCannotDeleteError,
     ServerInviteGenerationFailedError,

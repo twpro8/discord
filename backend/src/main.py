@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.common.errors import LumiereError, app_exception_handler
 from src.kernel.config import settings
-from src.kernel.errors import LumiereError, app_exception_handler
 from src.kernel.logging import configure_logging, get_logger
 from src.kernel.redis import close_redis, init_redis
 from src.kernel.router import api_router

@@ -2,7 +2,7 @@ from fastapi import APIRouter, status
 from fastapi.requests import Request
 from fastapi.responses import Response
 
-from src.kernel.schemas import SuccessResponse
+from src.common.schemas import SuccessResponse
 from src.modules.auth.dependencies import (
     AuthServiceDep,
     OptionalRefreshTokenDep,

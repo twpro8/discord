@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import Field
 
-from src.kernel.schemas.base_schema import BaseSchema
+from src.common.schemas.base_schema import BaseSchema
 
 
 class ServerInvite(BaseSchema):

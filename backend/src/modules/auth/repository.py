@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import update
 
-from src.kernel.repositories import BaseRepository
+from src.common.repositories import BaseRepository
 from src.modules.auth.mappers import AuthMapper
 from src.modules.auth.models import RefreshTokenOrm
 from src.modules.auth.schemas import RefreshToken

@@ -7,10 +7,10 @@ from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Executable
 
+from src.common.errors import NotFoundError
+from src.common.repositories.base_data_mapper import BaseMapper
+from src.common.schemas.base_schema import BaseSchema
 from src.kernel.database import UUIDBase
-from src.kernel.errors import NotFoundError
-from src.kernel.repositories.base_data_mapper import BaseMapper
-from src.kernel.schemas.base_schema import BaseSchema
 
 
 class BaseRepository[T: UUIDBase, R: BaseSchema]:

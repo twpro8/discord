@@ -5,13 +5,13 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.common.models import *  # noqa
 from src.kernel.config import settings
 from src.kernel.database import Base, get_session
 from src.kernel.database.session import (
     get_null_pool_engine,
     get_null_pool_session_factory,
 )
-from src.kernel.models import *  # noqa
 from src.main import app
 from src.modules.users.schemas import User
 from tests.dependency_overrides.redis_client import get_fake_redis_client

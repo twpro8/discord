@@ -8,7 +8,7 @@ from uuid import UUID
 from pydantic import Field
 
 # Project modules
-from src.kernel.schemas import BaseSchema
+from src.common.schemas import BaseSchema
 from src.modules.friends.enums import FriendStatus
 
 MIN_USERNAME_LENGTH = 3

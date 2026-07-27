@@ -4,7 +4,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Project modules
-from src.kernel.unit_of_work import BaseUnitOfWork
+from src.common.unit_of_work import BaseUnitOfWork
 from src.modules.friends.repository import FriendRepository
 from src.modules.users.repository import UserRepository
 
