@@ -14,7 +14,7 @@ from src.modules.messages.domain.repositories.message_repository import (
 )
 
 
-class AbstractMessageUnitOfWork(ABC):
+class MessageUnitOfWork(ABC):
     messages: MessageRepository
     chats: ChatRepository
     chat_members: ChatMemberRepository

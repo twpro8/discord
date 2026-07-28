@@ -1,21 +1,22 @@
 from asyncpg.exceptions import ForeignKeyViolationError
-from pydantic import BaseModel
+from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.messages.domain.entities.schemas import Message
+from src.modules.messages.domain.entities.schemas import Message, MessageCreate
 from src.modules.messages.domain.exceptions import MessageNotFoundError
-from src.modules.messages.infrastructure.persistence.mappers import MessageMapper
+from src.modules.messages.infrastructure.persistence.mappers import model_to_entity
 from src.modules.messages.models import MessageOrm
-from src.shared.repositories import BaseRepository
 
 
-class MessageRepository(BaseRepository[MessageOrm, Message]):
-    model = MessageOrm
-    mapper = MessageMapper
+class MessageRepositoryImpl:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
 
-    async def create(self, data: BaseModel) -> Message:
+    async def create(self, data: MessageCreate) -> Message:
+        stmt = insert(MessageOrm).values(**data.model_dump()).returning(MessageOrm)
         try:
-            message = await super().create(data)
+            result = await self._session.execute(stmt)
         except IntegrityError as e:
             cause = getattr(e.orig, "__cause__", None)
             constraint = getattr(cause, "constraint_name", None)
@@ -25,4 +26,4 @@ class MessageRepository(BaseRepository[MessageOrm, Message]):
                         raise MessageNotFoundError
                 raise
             raise
-        return message
+        return model_to_entity(result.scalar_one())

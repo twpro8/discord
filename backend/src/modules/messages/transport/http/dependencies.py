@@ -15,12 +15,22 @@ from src.modules.messages.application.commands.send_channel_message import (
 from src.modules.messages.application.commands.send_chat_message import (
     SendChatMessageCommand,
 )
-from src.modules.messages.infrastructure.persistence.repository import MessageRepository
-from src.modules.messages.infrastructure.unit_of_work import MessageUnitOfWork
+from src.modules.messages.domain.repositories.message_repository import (
+    MessageRepository,
+)
+from src.modules.messages.domain.repositories.message_unit_of_work import (
+    MessageUnitOfWork,
+)
+from src.modules.messages.infrastructure.message_unit_of_work_impl import (
+    MessageUnitOfWorkImpl,
+)
+from src.modules.messages.infrastructure.persistence.message_repository_impl import (
+    MessageRepositoryImpl,
+)
 
 
 def get_message_repository(session: SessionDep) -> MessageRepository:
-    return MessageRepository(session)
+    return MessageRepositoryImpl(session)
 
 
 async def get_message_unit_of_work(
@@ -30,7 +40,7 @@ async def get_message_unit_of_work(
     chat_member_repository: ChatMemberRepositoryDep,
     channel_repository: ChannelRepositoryDep,
 ) -> AsyncGenerator[MessageUnitOfWork]:
-    async with MessageUnitOfWork(
+    async with MessageUnitOfWorkImpl(
         session,
         message_repository,
         chat_repository,

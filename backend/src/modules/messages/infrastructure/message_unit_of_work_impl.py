@@ -7,14 +7,16 @@ from src.modules.chats.domain.repositories.chat_member_repository import (
     ChatMemberRepository,
 )
 from src.modules.chats.domain.repositories.chat_repository import ChatRepository
-from src.modules.messages.domain.repositories.message_unit_of_work import (
-    AbstractMessageUnitOfWork,
+from src.modules.messages.domain.repositories.message_repository import (
+    MessageRepository,
 )
-from src.modules.messages.infrastructure.persistence.repository import MessageRepository
+from src.modules.messages.domain.repositories.message_unit_of_work import (
+    MessageUnitOfWork,
+)
 from src.shared.unit_of_work import BaseUnitOfWork
 
 
-class MessageUnitOfWork(BaseUnitOfWork, AbstractMessageUnitOfWork):
+class MessageUnitOfWorkImpl(BaseUnitOfWork, MessageUnitOfWork):
     def __init__(
         self,
         session: AsyncSession,

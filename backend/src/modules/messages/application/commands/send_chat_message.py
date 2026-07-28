@@ -6,13 +6,13 @@ from src.modules.messages.domain.entities.schemas import (
     MessageCreateRequest,
 )
 from src.modules.messages.domain.repositories.message_unit_of_work import (
-    AbstractMessageUnitOfWork,
+    MessageUnitOfWork,
 )
 from src.shared.permissions import assert_is_chat_member
 
 
 class SendChatMessageCommand:
-    def __init__(self, uow: AbstractMessageUnitOfWork) -> None:
+    def __init__(self, uow: MessageUnitOfWork) -> None:
         self._uow = uow
 
     async def __call__(
