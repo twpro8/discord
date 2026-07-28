@@ -33,10 +33,7 @@ async def create_server(
     server_data: ServerCreateRequestSchema,
     command: CreateServerCommandDep,
 ) -> ServerSchema:
-    new_server = await command(
-        server_data=server_data,
-        owner_id=current_user_id,
-    )
+    new_server = await command(server_data=server_data, owner_id=current_user_id)
     return new_server
 
 
@@ -57,7 +54,9 @@ async def transfer_ownership(
     owner_id: UpdateOwnerIdSchema,
 ) -> ServerSchema:
     new_server = await command(
-        server_id=server_id, current_user_id=current_user_id, data=owner_id
+        server_id=server_id,
+        current_user_id=current_user_id,
+        data=owner_id,
     )
     return new_server
 
@@ -100,7 +99,4 @@ async def delete_server(
     current_user_id: UserIdDep,
     command: DeleteServerCommandDep,
 ) -> None:
-    await command(
-        server_id=server_id,
-        owner_id=current_user_id,
-    )
+    await command(server_id=server_id, owner_id=current_user_id)
