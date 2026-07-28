@@ -4,9 +4,12 @@ from fastapi.responses import Response
 
 from src.modules.auth.domain.schemas import LoginForm, RegisterForm
 from src.modules.auth.transport.http.dependencies import (
-    AuthServiceDep,
+    LoginCommandDep,
+    LogoutCommandDep,
     OptionalRefreshTokenDep,
+    RefreshCommandDep,
     RefreshTokenDep,
+    RegisterCommandDep,
 )
 from src.modules.auth.transport.http.utils import (
     delete_token_cookies,
@@ -24,10 +27,10 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 )
 async def authenticate(
     form_data: LoginForm,
-    service: AuthServiceDep,
+    command: LoginCommandDep,
     response: Response,
 ) -> SuccessResponse:
-    result = await service.login(form_data.username, form_data.password)
+    result = await command(form_data.username, form_data.password)
     set_token_cookies(response, result.access_token, result.refresh_token)
     return SuccessResponse()
 
@@ -38,11 +41,11 @@ async def authenticate(
 )
 async def register(
     form_data: RegisterForm,
-    service: AuthServiceDep,
+    command: RegisterCommandDep,
     request: Request,
     response: Response,
 ) -> UserRead:
-    user = await service.register(form_data)
+    user = await command(form_data)
     response.headers["location"] = f"{request.url.path}/{user.id}"
     return UserRead.model_validate(user)
 
@@ -50,10 +53,10 @@ async def register(
 @router.post("/refresh", status_code=status.HTTP_200_OK)
 async def refresh(
     refresh_token: RefreshTokenDep,
-    service: AuthServiceDep,
+    command: RefreshCommandDep,
     response: Response,
 ) -> SuccessResponse:
-    tokens = await service.refresh(refresh_token)
+    tokens = await command(refresh_token)
     set_token_cookies(response, tokens.access_token, tokens.refresh_token)
     return SuccessResponse()
 
@@ -61,10 +64,10 @@ async def refresh(
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
     refresh_token: OptionalRefreshTokenDep,
-    service: AuthServiceDep,
+    command: LogoutCommandDep,
     response: Response,
 ) -> None:
     delete_token_cookies(response)
     if refresh_token is None:
         return
-    await service.logout(refresh_token)
+    await command(refresh_token)
