@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from src.modules.servers.domain.entities.schemas import (
+from src.modules.servers.domain.entities.server import (
     ServerCreateRequestSchema,
     ServerInviteCode,
     ServerSchema,
@@ -10,12 +10,17 @@ from src.modules.servers.domain.entities.schemas import (
     ServerUserBriefSchema,
     UpdateOwnerIdSchema,
 )
-from src.modules.servers.invites.router import router as invite_router
-from src.modules.servers.server_members.schemas import ServerMemberSchema
+from src.modules.servers.domain.entities.server_member import ServerMemberSchema
 from src.modules.servers.transport.http.dependencies import (
-    ServerMemberServiceDep,
-    ServerServiceDep,
+    CreateServerCommandDep,
+    DeleteServerCommandDep,
+    GetServersWhereUserMemberQueryDep,
+    GetServerWhereUserMemberQueryDep,
+    JoinServerCommandDep,
+    TransferServerOwnershipCommandDep,
+    UpdateServerCommandDep,
 )
+from src.modules.servers.transport.http.invites import router as invite_router
 from src.modules.users.transport.http.dependencies import UserIdDep
 
 router = APIRouter(prefix="/servers", tags=["Servers"])
@@ -26,9 +31,9 @@ router.include_router(invite_router, prefix="/{server_id}")
 async def create_server(
     current_user_id: UserIdDep,
     server_data: ServerCreateRequestSchema,
-    service: ServerServiceDep,
+    command: CreateServerCommandDep,
 ) -> ServerSchema:
-    new_server = await service.create_server(
+    new_server = await command(
         server_data=server_data,
         owner_id=current_user_id,
     )
@@ -39,20 +44,19 @@ async def create_server(
 async def join_server(
     current_user_id: UserIdDep,
     code: ServerInviteCode,
-    service: ServerMemberServiceDep,
+    command: JoinServerCommandDep,
 ) -> ServerMemberSchema:
-    new_server = await service.join_server(user_id=current_user_id, code_schema=code)
-    return new_server
+    return await command(user_id=current_user_id, code_schema=code)
 
 
 @router.post("/{server_id}/transfer", status_code=status.HTTP_200_OK)
 async def transfer_ownership(
     server_id: UUID,
     current_user_id: UserIdDep,
-    service: ServerServiceDep,
+    command: TransferServerOwnershipCommandDep,
     owner_id: UpdateOwnerIdSchema,
 ) -> ServerSchema:
-    new_server = await service.transfer_server_ownership(
+    new_server = await command(
         server_id=server_id, current_user_id=current_user_id, data=owner_id
     )
     return new_server
@@ -61,20 +65,18 @@ async def transfer_ownership(
 @router.get("", response_model=list[ServerUserBriefSchema])
 async def get_my_servers(
     current_user_id: UserIdDep,
-    service: ServerServiceDep,
+    query: GetServersWhereUserMemberQueryDep,
 ) -> list[ServerUserBriefSchema]:
-    return await service.get_servers_where_user_member(user_id=current_user_id)
+    return await query(user_id=current_user_id)
 
 
 @router.get("/{server_id}", response_model=ServerSchema)
 async def get_my_server(
     current_user_id: UserIdDep,
     server_id: UUID,
-    service: ServerServiceDep,
-) -> ServerSchema | None:
-    return await service.get_server_where_user_member(
-        user_id=current_user_id, server_id=server_id
-    )
+    query: GetServerWhereUserMemberQueryDep,
+) -> ServerSchema:
+    return await query(user_id=current_user_id, server_id=server_id)
 
 
 @router.patch("/{server_id}")
@@ -82,9 +84,9 @@ async def update_server(
     server_id: UUID,
     current_user_id: UserIdDep,
     update_data: ServerUpdateRequestSchema,
-    service: ServerServiceDep,
+    command: UpdateServerCommandDep,
 ) -> ServerSchema:
-    updated_server = await service.update_server(
+    updated_server = await command(
         update_data=update_data,
         server_id=server_id,
         owner_id=current_user_id,
@@ -96,9 +98,9 @@ async def update_server(
 async def delete_server(
     server_id: UUID,
     current_user_id: UserIdDep,
-    service: ServerServiceDep,
+    command: DeleteServerCommandDep,
 ) -> None:
-    await service.delete_server(
+    await command(
         server_id=server_id,
         owner_id=current_user_id,
     )

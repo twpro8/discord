@@ -20,9 +20,7 @@ class ServerInvite(BaseSchema):
 
 class CreateServerInviteRequest(BaseSchema):
     expires_in: int | None = Field(None)
-    max_uses: int | None = Field(
-        default=None,
-    )
+    max_uses: int | None = Field(default=None)
 
 
 class CreateServerInvite(BaseSchema):

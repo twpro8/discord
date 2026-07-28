@@ -2,12 +2,16 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
-from src.modules.servers.invites.schemas import (
+from src.modules.servers.domain.entities.server_invite import (
     CreateServerInviteRequest,
     ServerInvite,
     ServerInviteWithStatus,
 )
-from src.modules.servers.transport.http.dependencies import ServerInviteServiceDep
+from src.modules.servers.transport.http.dependencies import (
+    CreateInviteCommandDep,
+    DeleteInviteCommandDep,
+    GetInvitesQueryDep,
+)
 from src.modules.users.transport.http.dependencies import UserIdDep
 
 router = APIRouter(prefix="/invites", tags=["Server Invites"])
@@ -18,9 +22,9 @@ async def create_invite(
     server_id: UUID,
     current_user_id: UserIdDep,
     payload: CreateServerInviteRequest,
-    service: ServerInviteServiceDep,
+    command: CreateInviteCommandDep,
 ) -> ServerInvite:
-    return await service.create_invite(
+    return await command(
         server_id=server_id,
         user_id=current_user_id,
         payload=payload,
@@ -31,11 +35,11 @@ async def create_invite(
 async def get_invites(
     user_id: UserIdDep,
     server_id: UUID,
-    service: ServerInviteServiceDep,
+    query: GetInvitesQueryDep,
     limit: int = Query(default=100, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ) -> list[ServerInviteWithStatus]:
-    return await service.list_invites(
+    return await query(
         user_id=user_id,
         server_id=server_id,
         limit=limit,
@@ -48,9 +52,9 @@ async def delete_invite(
     server_id: UUID,
     code: str,
     current_user_id: UserIdDep,
-    service: ServerInviteServiceDep,
+    command: DeleteInviteCommandDep,
 ) -> None:
-    await service.delete_invite(
+    await command(
         server_id=server_id,
         user_id=current_user_id,
         code=code,
