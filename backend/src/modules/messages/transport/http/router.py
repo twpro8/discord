@@ -7,7 +7,10 @@ from src.modules.messages.domain.entities.schemas import (
     ChatMessage,
     MessageCreateRequest,
 )
-from src.modules.messages.transport.http.dependencies import MessageServiceDep
+from src.modules.messages.transport.http.dependencies import (
+    SendChannelMessageCommandDep,
+    SendChatMessageCommandDep,
+)
 from src.modules.users.transport.http.dependencies import UserIdDep
 
 channel_message_router = APIRouter(prefix="/messages", tags=["Channel Messages"])
@@ -18,10 +21,10 @@ chat_message_router = APIRouter(prefix="/messages", tags=["Chat Messages"])
 async def send_channel_message(
     data: MessageCreateRequest,
     user_id: UserIdDep,
-    service: MessageServiceDep,
+    command: SendChannelMessageCommandDep,
     channel_id: UUID,
 ) -> ChannelMessage:
-    return await service.send_channel_message(
+    return await command(
         channel_id=channel_id,
         sender_id=user_id,
         data=data,
@@ -32,10 +35,10 @@ async def send_channel_message(
 async def send_chat_message(
     data: MessageCreateRequest,
     user_id: UserIdDep,
-    service: MessageServiceDep,
+    command: SendChatMessageCommandDep,
     chat_id: UUID,
 ) -> ChatMessage:
-    return await service.send_chat_message(
+    return await command(
         chat_id=chat_id,
         sender_id=user_id,
         data=data,

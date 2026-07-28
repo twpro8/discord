@@ -9,7 +9,7 @@ from src.modules.chats.domain.exceptions import (
 
 if TYPE_CHECKING:
     from src.modules.chats.domain.entities.chat import Chat
-    from src.modules.chats.infrastructure.persistence.repositories import (
+    from src.modules.chats.domain.repositories.chat_repository import (
         ChatMemberRepository,
         ChatRepository,
     )

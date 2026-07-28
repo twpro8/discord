@@ -5,11 +5,14 @@ from src.modules.chats.infrastructure.persistence.repositories import (
     ChatMemberRepository,
     ChatRepository,
 )
+from src.modules.messages.domain.repositories.message_unit_of_work import (
+    AbstractMessageUnitOfWork,
+)
 from src.modules.messages.infrastructure.persistence.repository import MessageRepository
 from src.shared.unit_of_work import BaseUnitOfWork
 
 
-class MessageUnitOfWork(BaseUnitOfWork):
+class MessageUnitOfWork(BaseUnitOfWork, AbstractMessageUnitOfWork):
     def __init__(
         self,
         session: AsyncSession,
