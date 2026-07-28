@@ -1,6 +1,6 @@
 from httpx import AsyncClient
 
-from src.modules.chats.enums import ChatType
+from src.modules.chats.domain.enums import ChatType
 from src.modules.users.domain.entities.user import User
 
 

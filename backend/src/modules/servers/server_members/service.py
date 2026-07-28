@@ -4,10 +4,10 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.servers.enums import ServerMemberRole
-from src.modules.servers.exceptions import MemberNotFoundError
+from src.modules.servers.domain.entities.schemas import ServerInviteCode
+from src.modules.servers.domain.enums import ServerMemberRole
+from src.modules.servers.domain.exceptions import MemberNotFoundError
 from src.modules.servers.invites.exceptions import ServerInviteNotFoundError
-from src.modules.servers.schemas import ServerInviteCode
 from src.modules.servers.server_members.schemas import (
     ServerMemberCreateSchema,
     ServerMemberSchema,

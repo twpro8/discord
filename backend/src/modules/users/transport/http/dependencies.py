@@ -5,8 +5,8 @@ from uuid import UUID
 from fastapi import Depends
 
 from src.api.v1.dependencies import AccessTokenDep, SessionDep
-from src.modules.auth.exceptions import InvalidAccessTokenError
-from src.modules.auth.security import decode_access_token
+from src.core.security.jwt import decode_access_token
+from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.modules.users.application.commands.delete_user import DeleteUserCommand
 from src.modules.users.application.commands.update_user import UpdateUserCommand
 from src.modules.users.application.queries.get_user_by_id import (

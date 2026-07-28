@@ -5,8 +5,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.database import UUIDBase, str_128, str_255, str_512, timestamp
 
 if TYPE_CHECKING:
-    from src.modules.auth.models import RefreshTokenOrm
-    from src.modules.friends.models import FriendOrm
+    from src.modules.auth.infrastructure.persistence.models import RefreshTokenOrm
+    from src.modules.friends.infrastructure.persistence.models import FriendOrm
 
 
 class UserOrm(UUIDBase):

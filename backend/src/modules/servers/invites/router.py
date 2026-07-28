@@ -2,12 +2,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
-from src.modules.servers.dependencies import ServerInviteServiceDep
 from src.modules.servers.invites.schemas import (
     CreateServerInviteRequest,
     ServerInvite,
     ServerInviteWithStatus,
 )
+from src.modules.servers.transport.http.dependencies import ServerInviteServiceDep
 from src.modules.users.transport.http.dependencies import UserIdDep
 
 router = APIRouter(prefix="/invites", tags=["Server Invites"])

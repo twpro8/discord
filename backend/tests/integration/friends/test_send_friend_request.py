@@ -8,10 +8,10 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.friends.enums import FriendStatus
+from src.modules.friends.domain.enums import FriendStatus
 
 # Project modules
-from src.modules.friends.models import FriendOrm
+from src.modules.friends.infrastructure.persistence.models import FriendOrm
 from src.modules.users.domain.entities.user import User
 
 
