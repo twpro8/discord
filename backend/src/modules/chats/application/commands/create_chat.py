@@ -9,12 +9,12 @@ from src.modules.chats.domain.entities.schemas import (
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
 from src.modules.chats.domain.exceptions import SelfChatForbiddenError
 from src.modules.chats.domain.repositories.chat_unit_of_work import (
-    AbstractChatUnitOfWork,
+    ChatUnitOfWork,
 )
 
 
 class CreateChatCommand:
-    def __init__(self, uow: AbstractChatUnitOfWork) -> None:
+    def __init__(self, uow: ChatUnitOfWork) -> None:
         self._uow = uow
 
     async def __call__(self, creator_id: UUID, data: ChatCreateRequest) -> Chat:

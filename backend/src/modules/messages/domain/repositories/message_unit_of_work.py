@@ -3,8 +3,10 @@ from abc import ABC, abstractmethod
 from src.modules.channels.domain.repositories.channel_repository import (
     ChannelRepository,
 )
-from src.modules.chats.domain.repositories.chat_repository import (
+from src.modules.chats.domain.repositories.chat_member_repository import (
     ChatMemberRepository,
+)
+from src.modules.chats.domain.repositories.chat_repository import (
     ChatRepository,
 )
 from src.modules.messages.domain.repositories.message_repository import (

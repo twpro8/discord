@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 
-from src.modules.chats.domain.repositories.chat_repository import (
+from src.modules.chats.domain.repositories.chat_member_repository import (
     ChatMemberRepository,
+)
+from src.modules.chats.domain.repositories.chat_repository import (
     ChatRepository,
 )
 
 
-class AbstractChatUnitOfWork(ABC):
+class ChatUnitOfWork(ABC):
     chats: ChatRepository
     members: ChatMemberRepository
 

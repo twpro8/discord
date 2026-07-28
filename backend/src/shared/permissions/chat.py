@@ -9,8 +9,10 @@ from src.modules.chats.domain.exceptions import (
 
 if TYPE_CHECKING:
     from src.modules.chats.domain.entities.chat import Chat
-    from src.modules.chats.domain.repositories.chat_repository import (
+    from src.modules.chats.domain.repositories.chat_member_repository import (
         ChatMemberRepository,
+    )
+    from src.modules.chats.domain.repositories.chat_repository import (
         ChatRepository,
     )
 
@@ -25,11 +27,11 @@ async def assert_is_chat_member(
     user_id: UUID,
     chat_id: UUID,
 ) -> Chat:
-    chat = await uow.chats.get_by_id(chat_id)
+    chat = await uow.chats.find_by_id(chat_id)
     if chat is None:
         raise ChatNotFoundError
 
-    membership = await uow.chat_members.get_active(chat_id, user_id)
+    membership = await uow.chat_members.find_active(chat_id, user_id)
     if membership is None:
         raise NotChatMemberError
 

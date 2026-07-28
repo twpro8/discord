@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.channels.domain.repositories.channel_repository import (
     ChannelRepository,
 )
-from src.modules.chats.infrastructure.persistence.repositories import (
+from src.modules.chats.domain.repositories.chat_member_repository import (
     ChatMemberRepository,
-    ChatRepository,
 )
+from src.modules.chats.domain.repositories.chat_repository import ChatRepository
 from src.modules.messages.domain.repositories.message_unit_of_work import (
     AbstractMessageUnitOfWork,
 )

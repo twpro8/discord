@@ -1,16 +1,16 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.chats.domain.repositories.chat_unit_of_work import (
-    AbstractChatUnitOfWork,
-)
-from src.modules.chats.infrastructure.persistence.repositories import (
+from src.modules.chats.domain.repositories.chat_member_repository import (
     ChatMemberRepository,
-    ChatRepository,
+)
+from src.modules.chats.domain.repositories.chat_repository import ChatRepository
+from src.modules.chats.domain.repositories.chat_unit_of_work import (
+    ChatUnitOfWork,
 )
 from src.shared.unit_of_work import BaseUnitOfWork
 
 
-class ChatUnitOfWork(BaseUnitOfWork, AbstractChatUnitOfWork):
+class ChatUnitOfWorkImpl(BaseUnitOfWork, ChatUnitOfWork):
     def __init__(
         self,
         session: AsyncSession,

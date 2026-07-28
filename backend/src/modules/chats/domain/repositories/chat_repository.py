@@ -1,16 +1,17 @@
 from typing import Protocol
 from uuid import UUID
 
-from pydantic import BaseModel
-
-from src.modules.chats.domain.entities.chat import Chat, ChatMember
-from src.modules.chats.domain.entities.schemas import ChatSummaryPage, MemberCreate
+from src.modules.chats.domain.entities.chat import Chat
+from src.modules.chats.domain.entities.schemas import (
+    ChatCreate,
+    ChatSummaryPage,
+)
 
 
 class ChatRepository(Protocol):
-    async def create(self, data: BaseModel) -> Chat: ...
+    async def create(self, data: ChatCreate) -> Chat: ...
 
-    async def get_by_id(self, chat_id: UUID) -> Chat | None: ...
+    async def find_by_id(self, chat_id: UUID) -> Chat | None: ...
 
     async def find_private_chat(self, user_a: UUID, user_b: UUID) -> Chat | None: ...
 
@@ -22,9 +23,3 @@ class ChatRepository(Protocol):
         limit: int,
         cursor: str | None,
     ) -> ChatSummaryPage: ...
-
-
-class ChatMemberRepository(Protocol):
-    async def add_members(self, members: list[MemberCreate]) -> None: ...
-
-    async def get_active(self, chat_id: UUID, user_id: UUID) -> ChatMember | None: ...

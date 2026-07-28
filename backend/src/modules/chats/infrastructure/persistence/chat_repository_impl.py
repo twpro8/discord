@@ -2,31 +2,32 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import Executable, and_, desc, func, insert, select, tuple_, update
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from src.modules.chats.domain.cursor import decode_cursor, encode_cursor
-from src.modules.chats.domain.entities.chat import Chat, ChatMember
-from src.modules.chats.domain.entities.schemas import (
-    ChatSummaryPage,
-    MemberCreate,
-)
+from src.modules.chats.domain.entities.chat import Chat
+from src.modules.chats.domain.entities.schemas import ChatCreate, ChatSummaryPage
 from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.infrastructure.persistence.mappers import (
-    ChatMapper,
-    ChatSummaryMapper,
-    MemberMapper,
+    chat_model_to_entity,
+    chat_summary_to_entity,
 )
 from src.modules.chats.infrastructure.persistence.models import ChatMemberOrm, ChatOrm
 from src.modules.messages.models import MessageOrm
 from src.modules.users.infrastructure.persistence.models import UserOrm
-from src.shared.repositories import BaseRepository
 
 SNIPPET_LEN = 120
 
 
-class ChatRepository(BaseRepository[ChatOrm, Chat]):
-    model = ChatOrm
-    mapper = ChatMapper
+class ChatRepositoryImpl:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def create(self, data: ChatCreate) -> Chat:
+        stmt = insert(ChatOrm).values(**data.model_dump()).returning(ChatOrm)
+        result = await self._session.execute(stmt)
+        return chat_model_to_entity(result.scalar_one())
 
     async def find_private_chat(self, user_a: UUID, user_b: UUID) -> Chat | None:
         """Find private chat between users"""
@@ -46,8 +47,9 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
             )
             .where(ChatOrm.type == ChatType.private)
         )
-
-        return await self._execute_and_map_one_or_none(query)
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return chat_model_to_entity(model) if model else None
 
     async def list_chats_for_user(
         self,
@@ -58,12 +60,12 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
         decoded_cursor = decode_cursor(cursor) if cursor else None
 
         query = self._build_chat_list_query(user_id, limit, decoded_cursor)
-        rows = (await self.session.execute(query)).all()
+        rows = (await self._session.execute(query)).all()
 
         has_next = len(rows) > limit
         rows = rows[:limit]
 
-        items = [ChatSummaryMapper.to_schema(r) for r in rows]
+        items = [chat_summary_to_entity(r) for r in rows]
         next_cursor = (
             encode_cursor(rows[-1].sort_key, rows[-1].id) if has_next else None
         )
@@ -78,7 +80,7 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
             .join(ChatMemberOrm, ChatMemberOrm.chat_id == ChatOrm.id)
             .where(ChatMemberOrm.user_id == user_id, ChatMemberOrm.left_at.is_(None))
         )
-        result = await self.session.execute(query)
+        result = await self._session.execute(query)
         count = result.scalar_one()
         return count
 
@@ -166,8 +168,11 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
 
         return query
 
-    async def get_by_id(self, chat_id: UUID) -> Chat | None:
-        return await self.get_one(id=chat_id)
+    async def find_by_id(self, chat_id: UUID) -> Chat | None:
+        query = select(ChatOrm).filter_by(id=chat_id)
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return chat_model_to_entity(model) if model else None
 
     async def increment_sequence(self, chat_id: UUID) -> int:
         stmt = (
@@ -176,17 +181,5 @@ class ChatRepository(BaseRepository[ChatOrm, Chat]):
             .values(last_sequence=ChatOrm.last_sequence + 1)
             .returning(ChatOrm.last_sequence)
         )
-        result = await self.session.execute(stmt)
+        result = await self._session.execute(stmt)
         return result.scalar_one()
-
-
-class ChatMemberRepository(BaseRepository[ChatMemberOrm, ChatMember]):
-    model = ChatMemberOrm
-    mapper = MemberMapper
-
-    async def add_members(self, members: list[MemberCreate]) -> None:
-        statement = insert(ChatMemberOrm).values([m.model_dump() for m in members])
-        await self.session.execute(statement)
-
-    async def get_active(self, chat_id: UUID, user_id: UUID) -> ChatMember | None:
-        return await self.get_one(user_id=user_id, chat_id=chat_id, left_at=None)
