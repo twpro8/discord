@@ -6,7 +6,7 @@ from src.modules.friends.domain.repositories.friend_repository import (
 from src.modules.users.domain.repositories.user_repository import UserRepository
 
 
-class AbstractFriendUnitOfWork(ABC):
+class FriendUnitOfWork(ABC):
     friends: FriendRepository
     users: UserRepository
 

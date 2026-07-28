@@ -18,13 +18,13 @@ from src.modules.users.domain.repositories.user_unit_of_work import (
     AbstractUserUnitOfWork,
 )
 from src.modules.users.infrastructure.persistence.repository import (
-    SqlAlchemyUserRepository,
+    UserRepositoryImpl,
 )
 from src.modules.users.infrastructure.unit_of_work import UserUnitOfWork
 
 
 def get_user_repository(session: SessionDep) -> UserRepository:
-    return SqlAlchemyUserRepository(session)
+    return UserRepositoryImpl(session)
 
 
 async def get_user_unit_of_work(
@@ -61,7 +61,7 @@ async def get_current_user(
     return await user_use_case(user_id)
 
 
-UserRepositoryDep = Annotated[SqlAlchemyUserRepository, Depends(get_user_repository)]
+UserRepositoryDep = Annotated[UserRepositoryImpl, Depends(get_user_repository)]
 UserUnitOfWorkDep = Annotated[UserUnitOfWork, Depends(get_user_unit_of_work)]
 UserIdDep = Annotated[UUID, Depends(get_current_user_id)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]

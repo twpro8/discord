@@ -11,7 +11,7 @@ from src.modules.users.infrastructure.persistence.mappers import (
 from src.modules.users.infrastructure.persistence.models import UserOrm
 
 
-class SqlAlchemyUserRepository:
+class UserRepositoryImpl:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

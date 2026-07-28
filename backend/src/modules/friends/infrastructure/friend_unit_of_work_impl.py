@@ -1,21 +1,19 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.friends.domain.repositories.friend_repository import FriendRepository
 from src.modules.friends.domain.repositories.friend_unit_of_work import (
-    AbstractFriendUnitOfWork,
+    FriendUnitOfWork,
 )
-from src.modules.friends.infrastructure.persistence.repository import FriendRepository
-from src.modules.users.infrastructure.persistence.repository import (
-    SqlAlchemyUserRepository,
-)
+from src.modules.users.domain.repositories.user_repository import UserRepository
 from src.shared.unit_of_work import BaseUnitOfWork
 
 
-class FriendUnitOfWork(BaseUnitOfWork, AbstractFriendUnitOfWork):
+class FriendUnitOfWorkImpl(BaseUnitOfWork, FriendUnitOfWork):
     def __init__(
         self,
         session: AsyncSession,
         friend_repository: FriendRepository,
-        user_repository: SqlAlchemyUserRepository,
+        user_repository: UserRepository,
     ) -> None:
         super().__init__(session)
         self.friends = friend_repository

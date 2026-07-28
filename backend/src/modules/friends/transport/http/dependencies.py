@@ -21,23 +21,29 @@ from src.modules.friends.application.queries.get_requests import (
 from src.modules.friends.application.queries.get_sent_requests import (
     GetSentFriendRequestsQuery,
 )
-from src.modules.friends.infrastructure.persistence.repository import FriendRepository
-from src.modules.friends.infrastructure.unit_of_work import FriendUnitOfWork
+from src.modules.friends.domain.repositories.friend_repository import FriendRepository
+from src.modules.friends.domain.repositories.friend_unit_of_work import FriendUnitOfWork
+from src.modules.friends.infrastructure.friend_unit_of_work_impl import (
+    FriendUnitOfWorkImpl,
+)
+from src.modules.friends.infrastructure.persistence.friend_repository_impl import (
+    FriendRepositoryImpl,
+)
 from src.modules.users.infrastructure.persistence.repository import (
-    SqlAlchemyUserRepository,
+    UserRepositoryImpl,
 )
 
 
 def get_friend_repository(session: SessionDep) -> FriendRepository:
-    return FriendRepository(session)
+    return FriendRepositoryImpl(session)
 
 
 async def get_friend_unit_of_work(
     session: SessionDep,
     friend_repository: FriendRepositoryDep,
 ) -> AsyncGenerator[FriendUnitOfWork]:
-    user_repository = SqlAlchemyUserRepository(session)
-    async with FriendUnitOfWork(
+    user_repository = UserRepositoryImpl(session)
+    async with FriendUnitOfWorkImpl(
         session,
         friend_repository,
         user_repository,

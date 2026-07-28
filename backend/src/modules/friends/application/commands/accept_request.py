@@ -11,12 +11,12 @@ from src.modules.friends.domain.exceptions import (
     NotParticipantError,
 )
 from src.modules.friends.domain.repositories.friend_unit_of_work import (
-    AbstractFriendUnitOfWork,
+    FriendUnitOfWork,
 )
 
 
 class AcceptFriendRequestCommand:
-    def __init__(self, uow: AbstractFriendUnitOfWork) -> None:
+    def __init__(self, uow: FriendUnitOfWork) -> None:
         self._uow = uow
 
     async def __call__(self, current_user_id: UUID, request_id: UUID) -> FriendRequest:

@@ -1,29 +1,48 @@
-"""Database access for friend requests."""
-
-# Python modules
 from uuid import UUID
 
-# Third-party modules
-from sqlalchemy import or_, select
+from sqlalchemy import delete, insert, or_, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.modules.friends.domain.entities.schemas import (
     FriendRequest,
+    FriendRequestCreate,
+    FriendRequestUpdate,
     FriendRequestWithUser,
 )
 from src.modules.friends.domain.enums import FriendStatus
-from src.modules.friends.infrastructure.persistence.mappers import FriendMapper
+from src.modules.friends.domain.repositories.friend_repository import FriendRepository
+from src.modules.friends.infrastructure.persistence.mappers import model_to_entity
 from src.modules.friends.infrastructure.persistence.models import FriendOrm
 
-# Project modules
-from src.shared.repositories import BaseRepository
 
+class FriendRepositoryImpl(FriendRepository):
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
 
-class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
-    """Read and write friend relationship records."""
+    async def create(self, data: FriendRequestCreate) -> FriendRequest:
+        stmt = insert(FriendOrm).values(**data.model_dump()).returning(FriendOrm)
+        result = await self._session.execute(stmt)
+        return model_to_entity(result.scalar_one())
 
-    model = FriendOrm
-    mapper = FriendMapper
+    async def update(
+        self,
+        request_id: UUID,
+        data: FriendRequestUpdate,
+        exclude_unset: bool = False,
+    ) -> FriendRequest:
+        stmt = (
+            update(FriendOrm)
+            .where(FriendOrm.id == request_id)
+            .values(**data.model_dump(exclude_unset=exclude_unset))
+            .returning(FriendOrm)
+        )
+        result = await self._session.execute(stmt)
+        return model_to_entity(result.scalar_one())
+
+    async def delete(self, request_id: UUID) -> None:
+        stmt = delete(FriendOrm).where(FriendOrm.id == request_id)
+        await self._session.execute(stmt)
 
     async def get_between_users(
         self,
@@ -31,19 +50,23 @@ class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
         second_user_id: UUID,
     ) -> FriendRequest | None:
         """Return an existing relationship in either direction, if present."""
-        statement = select(self.model).where(
+        stmt = select(FriendOrm).where(
             or_(
-                (self.model.user_id == first_user_id)
-                & (self.model.target_user_id == second_user_id),
-                (self.model.user_id == second_user_id)
-                & (self.model.target_user_id == first_user_id),
+                (FriendOrm.user_id == first_user_id)
+                & (FriendOrm.target_user_id == second_user_id),
+                (FriendOrm.user_id == second_user_id)
+                & (FriendOrm.target_user_id == first_user_id),
             )
         )
-        return await self._execute_and_map_one_or_none(statement)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return model_to_entity(model) if model else None
 
     async def get_by_id(self, request_id: UUID) -> FriendRequest | None:
-        """Return a single relationship by its primary key."""
-        return await self.get_one(id=request_id)
+        query = select(FriendOrm).filter_by(id=request_id)
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model_to_entity(model) if model else None
 
     async def get_for_user(
         self,
@@ -51,15 +74,15 @@ class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
         status: FriendStatus = FriendStatus.PENDING,
     ) -> list[FriendRequestWithUser]:
         """Return all friend relationships targeted at *user_id* for the given *status*."""
-        statement = (
-            select(self.model)
-            .options(joinedload(self.model.user))
+        stmt = (
+            select(FriendOrm)
+            .options(joinedload(FriendOrm.user))
             .where(
-                self.model.target_user_id == user_id,
-                self.model.status == status,
+                FriendOrm.target_user_id == user_id,
+                FriendOrm.status == status,
             )
         )
-        result = await self.session.execute(statement)
+        result = await self._session.execute(stmt)
         orm_objects = result.scalars().unique().all()
 
         return [
@@ -82,15 +105,15 @@ class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
         status: FriendStatus = FriendStatus.PENDING,
     ) -> list[FriendRequestWithUser]:
         """Return all friend relationships sent by the user with *user_id* for the given *status*."""
-        statement = (
-            select(self.model)
-            .options(joinedload(self.model.target_user))
+        stmt = (
+            select(FriendOrm)
+            .options(joinedload(FriendOrm.target_user))
             .where(
-                self.model.user_id == user_id,
-                self.model.status == status,
+                FriendOrm.user_id == user_id,
+                FriendOrm.status == status,
             )
         )
-        result = await self.session.execute(statement)
+        result = await self._session.execute(stmt)
         orm_objects = result.scalars().unique().all()
 
         return [
@@ -109,18 +132,18 @@ class FriendRepository(BaseRepository[FriendOrm, FriendRequest]):
 
     async def get_friends(self, user_id: UUID) -> list[FriendRequestWithUser]:
         """Return all accepted friend relationships for the user in either direction."""
-        statement = (
-            select(self.model)
-            .options(joinedload(self.model.user), joinedload(self.model.target_user))
+        stmt = (
+            select(FriendOrm)
+            .options(joinedload(FriendOrm.user), joinedload(FriendOrm.target_user))
             .where(
                 or_(
-                    self.model.user_id == user_id,
-                    self.model.target_user_id == user_id,
+                    FriendOrm.user_id == user_id,
+                    FriendOrm.target_user_id == user_id,
                 ),
-                self.model.status == FriendStatus.FRIENDS,
+                FriendOrm.status == FriendStatus.FRIENDS,
             )
         )
-        result = await self.session.execute(statement)
+        result = await self._session.execute(stmt)
         orm_objects = result.scalars().unique().all()
 
         return [

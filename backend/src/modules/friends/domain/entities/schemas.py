@@ -1,15 +1,9 @@
-"""Request and response schemas for friend requests."""
-
-# Python modules
 from datetime import datetime
 from uuid import UUID
 
-# Third-party modules
 from pydantic import Field
 
 from src.modules.friends.domain.enums import FriendStatus
-
-# Project modules
 from src.shared.schemas import BaseSchema
 
 MIN_USERNAME_LENGTH = 3

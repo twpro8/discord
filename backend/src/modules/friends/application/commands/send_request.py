@@ -10,13 +10,13 @@ from src.modules.friends.domain.exceptions import (
     FriendRequestAlreadyExistsError,
 )
 from src.modules.friends.domain.repositories.friend_unit_of_work import (
-    AbstractFriendUnitOfWork,
+    FriendUnitOfWork,
 )
 from src.modules.users.domain.exceptions import UserNotFoundError
 
 
 class SendFriendRequestCommand:
-    def __init__(self, uow: AbstractFriendUnitOfWork) -> None:
+    def __init__(self, uow: FriendUnitOfWork) -> None:
         self._uow = uow
 
     async def __call__(self, sender_id: UUID, data: SendFriendRequest) -> FriendRequest:
