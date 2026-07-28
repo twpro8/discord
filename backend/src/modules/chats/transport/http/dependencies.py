@@ -4,7 +4,8 @@ from typing import Annotated
 from fastapi import Depends
 
 from src.api.v1.dependencies import SessionDep
-from src.modules.chats.application.service import ChatService
+from src.modules.chats.application.commands.create_chat import CreateChatCommand
+from src.modules.chats.application.queries.get_chats import GetChatsQuery
 from src.modules.chats.infrastructure.persistence.repositories import (
     ChatMemberRepository,
     ChatRepository,
@@ -20,8 +21,14 @@ def get_chat_member_repository(session: SessionDep) -> ChatMemberRepository:
     return ChatMemberRepository(session)
 
 
-def get_chat_service(unit_of_work: ChatUnitOfWorkDep) -> ChatService:
-    return ChatService(unit_of_work)
+def get_create_chat_command(uow: ChatUnitOfWorkDep) -> CreateChatCommand:
+    return CreateChatCommand(uow)
+
+
+def get_chats_query(
+    chat_repository: ChatRepositoryDep,
+) -> GetChatsQuery:
+    return GetChatsQuery(chat_repository)
 
 
 async def get_chat_unit_of_work(
@@ -42,4 +49,5 @@ ChatMemberRepositoryDep = Annotated[
     ChatMemberRepository, Depends(get_chat_member_repository)
 ]
 ChatUnitOfWorkDep = Annotated[ChatUnitOfWork, Depends(get_chat_unit_of_work)]
-ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
+CreateChatCommandDep = Annotated[CreateChatCommand, Depends(get_create_chat_command)]
+GetChatsQueryDep = Annotated[GetChatsQuery, Depends(get_chats_query)]

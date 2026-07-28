@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from src.modules.chats.domain.entities.chat import Chat, ChatMember
+from src.modules.chats.domain.entities.schemas import ChatSummaryPage, MemberCreate
 
 
 class ChatRepository(Protocol):
@@ -20,10 +21,10 @@ class ChatRepository(Protocol):
         user_id: UUID,
         limit: int,
         cursor: str | None,
-    ) -> BaseModel: ...
+    ) -> ChatSummaryPage: ...
 
 
 class ChatMemberRepository(Protocol):
-    async def add_members(self, members: list[BaseModel]) -> None: ...
+    async def add_members(self, members: list[MemberCreate]) -> None: ...
 
     async def get_active(self, chat_id: UUID, user_id: UUID) -> ChatMember | None: ...
