@@ -5,7 +5,7 @@ from src.modules.channels.domain.repositories.channel_repository import (
 )
 
 
-class AbstractChannelUnitOfWork(ABC):
+class ChannelUnitOfWork(ABC):
     channels: ChannelRepository
 
     @abstractmethod

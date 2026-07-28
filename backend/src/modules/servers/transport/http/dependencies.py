@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from src.api.v1.dependencies import SessionDep
-from src.modules.channels.transport.http.dependencies import ChannelServiceDep
+from src.modules.channels.transport.http.dependencies import CreateChannelCommandDep
 from src.modules.servers.application.commands.create_invite import CreateInviteCommand
 from src.modules.servers.application.commands.create_server import CreateServerCommand
 from src.modules.servers.application.commands.delete_invite import DeleteInviteCommand
@@ -64,11 +64,11 @@ async def get_server_unit_of_work(
 
 def get_create_server_command(
     server_unit_of_work: ServerUnitOfWorkDep,
-    channel_service: ChannelServiceDep,
+    create_channel_command: CreateChannelCommandDep,
 ) -> CreateServerCommand:
     return CreateServerCommand(
         uow=server_unit_of_work,
-        channel_service=channel_service,
+        create_channel_command=create_channel_command,
     )
 
 

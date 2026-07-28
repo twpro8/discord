@@ -1,6 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.channels.infrastructure.persistence.repository import ChannelRepository
+from src.modules.channels.domain.repositories.channel_repository import (
+    ChannelRepository,
+)
 from src.modules.chats.infrastructure.persistence.repositories import (
     ChatMemberRepository,
     ChatRepository,

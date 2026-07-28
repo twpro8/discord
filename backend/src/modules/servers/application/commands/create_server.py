@@ -1,6 +1,8 @@
 from uuid import UUID
 
-from src.modules.channels.application.service import ChannelService
+from src.modules.channels.application.commands.create_channel import (
+    CreateChannelCommand,
+)
 from src.modules.servers.domain.entities.server import (
     ServerCreateRequestSchema,
     ServerCreateSchema,
@@ -17,10 +19,10 @@ class CreateServerCommand:
     def __init__(
         self,
         uow: ServerUnitOfWork,
-        channel_service: ChannelService,
+        create_channel_command: CreateChannelCommand,
     ) -> None:
         self._uow = uow
-        self._channel_service = channel_service
+        self._create_channel_command = create_channel_command
 
     async def __call__(
         self,
@@ -37,7 +39,7 @@ class CreateServerCommand:
         )
         await self._uow.server_members.create(member_data)
 
-        await self._channel_service.create_channel(
+        await self._create_channel_command(
             server.id,
             name="general",
             is_commit=False,

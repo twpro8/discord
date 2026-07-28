@@ -33,7 +33,7 @@ async def get_valid_refresh_token(
     uow: AbstractAuthUnitOfWork, refresh_token: str
 ) -> RefreshToken:
     token_hash = hash_refresh_token(refresh_token)
-    stored = await uow.refresh_tokens.get_one(token_hash=token_hash)
+    stored = await uow.refresh_tokens.find_by_hash(token_hash=token_hash)
     if not stored or stored.expires_at <= datetime.now(UTC):
         raise InvalidRefreshTokenError
     if stored.is_revoked:

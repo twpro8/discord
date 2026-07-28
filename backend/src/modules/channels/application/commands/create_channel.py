@@ -1,16 +1,16 @@
 from uuid import UUID
 
 from src.modules.channels.domain.entities.channel import Channel
+from src.modules.channels.domain.entities.schemas import ChannelCreate
 from src.modules.channels.domain.enums import ChannelType
 from src.modules.channels.domain.repositories.channel_unit_of_work import (
-    AbstractChannelUnitOfWork,
+    ChannelUnitOfWork,
 )
-from src.modules.channels.transport.http.schemas import ChannelCreateSchema
 
 
 class CreateChannelCommand:
-    def __init__(self, uow: AbstractChannelUnitOfWork) -> None:
-        self._uow = uow
+    def __init__(self, channel_unit_of_work: ChannelUnitOfWork) -> None:
+        self._uow = channel_unit_of_work
 
     async def __call__(
         self,
@@ -19,8 +19,9 @@ class CreateChannelCommand:
         type: ChannelType = ChannelType.text,
         topic: str | None = None,
         is_private: bool = False,
+        is_commit: bool = True,
     ) -> Channel:
-        channel_data = ChannelCreateSchema(
+        channel_data = ChannelCreate(
             server_id=server_id,
             name=name,
             type=type,
@@ -28,6 +29,9 @@ class CreateChannelCommand:
             topic=topic,
             is_private=is_private,
         )
+
         channel = await self._uow.channels.create(channel_data)
-        await self._uow.commit()
+        if is_commit:
+            await self._uow.commit()
+
         return channel

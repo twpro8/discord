@@ -1,10 +1,15 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.channels.infrastructure.persistence.repository import ChannelRepository
-from src.shared.unit_of_work.base_unit_of_work import BaseUnitOfWork
+from src.modules.channels.domain.repositories.channel_repository import (
+    ChannelRepository,
+)
+from src.modules.channels.domain.repositories.channel_unit_of_work import (
+    ChannelUnitOfWork,
+)
+from src.shared.unit_of_work import BaseUnitOfWork
 
 
-class ChannelUnitOfWork(BaseUnitOfWork):
+class ChannelUnitOfWorkImpl(BaseUnitOfWork, ChannelUnitOfWork):
     channels: ChannelRepository
 
     def __init__(

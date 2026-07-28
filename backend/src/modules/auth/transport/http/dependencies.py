@@ -10,17 +10,17 @@ from src.modules.auth.application.commands.logout import LogoutCommand
 from src.modules.auth.application.commands.refresh import RefreshCommand
 from src.modules.auth.application.commands.register import RegisterCommand
 from src.modules.auth.domain.exceptions import AuthenticationError
-from src.modules.auth.infrastructure.persistence.repository import (
-    RefreshTokenRepository,
+from src.modules.auth.infrastructure.auth_unit_of_work_impl import AuthUnitOfWork
+from src.modules.auth.infrastructure.persistence.refresh_token_repository_impl import (
+    RefreshTokenRepositoryImpl,
 )
-from src.modules.auth.infrastructure.unit_of_work import AuthUnitOfWork
 from src.modules.users.transport.http.dependencies import UserRepositoryDep
 
 refresh_cookie_scheme = APIKeyCookie(name="refresh_token", auto_error=False)
 
 
-def get_refresh_token_repository(session: SessionDep) -> RefreshTokenRepository:
-    return RefreshTokenRepository(session)
+def get_refresh_token_repository(session: SessionDep) -> RefreshTokenRepositoryImpl:
+    return RefreshTokenRepositoryImpl(session)
 
 
 async def get_auth_unit_of_work(
@@ -59,7 +59,7 @@ def get_refresh_token_cookie(token: OptionalRefreshTokenDep) -> str:
 
 
 RefreshTokenRepositoryDep = Annotated[
-    RefreshTokenRepository, Depends(get_refresh_token_repository)
+    RefreshTokenRepositoryImpl, Depends(get_refresh_token_repository)
 ]
 AuthUnitOfWorkDep = Annotated[AuthUnitOfWork, Depends(get_auth_unit_of_work)]
 RegisterCommandDep = Annotated[RegisterCommand, Depends(get_register_command)]
