@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from src.core.logging import get_logger
 from src.modules.chats.domain.entities.chat import Chat
 from src.modules.chats.domain.entities.schemas import (
     ChatCreate,
@@ -7,15 +8,27 @@ from src.modules.chats.domain.entities.schemas import (
     MemberCreate,
 )
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
+from src.modules.chats.domain.events import ChatCreatedEvent
 from src.modules.chats.domain.exceptions import SelfChatForbiddenError
 from src.modules.chats.domain.repositories.chat_unit_of_work import (
     ChatUnitOfWork,
 )
 
+logger = get_logger(__name__)
+
 
 class CreateChatCommand:
     def __init__(self, uow: ChatUnitOfWork) -> None:
         self._uow = uow
+
+    def _log_events(self, chat: Chat) -> None:
+        for event in chat.pull_events():
+            logger.info(
+                "domain_event",
+                event_type=type(event).__name__,
+                event_id=str(event.event_id),
+                chat_id=str(chat.id),
+            )
 
     async def __call__(self, creator_id: UUID, data: ChatCreateRequest) -> Chat:
         if data.type == ChatType.private:
@@ -40,6 +53,7 @@ class CreateChatCommand:
             return existing_chat
 
         chat = await self._uow.chats.create(ChatCreate(type=ChatType.private))
+        chat.record_event(ChatCreatedEvent(chat_id=chat.id))
 
         members = [
             MemberCreate(user_id=creator_id, chat_id=chat.id),
@@ -48,6 +62,7 @@ class CreateChatCommand:
 
         await self._uow.members.add_members(members)
         await self._uow.commit()
+        self._log_events(chat)
 
         return chat
 
@@ -64,6 +79,7 @@ class CreateChatCommand:
                 description=data.description,
             )
         )
+        chat.record_event(ChatCreatedEvent(chat_id=chat.id))
 
         members = []
 
@@ -87,5 +103,6 @@ class CreateChatCommand:
 
         await self._uow.members.add_members(members)
         await self._uow.commit()
+        self._log_events(chat)
 
         return chat
