@@ -3,8 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, Query, status
 
 from src.modules.servers.domain.entities.server_invite import (
-    ServerInvite,
     ServerInviteCreateRequest,
+    ServerInviteResponse,
     ServerInviteWithStatus,
 )
 from src.modules.servers.transport.http.dependencies import (
@@ -17,18 +17,21 @@ from src.modules.users.transport.http.dependencies import UserIdDep
 router = APIRouter(prefix="/invites", tags=["Server Invites"])
 
 
-@router.post("", response_model=ServerInvite, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=ServerInviteResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_invite(
     server_id: UUID,
     current_user_id: UserIdDep,
     payload: ServerInviteCreateRequest,
     command: CreateInviteCommandDep,
-) -> ServerInvite:
-    return await command(
+) -> ServerInviteResponse:
+    invite = await command(
         server_id=server_id,
         user_id=current_user_id,
         payload=payload,
     )
+    return ServerInviteResponse.model_validate(invite)
 
 
 @router.get("", response_model=list[ServerInviteWithStatus])

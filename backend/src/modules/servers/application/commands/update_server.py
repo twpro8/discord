@@ -23,12 +23,14 @@ class UpdateServerCommand:
         if not server:
             raise ServerNotFoundError
 
-        merged_data = server.model_dump() | update_data.model_dump(exclude_unset=True)
-        merged_data["id"] = server.id
-        merged_data["owner_id"] = owner_id
-
-        _update_data = ServerUpdate(**merged_data)
-        updated_server = await self._uow.servers.update(server.id, _update_data)
+        _update_data = ServerUpdate(
+            id=server.id,
+            owner_id=owner_id,
+            **update_data.model_dump(exclude_unset=True),
+        )
+        updated_server = await self._uow.servers.update(
+            server.id, _update_data, exclude_unset=True
+        )
 
         await self._uow.commit()
         return updated_server

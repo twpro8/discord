@@ -55,7 +55,14 @@ class GetInvitesQuery:
         )
         return [
             ServerInviteWithStatus(
-                **invite.model_dump(),
+                id=invite.id,
+                server_id=invite.server_id,
+                code=invite.code,
+                created_by=invite.created_by,
+                max_uses=invite.max_uses,
+                use_count=invite.use_count,
+                expires_at=invite.expires_at,
+                created_at=invite.created_at,
                 validity_status=_compute_validity_status(invite),
             )
             for invite in invites
