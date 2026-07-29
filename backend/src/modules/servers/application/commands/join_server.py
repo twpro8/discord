@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -9,17 +10,25 @@ from src.modules.servers.domain.entities.server_member import (
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import ServerInviteNotFoundError
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.application.command import Command
 from src.shared.result import Result
 
 
-class JoinServerCommand:
+@dataclass(frozen=True, kw_only=True)
+class JoinServerCommand(Command):
+    user_id: UUID
+    code_schema: ServerInviteCode
+
+
+class JoinServerCommandHandler:
     def __init__(self, uow: ServerUnitOfWork) -> None:
         self._uow = uow
 
-    async def __call__(
-        self, user_id: UUID, code_schema: ServerInviteCode
+    async def handle(
+        self, command: JoinServerCommand
     ) -> Result[ServerMember, ServerInviteNotFoundError]:
-        code = code_schema.code
+        user_id = command.user_id
+        code = command.code_schema.code
         invite = await self._uow.invites.get_one(code=code)
         if not invite:
             return Result.err(ServerInviteNotFoundError())

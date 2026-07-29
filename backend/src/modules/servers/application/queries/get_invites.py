@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
@@ -10,6 +11,7 @@ from src.modules.servers.domain.repositories.server_invite_repository import (
     ServerInviteRepository,
 )
 from src.modules.servers.domain.repositories.server_repository import ServerRepository
+from src.shared.application.query import Query
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 
@@ -34,7 +36,15 @@ def _compute_validity_status(
     return "valid"
 
 
-class GetInvitesQuery:
+@dataclass(frozen=True, kw_only=True)
+class GetInvitesQuery(Query):
+    user_id: UUID
+    server_id: UUID
+    limit: int = 100
+    offset: int = 0
+
+
+class GetInvitesQueryHandler:
     def __init__(
         self,
         server_repository: ServerRepository,
@@ -43,17 +53,19 @@ class GetInvitesQuery:
         self._server_repository = server_repository
         self._server_invite_repository = server_invite_repository
 
-    async def __call__(
-        self, user_id: UUID, server_id: UUID, limit: int = 100, offset: int = 0
+    async def handle(
+        self, query: GetInvitesQuery
     ) -> Result[list[ServerInviteWithStatus], LumiereError]:
-        server = await self._server_repository.get_one(id=server_id, owner_id=user_id)
+        server = await self._server_repository.get_one(
+            id=query.server_id, owner_id=query.user_id
+        )
         if not server:
             return Result.ok([])
 
         invites = await self._server_invite_repository.get_filtered(
-            server_id=server_id,
-            limit=limit,
-            offset=offset,
+            server_id=query.server_id,
+            limit=query.limit,
+            offset=query.offset,
         )
         return Result.ok(
             [
