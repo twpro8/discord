@@ -6,10 +6,10 @@ from src.modules.servers.domain.entities.server_invite import (
     ServerInvite,
     ServerInviteWithStatus,
 )
-from src.modules.servers.infrastructure.persistence.repository import (
+from src.modules.servers.domain.repositories.server_invite_repository import (
     ServerInviteRepository,
-    ServerRepository,
 )
+from src.modules.servers.domain.repositories.server_repository import ServerRepository
 
 
 def _compute_validity_status(

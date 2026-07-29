@@ -13,7 +13,7 @@ from src.modules.messages.domain.repositories.message_repository import (
 from src.modules.messages.domain.repositories.message_unit_of_work import (
     MessageUnitOfWork,
 )
-from src.shared.unit_of_work import BaseUnitOfWork
+from src.shared.data.unit_of_work import BaseUnitOfWork
 
 
 class MessageUnitOfWorkImpl(BaseUnitOfWork, MessageUnitOfWork):

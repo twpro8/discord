@@ -7,7 +7,7 @@ from src.modules.servers.domain.enums import ServerMemberRole
 from src.shared.schemas import BaseSchema
 
 
-class ServerSchema(BaseSchema):
+class Server(BaseSchema):
     id: UUID
     name: str
     description: str | None
@@ -18,34 +18,30 @@ class ServerSchema(BaseSchema):
     updated_at: datetime
 
 
-class ServerCreateRequestSchema(BaseSchema):
+class ServerCreateRequest(BaseSchema):
     name: str = Field(..., min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=300)
 
 
-class ServerCreateSchema(ServerCreateRequestSchema):
+class ServerCreate(ServerCreateRequest):
     owner_id: UUID
 
 
-class ServerUpdateRequestSchema(BaseSchema):
-    name: str | None = Field(None, min_length=1, max_length=100)
-    description: str | None = Field(None, min_length=1, max_length=300)
+class ServerUpdateRequest(BaseSchema):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    description: str | None = Field(default=None, min_length=1, max_length=300)
 
 
-class ServerUpdateSchema(ServerUpdateRequestSchema):
+class ServerUpdate(ServerUpdateRequest):
     id: UUID
     owner_id: UUID
 
 
-class UpdateOwnerIdSchema(BaseSchema):
+class UpdateOwnerID(BaseSchema):
     owner_id: UUID
 
 
-class UpdateServerOwner(UpdateOwnerIdSchema):
-    id: UUID
-
-
-class ServerUserBriefSchema(BaseSchema):
+class ServerUserSummary(BaseSchema):
     id: UUID
     name: str
     icon_url: str | None

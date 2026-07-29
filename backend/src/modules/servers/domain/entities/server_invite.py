@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import Field
 
-from src.shared.schemas.base_schema import BaseSchema
+from src.shared.schemas import BaseSchema
 
 
 class ServerInvite(BaseSchema):
@@ -18,12 +18,12 @@ class ServerInvite(BaseSchema):
     created_at: datetime
 
 
-class CreateServerInviteRequest(BaseSchema):
+class ServerInviteCreateRequest(BaseSchema):
     expires_in: int | None = Field(None)
     max_uses: int | None = Field(default=None)
 
 
-class CreateServerInvite(BaseSchema):
+class ServerInviteCreate(BaseSchema):
     server_id: UUID
     code: str
     created_by: UUID

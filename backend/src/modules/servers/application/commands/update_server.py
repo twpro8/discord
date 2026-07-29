@@ -1,12 +1,12 @@
 from uuid import UUID
 
 from src.modules.servers.domain.entities.server import (
-    ServerSchema,
-    ServerUpdateRequestSchema,
-    ServerUpdateSchema,
+    Server,
+    ServerUpdate,
+    ServerUpdateRequest,
 )
 from src.modules.servers.domain.exceptions import ServerNotFoundError
-from src.modules.servers.infrastructure.unit_of_work import ServerUnitOfWork
+from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 
 
 class UpdateServerCommand:
@@ -15,10 +15,10 @@ class UpdateServerCommand:
 
     async def __call__(
         self,
-        update_data: ServerUpdateRequestSchema,
+        update_data: ServerUpdateRequest,
         server_id: UUID,
         owner_id: UUID,
-    ) -> ServerSchema:
+    ) -> Server:
         server = await self._uow.servers.get_one(id=server_id, owner_id=owner_id)
         if not server:
             raise ServerNotFoundError
@@ -27,7 +27,7 @@ class UpdateServerCommand:
         merged_data["id"] = server.id
         merged_data["owner_id"] = owner_id
 
-        _update_data = ServerUpdateSchema(**merged_data)
+        _update_data = ServerUpdate(**merged_data)
         updated_server = await self._uow.servers.update(server.id, _update_data)
 
         await self._uow.commit()

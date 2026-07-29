@@ -21,30 +21,38 @@ from src.modules.servers.application.queries.get_server_where_user_member import
 from src.modules.servers.application.queries.get_servers_where_user_member import (
     GetServersWhereUserMemberQuery,
 )
-from src.modules.servers.infrastructure.persistence.repository import (
+from src.modules.servers.domain.repositories.server_invite_repository import (
     ServerInviteRepository,
-    ServerMemberRepository,
-    ServerRepository,
 )
-from src.modules.servers.infrastructure.unit_of_work import ServerUnitOfWork
+from src.modules.servers.domain.repositories.server_member_repository import (
+    ServerMemberRepository,
+)
+from src.modules.servers.domain.repositories.server_repository import ServerRepository
+from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.modules.servers.infrastructure.persistence.server_invite_repository_impl import (
+    ServerInviteRepositoryImpl,
+)
+from src.modules.servers.infrastructure.persistence.server_member_repository_impl import (
+    ServerMemberRepositoryImpl,
+)
+from src.modules.servers.infrastructure.persistence.server_repository_impl import (
+    ServerRepositoryImpl,
+)
+from src.modules.servers.infrastructure.server_unit_of_work_impl import (
+    ServerUnitOfWorkImpl,
+)
 
 
-def get_server_repository(
-    session: SessionDep,
-) -> ServerRepository:
-    return ServerRepository(session=session)
+def get_server_repository(session: SessionDep) -> ServerRepositoryImpl:
+    return ServerRepositoryImpl(session=session)
 
 
-def get_server_member_repository(
-    session: SessionDep,
-) -> ServerMemberRepository:
-    return ServerMemberRepository(session=session)
+def get_server_member_repository(session: SessionDep) -> ServerMemberRepository:
+    return ServerMemberRepositoryImpl(session=session)
 
 
-def get_server_invite_repository(
-    session: SessionDep,
-) -> ServerInviteRepository:
-    return ServerInviteRepository(session=session)
+def get_server_invite_repository(session: SessionDep) -> ServerInviteRepository:
+    return ServerInviteRepositoryImpl(session=session)
 
 
 async def get_server_unit_of_work(
@@ -53,7 +61,7 @@ async def get_server_unit_of_work(
     server_member_repository: ServerMemberRepositoryDep,
     server_invite_repository: ServerInviteRepositoryDep,
 ) -> AsyncGenerator[ServerUnitOfWork]:
-    async with ServerUnitOfWork(
+    async with ServerUnitOfWorkImpl(
         session,
         server_repository,
         server_member_repository,

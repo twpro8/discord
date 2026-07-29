@@ -5,7 +5,7 @@ from src.modules.friends.domain.repositories.friend_unit_of_work import (
     FriendUnitOfWork,
 )
 from src.modules.users.domain.repositories.user_repository import UserRepository
-from src.shared.unit_of_work import BaseUnitOfWork
+from src.shared.data.unit_of_work import BaseUnitOfWork
 
 
 class FriendUnitOfWorkImpl(BaseUnitOfWork, FriendUnitOfWork):

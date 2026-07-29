@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import Field, model_validator
 
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
-from src.shared.schemas.base_schema import BaseSchema
+from src.shared.schemas import BaseSchema
 
 
 class MemberCreate(BaseSchema):

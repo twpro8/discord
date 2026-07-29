@@ -13,7 +13,7 @@ from src.core.database.session import (
 )
 from src.main import app
 from src.modules.users.domain.entities.user import User
-from src.shared.models import *  # noqa
+from src.shared.data.models import *  # noqa
 from tests.dependency_overrides.redis_client import get_fake_redis_client
 from tests.dependency_overrides.session import get_null_pool_session
 from tests.seeder import populate_database

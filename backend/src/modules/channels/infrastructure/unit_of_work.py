@@ -6,7 +6,7 @@ from src.modules.channels.domain.repositories.channel_repository import (
 from src.modules.channels.domain.repositories.channel_unit_of_work import (
     ChannelUnitOfWork,
 )
-from src.shared.unit_of_work import BaseUnitOfWork
+from src.shared.data.unit_of_work import BaseUnitOfWork
 
 
 class ChannelUnitOfWorkImpl(BaseUnitOfWork, ChannelUnitOfWork):

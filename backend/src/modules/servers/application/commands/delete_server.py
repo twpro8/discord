@@ -4,7 +4,7 @@ from src.modules.servers.domain.exceptions import (
     ServerNotEmptyError,
     ServerNotFoundError,
 )
-from src.modules.servers.infrastructure.unit_of_work import ServerUnitOfWork
+from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 
 
 class DeleteServerCommand:

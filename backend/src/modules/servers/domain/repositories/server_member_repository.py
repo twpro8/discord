@@ -1,18 +1,19 @@
 from typing import Any, Protocol
 from uuid import UUID
 
-from pydantic import BaseModel
-
-from src.modules.servers.domain.entities.server_member import ServerMemberSchema
+from src.modules.servers.domain.entities.server_member import (
+    ServerMember,
+    ServerMemberCreate,
+    ServerMemberUpdate,
+)
 
 
 class ServerMemberRepository(Protocol):
-    async def create(self, data: BaseModel) -> ServerMemberSchema: ...
-    async def get_one(self, **filter_by: Any) -> ServerMemberSchema | None: ...
+    async def create(self, data: ServerMemberCreate) -> ServerMember: ...
+    async def get_one(self, **filter_by: Any) -> ServerMember | None: ...
     async def update(
         self,
         id_: UUID,
-        data: BaseModel,
+        data: ServerMemberUpdate,
         exclude_unset: bool = False,
-        **filter_by: Any,
-    ) -> ServerMemberSchema: ...
+    ) -> ServerMember: ...

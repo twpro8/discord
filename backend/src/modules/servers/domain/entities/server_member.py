@@ -1,26 +1,21 @@
-from datetime import datetime
 from uuid import UUID
 
 from src.modules.servers.domain.enums import ServerMemberRole
-from src.shared.schemas.base_schema import BaseSchema
+from src.shared.schemas import BaseSchema
 
 
-class ServerMemberSchema(BaseSchema):
+class ServerMember(BaseSchema):
     id: UUID
     server_id: UUID
     user_id: UUID
     role: ServerMemberRole
 
 
-class ServerMemberCreateSchema(BaseSchema):
+class ServerMemberCreate(BaseSchema):
     server_id: UUID
     user_id: UUID
     role: ServerMemberRole = ServerMemberRole.member
 
 
-class ServerMemberUpdateSchema(BaseSchema):
-    left_at: datetime | None = None
-
-
-class UpdateMemberRole(BaseSchema):
+class ServerMemberUpdate(BaseSchema):
     role: ServerMemberRole

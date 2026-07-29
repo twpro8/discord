@@ -3,8 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, Query, status
 
 from src.modules.servers.domain.entities.server_invite import (
-    CreateServerInviteRequest,
     ServerInvite,
+    ServerInviteCreateRequest,
     ServerInviteWithStatus,
 )
 from src.modules.servers.transport.http.dependencies import (
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/invites", tags=["Server Invites"])
 async def create_invite(
     server_id: UUID,
     current_user_id: UserIdDep,
-    payload: CreateServerInviteRequest,
+    payload: ServerInviteCreateRequest,
     command: CreateInviteCommandDep,
 ) -> ServerInvite:
     return await command(

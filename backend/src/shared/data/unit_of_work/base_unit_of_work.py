@@ -1,11 +1,10 @@
-from abc import ABC, abstractmethod
 from types import TracebackType
 from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class BaseUnitOfWork(ABC):
+class BaseUnitOfWork:
     """
     Base class for implementing the Unit of Work pattern.
 
@@ -27,8 +26,6 @@ class BaseUnitOfWork(ABC):
             ) -> None:
                 super().__init__(session)
                 self.users = user_repository
-
-            def _uow_marker(self) -> None: ...
 
         async with UserUnitOfWork(session) as uow:
             await uow.users.create(user_data)
@@ -102,9 +99,3 @@ class BaseUnitOfWork(ABC):
         Roll back the current transaction.
         """
         await self._session.rollback()
-
-    @abstractmethod
-    def _uow_marker(self) -> None:
-        """
-        Prevent direct instantiation of the base Unit of Work class.
-        """

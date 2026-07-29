@@ -3,12 +3,12 @@ from uuid import UUID
 
 from src.modules.servers.domain.entities.server import ServerInviteCode
 from src.modules.servers.domain.entities.server_member import (
-    ServerMemberCreateSchema,
-    ServerMemberSchema,
+    ServerMember,
+    ServerMemberCreate,
 )
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import ServerInviteNotFoundError
-from src.modules.servers.infrastructure.unit_of_work import ServerUnitOfWork
+from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 
 
 class JoinServerCommand:
@@ -17,7 +17,7 @@ class JoinServerCommand:
 
     async def __call__(
         self, user_id: UUID, code_schema: ServerInviteCode
-    ) -> ServerMemberSchema:
+    ) -> ServerMember:
         code = code_schema.code
         invite = await self._uow.invites.get_one(code=code)
         if not invite:
@@ -48,7 +48,7 @@ class JoinServerCommand:
 
         await self._uow.servers.increment_count(invite.server_id)
 
-        member_data = ServerMemberCreateSchema(
+        member_data = ServerMemberCreate(
             server_id=invite.server_id,
             user_id=user_id,
             role=ServerMemberRole.member,

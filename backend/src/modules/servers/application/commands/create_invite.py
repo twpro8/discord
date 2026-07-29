@@ -4,15 +4,15 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from src.modules.servers.domain.entities.server_invite import (
-    CreateServerInvite,
-    CreateServerInviteRequest,
     ServerInvite,
+    ServerInviteCreate,
+    ServerInviteCreateRequest,
 )
 from src.modules.servers.domain.exceptions import (
     ServerInviteGenerationFailedError,
     ServerInvitePermissionDeniedError,
 )
-from src.modules.servers.infrastructure.unit_of_work import ServerUnitOfWork
+from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 
 
 def _generate_random_code(length: int = 8) -> str:
@@ -25,7 +25,7 @@ class CreateInviteCommand:
         self._uow = uow
 
     async def __call__(
-        self, server_id: UUID, user_id: UUID, payload: CreateServerInviteRequest
+        self, server_id: UUID, user_id: UUID, payload: ServerInviteCreateRequest
     ) -> ServerInvite:
         server = await self._uow.servers.get_one(id=server_id, owner_id=user_id)
         if not server:
@@ -46,7 +46,7 @@ class CreateInviteCommand:
         if not code:
             raise ServerInviteGenerationFailedError
 
-        db_payload = CreateServerInvite(
+        db_payload = ServerInviteCreate(
             **payload.model_dump(),
             server_id=server_id,
             created_by=user_id,

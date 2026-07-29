@@ -1,40 +1,63 @@
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import Row
 
 from src.modules.servers.domain.entities.server import (
-    ServerSchema,
-    ServerUserBriefSchema,
+    Server,
+    ServerUserSummary,
 )
 from src.modules.servers.domain.entities.server_invite import ServerInvite
-from src.modules.servers.domain.entities.server_member import ServerMemberSchema
+from src.modules.servers.domain.entities.server_member import ServerMember
+from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.infrastructure.persistence.models import (
     ServerInviteOrm,
     ServerMemberOrm,
     ServerOrm,
 )
-from src.shared.repositories import BaseMapper
 
 
-class ServerMapper(BaseMapper[ServerOrm, ServerSchema]):
-    orm_class = ServerOrm
-    schema_class = ServerSchema
+class ServerDataMapper:
+    @staticmethod
+    def to_entity(model: ServerOrm) -> Server:
+        return Server(
+            id=model.id,
+            name=model.name,
+            description=model.description,
+            icon_url=model.icon_url,
+            owner_id=model.owner_id,
+            member_count=model.member_count,
+            created_at=model.created_at,
+            updated_at=model.updated_at,
+        )
 
 
-class ServerUserBriefMapper(BaseMapper[ServerOrm, ServerUserBriefSchema]):
-    orm_class = ServerOrm
-    schema_class = ServerUserBriefSchema
-
-    @classmethod
-    def to_schema(cls, row: Row[Any] | ServerOrm) -> ServerUserBriefSchema:
-        return cls.schema_class.model_validate(row)
+class ServerUserSummaryDataMapper:
+    @staticmethod
+    def to_entity(row: Row[Any] | ServerOrm) -> ServerUserSummary:
+        return ServerUserSummary.model_validate(row)
 
 
-class ServerMemberMapper(BaseMapper[ServerMemberOrm, ServerMemberSchema]):
-    orm_class = ServerMemberOrm
-    schema_class = ServerMemberSchema
+class ServerMemberDataMapper:
+    @staticmethod
+    def to_entity(model: ServerMemberOrm) -> ServerMember:
+        return ServerMember(
+            id=model.id,
+            server_id=model.server_id,
+            user_id=model.user_id,
+            role=cast(ServerMemberRole, model.role),
+        )
 
 
-class ServerInviteMapper(BaseMapper[ServerInviteOrm, ServerInvite]):
-    orm_class = ServerInviteOrm
-    schema_class = ServerInvite
+class ServerInviteDataMapper:
+    @staticmethod
+    def to_entity(model: ServerInviteOrm) -> ServerInvite:
+        return ServerInvite(
+            id=model.id,
+            server_id=model.server_id,
+            code=model.code,
+            created_by=model.created_by,
+            max_uses=model.max_uses,
+            use_count=model.use_count,
+            expires_at=model.expires_at,
+            created_at=model.created_at,
+        )

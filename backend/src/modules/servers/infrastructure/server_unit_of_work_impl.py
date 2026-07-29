@@ -1,18 +1,17 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.servers.infrastructure.persistence.repository import (
+from src.modules.servers.domain.repositories.server_invite_repository import (
     ServerInviteRepository,
-    ServerMemberRepository,
-    ServerRepository,
 )
-from src.shared.unit_of_work.base_unit_of_work import BaseUnitOfWork
+from src.modules.servers.domain.repositories.server_member_repository import (
+    ServerMemberRepository,
+)
+from src.modules.servers.domain.repositories.server_repository import ServerRepository
+from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.data.unit_of_work.base_unit_of_work import BaseUnitOfWork
 
 
-class ServerUnitOfWork(BaseUnitOfWork):
-    servers: ServerRepository
-    server_members: ServerMemberRepository
-    invites: ServerInviteRepository
-
+class ServerUnitOfWorkImpl(BaseUnitOfWork, ServerUnitOfWork):
     def __init__(
         self,
         session: AsyncSession,

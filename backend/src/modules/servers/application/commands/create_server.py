@@ -4,15 +4,15 @@ from src.modules.channels.application.commands.create_channel import (
     CreateChannelCommand,
 )
 from src.modules.servers.domain.entities.server import (
-    ServerCreateRequestSchema,
-    ServerCreateSchema,
-    ServerSchema,
+    Server,
+    ServerCreate,
+    ServerCreateRequest,
 )
 from src.modules.servers.domain.entities.server_member import (
-    ServerMemberCreateSchema,
+    ServerMemberCreate,
 )
 from src.modules.servers.domain.enums import ServerMemberRole
-from src.modules.servers.infrastructure.unit_of_work import ServerUnitOfWork
+from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 
 
 class CreateServerCommand:
@@ -26,13 +26,13 @@ class CreateServerCommand:
 
     async def __call__(
         self,
-        server_data: ServerCreateRequestSchema,
+        server_data: ServerCreateRequest,
         owner_id: UUID,
-    ) -> ServerSchema:
-        _server_data = ServerCreateSchema(**server_data.model_dump(), owner_id=owner_id)
+    ) -> Server:
+        _server_data = ServerCreate(**server_data.model_dump(), owner_id=owner_id)
         server = await self._uow.servers.create(_server_data)
 
-        member_data = ServerMemberCreateSchema(
+        member_data = ServerMemberCreate(
             user_id=owner_id,
             server_id=server.id,
             role=ServerMemberRole.owner,

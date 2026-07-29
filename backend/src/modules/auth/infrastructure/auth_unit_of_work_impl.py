@@ -7,7 +7,7 @@ from src.modules.auth.infrastructure.persistence.refresh_token_repository_impl i
     RefreshTokenRepositoryImpl,
 )
 from src.modules.users.domain.repositories.user_repository import UserRepository
-from src.shared.unit_of_work import BaseUnitOfWork
+from src.shared.data.unit_of_work import BaseUnitOfWork
 
 
 class AuthUnitOfWork(BaseUnitOfWork, AbstractAuthUnitOfWork):

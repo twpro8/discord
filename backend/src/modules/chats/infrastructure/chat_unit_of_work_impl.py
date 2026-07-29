@@ -7,7 +7,7 @@ from src.modules.chats.domain.repositories.chat_repository import ChatRepository
 from src.modules.chats.domain.repositories.chat_unit_of_work import (
     ChatUnitOfWork,
 )
-from src.shared.unit_of_work import BaseUnitOfWork
+from src.shared.data.unit_of_work import BaseUnitOfWork
 
 
 class ChatUnitOfWorkImpl(BaseUnitOfWork, ChatUnitOfWork):

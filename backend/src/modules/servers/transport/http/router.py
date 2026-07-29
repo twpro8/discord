@@ -3,14 +3,14 @@ from uuid import UUID
 from fastapi import APIRouter, status
 
 from src.modules.servers.domain.entities.server import (
-    ServerCreateRequestSchema,
+    Server,
+    ServerCreateRequest,
     ServerInviteCode,
-    ServerSchema,
-    ServerUpdateRequestSchema,
-    ServerUserBriefSchema,
-    UpdateOwnerIdSchema,
+    ServerUpdateRequest,
+    ServerUserSummary,
+    UpdateOwnerID,
 )
-from src.modules.servers.domain.entities.server_member import ServerMemberSchema
+from src.modules.servers.domain.entities.server_member import ServerMember
 from src.modules.servers.transport.http.dependencies import (
     CreateServerCommandDep,
     DeleteServerCommandDep,
@@ -30,9 +30,9 @@ router.include_router(invite_router, prefix="/{server_id}")
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_server(
     current_user_id: UserIdDep,
-    server_data: ServerCreateRequestSchema,
+    server_data: ServerCreateRequest,
     command: CreateServerCommandDep,
-) -> ServerSchema:
+) -> Server:
     new_server = await command(server_data=server_data, owner_id=current_user_id)
     return new_server
 
@@ -42,7 +42,7 @@ async def join_server(
     current_user_id: UserIdDep,
     code: ServerInviteCode,
     command: JoinServerCommandDep,
-) -> ServerMemberSchema:
+) -> ServerMember:
     return await command(user_id=current_user_id, code_schema=code)
 
 
@@ -51,8 +51,8 @@ async def transfer_ownership(
     server_id: UUID,
     current_user_id: UserIdDep,
     command: TransferServerOwnershipCommandDep,
-    owner_id: UpdateOwnerIdSchema,
-) -> ServerSchema:
+    owner_id: UpdateOwnerID,
+) -> Server:
     new_server = await command(
         server_id=server_id,
         current_user_id=current_user_id,
@@ -61,20 +61,20 @@ async def transfer_ownership(
     return new_server
 
 
-@router.get("", response_model=list[ServerUserBriefSchema])
+@router.get("", response_model=list[ServerUserSummary])
 async def get_my_servers(
     current_user_id: UserIdDep,
     query: GetServersWhereUserMemberQueryDep,
-) -> list[ServerUserBriefSchema]:
+) -> list[ServerUserSummary]:
     return await query(user_id=current_user_id)
 
 
-@router.get("/{server_id}", response_model=ServerSchema)
+@router.get("/{server_id}", response_model=Server)
 async def get_my_server(
     current_user_id: UserIdDep,
     server_id: UUID,
     query: GetServerWhereUserMemberQueryDep,
-) -> ServerSchema:
+) -> Server:
     return await query(user_id=current_user_id, server_id=server_id)
 
 
@@ -82,9 +82,9 @@ async def get_my_server(
 async def update_server(
     server_id: UUID,
     current_user_id: UserIdDep,
-    update_data: ServerUpdateRequestSchema,
+    update_data: ServerUpdateRequest,
     command: UpdateServerCommandDep,
-) -> ServerSchema:
+) -> Server:
     updated_server = await command(
         update_data=update_data,
         server_id=server_id,

@@ -9,7 +9,7 @@ from src.modules.servers.domain.repositories.server_member_repository import (
 from src.modules.servers.domain.repositories.server_repository import ServerRepository
 
 
-class AbstractServerUnitOfWork(ABC):
+class ServerUnitOfWork(ABC):
     servers: ServerRepository
     server_members: ServerMemberRepository
     invites: ServerInviteRepository

@@ -1,11 +1,11 @@
 from uuid import UUID
 
 from src.modules.servers.domain.entities.server import (
-    ServerSchema,
-    UpdateOwnerIdSchema,
-    UpdateServerOwner,
+    Server,
+    ServerUpdate,
+    UpdateOwnerID,
 )
-from src.modules.servers.domain.entities.server_member import UpdateMemberRole
+from src.modules.servers.domain.entities.server_member import ServerMemberUpdate
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import (
     CannotTransferToSelfError,
@@ -13,7 +13,7 @@ from src.modules.servers.domain.exceptions import (
     ServerNotFoundError,
     YouAreNotOwnerError,
 )
-from src.modules.servers.infrastructure.unit_of_work import ServerUnitOfWork
+from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 
 
 class TransferServerOwnershipCommand:
@@ -24,8 +24,8 @@ class TransferServerOwnershipCommand:
         self,
         server_id: UUID,
         current_user_id: UUID,
-        data: UpdateOwnerIdSchema,
-    ) -> ServerSchema:
+        data: UpdateOwnerID,
+    ) -> Server:
         server = await self._uow.servers.get_one(id=server_id)
         if not server:
             raise ServerNotFoundError
@@ -57,15 +57,20 @@ class TransferServerOwnershipCommand:
             raise MemberNotFoundError
 
         await self._uow.server_members.update(
-            current_user.id, UpdateMemberRole(role=ServerMemberRole.member)
+            current_user.id, ServerMemberUpdate(role=ServerMemberRole.member)
         )
 
         await self._uow.server_members.update(
-            new_owner.id, UpdateMemberRole(role=ServerMemberRole.owner)
+            new_owner.id,
+            ServerMemberUpdate(role=ServerMemberRole.owner),
         )
 
-        update_server_schema = UpdateServerOwner(**data.model_dump(), id=server.id)
-        new_server = await self._uow.servers.update(server.id, update_server_schema)
+        update_server_schema = ServerUpdate(id=server.id, owner_id=new_owner_id)
+        new_server = await self._uow.servers.update(
+            server.id,
+            update_server_schema,
+            exclude_unset=True,
+        )
 
         await self._uow.commit()
         return new_server
