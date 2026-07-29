@@ -2,14 +2,15 @@ from fastapi import APIRouter, status
 from fastapi.requests import Request
 from fastapi.responses import Response
 
+from src.api.v1.dependencies import MediatorDep
+from src.modules.auth.application.commands.login import LoginCommand
+from src.modules.auth.application.commands.logout import LogoutCommand
+from src.modules.auth.application.commands.refresh import RefreshCommand
+from src.modules.auth.application.commands.register import RegisterCommand
 from src.modules.auth.domain.entities.schemas import LoginForm, RegisterForm
 from src.modules.auth.transport.http.dependencies import (
-    LoginCommandDep,
-    LogoutCommandDep,
     OptionalRefreshTokenDep,
-    RefreshCommandDep,
     RefreshTokenDep,
-    RegisterCommandDep,
 )
 from src.modules.auth.transport.http.utils import (
     delete_token_cookies,
@@ -27,10 +28,12 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 )
 async def authenticate(
     form_data: LoginForm,
-    command: LoginCommandDep,
+    mediator: MediatorDep,
     response: Response,
 ) -> SuccessResponse:
-    result = await command(form_data.username, form_data.password)
+    result = await mediator.send(
+        LoginCommand(username=form_data.username, password=form_data.password)
+    )
     if result.is_err:
         raise result.error
     tokens = result.value
@@ -44,11 +47,11 @@ async def authenticate(
 )
 async def register(
     form_data: RegisterForm,
-    command: RegisterCommandDep,
+    mediator: MediatorDep,
     request: Request,
     response: Response,
 ) -> UserResponse:
-    result = await command(form_data)
+    result = await mediator.send(RegisterCommand(form_data=form_data))
     if result.is_err:
         raise result.error
     user = result.value
@@ -59,10 +62,10 @@ async def register(
 @router.post("/refresh", status_code=status.HTTP_200_OK)
 async def refresh(
     refresh_token: RefreshTokenDep,
-    command: RefreshCommandDep,
+    mediator: MediatorDep,
     response: Response,
 ) -> SuccessResponse:
-    result = await command(refresh_token)
+    result = await mediator.send(RefreshCommand(refresh_token=refresh_token))
     if result.is_err:
         raise result.error
     tokens = result.value
@@ -73,12 +76,12 @@ async def refresh(
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
     refresh_token: OptionalRefreshTokenDep,
-    command: LogoutCommandDep,
+    mediator: MediatorDep,
     response: Response,
 ) -> None:
     delete_token_cookies(response)
     if refresh_token is None:
         return
-    result = await command(refresh_token)
+    result = await mediator.send(LogoutCommand(refresh_token=refresh_token))
     if result.is_err:
         raise result.error

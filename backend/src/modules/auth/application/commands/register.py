@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from src.core.security.hashing import hash_password
 from src.modules.auth.domain.entities.schemas import RegisterForm
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
@@ -5,15 +7,22 @@ from src.modules.auth.domain.repositories.auth_unit_of_work import (
 )
 from src.modules.users.domain.entities.schemas import UserCreate
 from src.modules.users.domain.entities.user import User
+from src.shared.application.command import Command
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 
 
-class RegisterCommand:
+@dataclass(frozen=True, kw_only=True)
+class RegisterCommand(Command):
+    form_data: RegisterForm
+
+
+class RegisterCommandHandler:
     def __init__(self, uow: AbstractAuthUnitOfWork) -> None:
         self._uow = uow
 
-    async def __call__(self, form_data: RegisterForm) -> Result[User, LumiereError]:
+    async def handle(self, command: RegisterCommand) -> Result[User, LumiereError]:
+        form_data = command.form_data
         user_data = UserCreate(
             **form_data.model_dump(),
             password_hash=hash_password(form_data.password),
