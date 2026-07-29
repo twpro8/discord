@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, status
 
 from src.modules.friends.domain.entities.schemas import (
-    FriendRequest,
+    FriendRequestResponse,
     FriendRequestWithUser,
     SendFriendRequest,
 )
@@ -26,14 +26,15 @@ router = APIRouter(prefix="/friends", tags=["Friends"])
     "/requests",
     status_code=status.HTTP_201_CREATED,
     summary="Send a friend request",
-    response_model=FriendRequest,
+    response_model=FriendRequestResponse,
 )
 async def send_friend_request(
     current_user_id: UserIdDep,
     data: SendFriendRequest,
     command: SendFriendRequestCommandDep,
-) -> FriendRequest:
-    return await command(current_user_id, data)
+) -> FriendRequestResponse:
+    request = await command(current_user_id, data)
+    return FriendRequestResponse.model_validate(request)
 
 
 @router.get(
@@ -77,14 +78,15 @@ async def get_friends(
 @router.patch(
     "/requests/{request_id}/accept",
     summary="Accept a friend request",
-    response_model=FriendRequest,
+    response_model=FriendRequestResponse,
 )
 async def accept_friend_request(
     current_user_id: UserIdDep,
     request_id: UUID,
     command: AcceptFriendRequestCommandDep,
-) -> FriendRequest:
-    return await command(current_user_id, request_id)
+) -> FriendRequestResponse:
+    request = await command(current_user_id, request_id)
+    return FriendRequestResponse.model_validate(request)
 
 
 @router.delete(

@@ -11,12 +11,11 @@ from src.modules.friends.domain.entities.schemas import (
     FriendRequestWithUser,
 )
 from src.modules.friends.domain.enums import FriendStatus
-from src.modules.friends.domain.repositories.friend_repository import FriendRepository
 from src.modules.friends.infrastructure.persistence.mappers import model_to_entity
 from src.modules.friends.infrastructure.persistence.models import FriendOrm
 
 
-class FriendRepositoryImpl(FriendRepository):
+class FriendRepositoryImpl:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
