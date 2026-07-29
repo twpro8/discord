@@ -9,25 +9,30 @@ from src.modules.friends.domain.exceptions import (
 from src.modules.friends.domain.repositories.friend_unit_of_work import (
     FriendUnitOfWork,
 )
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 class RemoveFriendCommand:
     def __init__(self, uow: FriendUnitOfWork) -> None:
         self._uow = uow
 
-    async def __call__(self, current_user_id: UUID, relationship_id: UUID) -> None:
+    async def __call__(
+        self, current_user_id: UUID, relationship_id: UUID
+    ) -> Result[None, LumiereError]:
         request = await self._uow.friends.get_by_id(relationship_id)
         if request is None:
-            raise FriendRequestNotFoundError
+            return Result.err(FriendRequestNotFoundError())
 
         if (
             request.user_id != current_user_id
             and request.target_user_id != current_user_id
         ):
-            raise NotParticipantError
+            return Result.err(NotParticipantError())
 
         if request.status != FriendStatus.FRIENDS:
-            raise FriendRequestNotPendingError
+            return Result.err(FriendRequestNotPendingError())
 
         await self._uow.friends.delete(relationship_id)
         await self._uow.commit()
+        return Result.ok(None)

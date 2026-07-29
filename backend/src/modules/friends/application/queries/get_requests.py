@@ -5,6 +5,8 @@ from src.modules.friends.domain.enums import FriendStatus
 from src.modules.friends.domain.repositories.friend_repository import (
     FriendRepository,
 )
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 class GetFriendRequestsQuery:
@@ -15,5 +17,6 @@ class GetFriendRequestsQuery:
         self,
         user_id: UUID,
         status: FriendStatus = FriendStatus.PENDING,
-    ) -> list[FriendRequestWithUser]:
-        return await self._friends.get_for_user(user_id, status)
+    ) -> Result[list[FriendRequestWithUser], LumiereError]:
+        requests = await self._friends.get_for_user(user_id, status)
+        return Result.ok(requests)

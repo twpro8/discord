@@ -33,8 +33,10 @@ async def send_friend_request(
     data: SendFriendRequest,
     command: SendFriendRequestCommandDep,
 ) -> FriendRequestResponse:
-    request = await command(current_user_id, data)
-    return FriendRequestResponse.model_validate(request)
+    result = await command(current_user_id, data)
+    if result.is_err:
+        raise result.error
+    return FriendRequestResponse.model_validate(result.value)
 
 
 @router.get(
@@ -47,7 +49,10 @@ async def get_friend_requests(
     query: GetFriendRequestsQueryDep,
     status: FriendStatus = FriendStatus.PENDING,
 ) -> list[FriendRequestWithUser]:
-    return await query(current_user_id, status)
+    result = await query(current_user_id, status)
+    if result.is_err:
+        raise result.error
+    return result.value
 
 
 @router.get(
@@ -60,7 +65,10 @@ async def get_user_sent_requests(
     query: GetSentFriendRequestsQueryDep,
     status: FriendStatus = FriendStatus.PENDING,
 ) -> list[FriendRequestWithUser]:
-    return await query(current_user_id, status)
+    result = await query(current_user_id, status)
+    if result.is_err:
+        raise result.error
+    return result.value
 
 
 @router.get(
@@ -72,7 +80,10 @@ async def get_friends(
     current_user_id: UserIdDep,
     query: GetFriendsQueryDep,
 ) -> list[FriendRequestWithUser]:
-    return await query(current_user_id)
+    result = await query(current_user_id)
+    if result.is_err:
+        raise result.error
+    return result.value
 
 
 @router.patch(
@@ -85,8 +96,10 @@ async def accept_friend_request(
     request_id: UUID,
     command: AcceptFriendRequestCommandDep,
 ) -> FriendRequestResponse:
-    request = await command(current_user_id, request_id)
-    return FriendRequestResponse.model_validate(request)
+    result = await command(current_user_id, request_id)
+    if result.is_err:
+        raise result.error
+    return FriendRequestResponse.model_validate(result.value)
 
 
 @router.delete(
@@ -99,7 +112,9 @@ async def delete_friend_request(
     request_id: UUID,
     command: DeleteFriendRequestCommandDep,
 ) -> None:
-    await command(current_user_id, request_id)
+    result = await command(current_user_id, request_id)
+    if result.is_err:
+        raise result.error
 
 
 @router.delete(
@@ -112,4 +127,6 @@ async def remove_friend(
     relationship_id: UUID,
     command: RemoveFriendCommandDep,
 ) -> None:
-    await command(current_user_id, relationship_id)
+    result = await command(current_user_id, relationship_id)
+    if result.is_err:
+        raise result.error

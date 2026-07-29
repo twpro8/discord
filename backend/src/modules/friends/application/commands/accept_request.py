@@ -13,26 +13,30 @@ from src.modules.friends.domain.exceptions import (
 from src.modules.friends.domain.repositories.friend_unit_of_work import (
     FriendUnitOfWork,
 )
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 class AcceptFriendRequestCommand:
     def __init__(self, uow: FriendUnitOfWork) -> None:
         self._uow = uow
 
-    async def __call__(self, current_user_id: UUID, request_id: UUID) -> FriendRequest:
+    async def __call__(
+        self, current_user_id: UUID, request_id: UUID
+    ) -> Result[FriendRequest, LumiereError]:
         request = await self._uow.friends.get_by_id(request_id)
         if request is None:
-            raise FriendRequestNotFoundError
+            return Result.err(FriendRequestNotFoundError())
 
         if request.target_user_id != current_user_id:
-            raise NotParticipantError
+            return Result.err(NotParticipantError())
 
         if request.status != FriendStatus.PENDING:
-            raise FriendRequestNotPendingError
+            return Result.err(FriendRequestNotPendingError())
 
         updated = await self._uow.friends.update(
             request_id,
             FriendRequestUpdate(status=FriendStatus.FRIENDS),
         )
         await self._uow.commit()
-        return updated
+        return Result.ok(updated)
