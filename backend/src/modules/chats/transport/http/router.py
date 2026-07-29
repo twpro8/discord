@@ -18,7 +18,9 @@ async def create_chat(
     command: CreateChatCommandDep,
     data: ChatCreateRequest,
 ) -> ChatCreateRequest:
-    await command(current_user_id, data)
+    result = await command(current_user_id, data)
+    if result.is_err:
+        raise result.error
     return data
 
 
@@ -29,4 +31,7 @@ async def get_my_chats(
     limit: int = Query(20, gt=0, le=100),
     cursor: str | None = Query(None, max_length=128),
 ) -> ChatSummaryPage:
-    return await query(current_user_id, limit, cursor)
+    result = await query(current_user_id, limit, cursor)
+    if result.is_err:
+        raise result.error
+    return result.value

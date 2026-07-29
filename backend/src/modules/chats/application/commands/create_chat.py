@@ -13,6 +13,7 @@ from src.modules.chats.domain.exceptions import SelfChatForbiddenError
 from src.modules.chats.domain.repositories.chat_unit_of_work import (
     ChatUnitOfWork,
 )
+from src.shared.result import Result
 
 logger = get_logger(__name__)
 
@@ -30,7 +31,9 @@ class CreateChatCommand:
                 chat_id=str(chat.id),
             )
 
-    async def __call__(self, creator_id: UUID, data: ChatCreateRequest) -> Chat:
+    async def __call__(
+        self, creator_id: UUID, data: ChatCreateRequest
+    ) -> Result[Chat, SelfChatForbiddenError]:
         if data.type == ChatType.private:
             return await self._get_or_create_private_chat(creator_id, data)
         return await self._create_group_chat(creator_id, data)
@@ -39,9 +42,9 @@ class CreateChatCommand:
         self,
         creator_id: UUID,
         data: ChatCreateRequest,
-    ) -> Chat:
+    ) -> Result[Chat, SelfChatForbiddenError]:
         if creator_id == data.target_user_id:
-            raise SelfChatForbiddenError
+            return Result.err(SelfChatForbiddenError())
 
         assert data.target_user_id
 
@@ -50,7 +53,7 @@ class CreateChatCommand:
             user_b=data.target_user_id,
         )
         if existing_chat:
-            return existing_chat
+            return Result.ok(existing_chat)
 
         chat = await self._uow.chats.create(ChatCreate(type=ChatType.private))
         chat.record_event(ChatCreatedEvent(chat_id=chat.id))
@@ -64,13 +67,13 @@ class CreateChatCommand:
         await self._uow.commit()
         self._log_events(chat)
 
-        return chat
+        return Result.ok(chat)
 
     async def _create_group_chat(
         self,
         creator_id: UUID,
         data: ChatCreateRequest,
-    ) -> Chat:
+    ) -> Result[Chat, SelfChatForbiddenError]:
         chat = await self._uow.chats.create(
             ChatCreate(
                 owner_id=creator_id,
@@ -105,4 +108,4 @@ class CreateChatCommand:
         await self._uow.commit()
         self._log_events(chat)
 
-        return chat
+        return Result.ok(chat)
