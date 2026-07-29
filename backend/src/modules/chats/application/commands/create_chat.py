@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from uuid import UUID
 
 from src.core.logging import get_logger
@@ -13,12 +14,19 @@ from src.modules.chats.domain.exceptions import SelfChatForbiddenError
 from src.modules.chats.domain.repositories.chat_unit_of_work import (
     ChatUnitOfWork,
 )
+from src.shared.application.command import Command
 from src.shared.result import Result
 
 logger = get_logger(__name__)
 
 
-class CreateChatCommand:
+@dataclass(frozen=True, kw_only=True)
+class CreateChatCommand(Command):
+    creator_id: UUID
+    data: ChatCreateRequest
+
+
+class CreateChatCommandHandler:
     def __init__(self, uow: ChatUnitOfWork) -> None:
         self._uow = uow
 
@@ -31,9 +39,10 @@ class CreateChatCommand:
                 chat_id=str(chat.id),
             )
 
-    async def __call__(
-        self, creator_id: UUID, data: ChatCreateRequest
+    async def handle(
+        self, command: CreateChatCommand
     ) -> Result[Chat, SelfChatForbiddenError]:
+        creator_id, data = command.creator_id, command.data
         if data.type == ChatType.private:
             return await self._get_or_create_private_chat(creator_id, data)
         return await self._create_group_chat(creator_id, data)

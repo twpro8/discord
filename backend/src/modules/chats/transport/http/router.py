@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Query, status
 
+from src.api.v1.dependencies import MediatorDep
+from src.modules.chats.application.commands.create_chat import CreateChatCommand
+from src.modules.chats.application.queries.get_chats import GetChatsQuery
 from src.modules.chats.domain.entities.schemas import ChatCreateRequest, ChatSummaryPage
-from src.modules.chats.transport.http.dependencies import (
-    CreateChatCommandDep,
-    GetChatsQueryDep,
-)
 from src.modules.messages.module import get_chat_message_router
 from src.modules.users.transport.http.dependencies import UserIdDep
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 router = APIRouter(prefix="/chats", tags=["Chats"])
 router.include_router(get_chat_message_router(), prefix="/{chat_id}")
@@ -15,10 +16,12 @@ router.include_router(get_chat_message_router(), prefix="/{chat_id}")
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_chat(
     current_user_id: UserIdDep,
-    command: CreateChatCommandDep,
+    mediator: MediatorDep,
     data: ChatCreateRequest,
 ) -> ChatCreateRequest:
-    result = await command(current_user_id, data)
+    result = await mediator.send(
+        CreateChatCommand(creator_id=current_user_id, data=data)
+    )
     if result.is_err:
         raise result.error
     return data
@@ -27,11 +30,13 @@ async def create_chat(
 @router.get("", status_code=status.HTTP_200_OK)
 async def get_my_chats(
     current_user_id: UserIdDep,
-    query: GetChatsQueryDep,
+    mediator: MediatorDep,
     limit: int = Query(20, gt=0, le=100),
     cursor: str | None = Query(None, max_length=128),
 ) -> ChatSummaryPage:
-    result = await query(current_user_id, limit, cursor)
+    result: Result[ChatSummaryPage, LumiereError] = await mediator.query(
+        GetChatsQuery(user_id=current_user_id, limit=limit, cursor=cursor)
+    )
     if result.is_err:
         raise result.error
     return result.value
