@@ -2,7 +2,7 @@ from fastapi import APIRouter, status
 from fastapi.requests import Request
 from fastapi.responses import Response
 
-from src.modules.auth.domain.schemas import LoginForm, RegisterForm
+from src.modules.auth.domain.entities.schemas import LoginForm, RegisterForm
 from src.modules.auth.transport.http.dependencies import (
     LoginCommandDep,
     LogoutCommandDep,
@@ -15,7 +15,7 @@ from src.modules.auth.transport.http.utils import (
     delete_token_cookies,
     set_token_cookies,
 )
-from src.modules.users.domain.schemas import UserRead
+from src.modules.users.transport.http.schemas import UserResponse
 from src.shared.schemas import SuccessResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -44,10 +44,10 @@ async def register(
     command: RegisterCommandDep,
     request: Request,
     response: Response,
-) -> UserRead:
+) -> UserResponse:
     user = await command(form_data)
     response.headers["location"] = f"{request.url.path}/{user.id}"
-    return UserRead.model_validate(user)
+    return UserResponse.model_validate(user)
 
 
 @router.post("/refresh", status_code=status.HTTP_200_OK)

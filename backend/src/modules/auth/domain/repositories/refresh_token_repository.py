@@ -2,7 +2,7 @@ from typing import Protocol
 from uuid import UUID
 
 from src.modules.auth.domain.entities.refresh_token import RefreshToken
-from src.modules.auth.domain.schemas import RefreshTokenCreate
+from src.modules.auth.domain.entities.schemas import RefreshTokenCreate
 
 
 class RefreshTokenRepository(Protocol):

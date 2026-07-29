@@ -2,10 +2,10 @@ from src.modules.auth.application.token_helper import (
     get_valid_refresh_token,
     issue_tokens,
 )
+from src.modules.auth.domain.entities.schemas import TokenPair
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AbstractAuthUnitOfWork,
 )
-from src.modules.auth.domain.schemas import TokenPair
 
 
 class RefreshCommand:

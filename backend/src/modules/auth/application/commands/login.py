@@ -1,10 +1,10 @@
 from src.core.security.hashing import verify_password
 from src.modules.auth.application.token_helper import issue_tokens
+from src.modules.auth.domain.entities.schemas import TokenPair
 from src.modules.auth.domain.exceptions import IncorrectPasswordError
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AbstractAuthUnitOfWork,
 )
-from src.modules.auth.domain.schemas import TokenPair
 from src.modules.users.domain.exceptions import UserNotFoundError
 
 

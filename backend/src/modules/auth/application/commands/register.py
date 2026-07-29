@@ -1,10 +1,10 @@
 from src.core.security.hashing import hash_password
+from src.modules.auth.domain.entities.schemas import RegisterForm
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AbstractAuthUnitOfWork,
 )
-from src.modules.auth.domain.schemas import RegisterForm
+from src.modules.users.domain.entities.schemas import UserCreate
 from src.modules.users.domain.entities.user import User
-from src.modules.users.domain.schemas import UserCreate
 
 
 class RegisterCommand:

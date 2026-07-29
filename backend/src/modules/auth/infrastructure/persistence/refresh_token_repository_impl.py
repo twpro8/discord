@@ -4,7 +4,7 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.domain.entities.refresh_token import RefreshToken
-from src.modules.auth.domain.schemas import RefreshTokenCreate
+from src.modules.auth.domain.entities.schemas import RefreshTokenCreate
 from src.modules.auth.infrastructure.persistence.mappers import model_to_entity
 from src.modules.auth.infrastructure.persistence.models import RefreshTokenOrm
 
