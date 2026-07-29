@@ -13,6 +13,9 @@ from src.modules.messages.domain.repositories.message_repository import (
 from src.modules.messages.domain.repositories.message_unit_of_work import (
     MessageUnitOfWork,
 )
+from src.modules.servers.domain.repositories.server_member_repository import (
+    ServerMemberRepository,
+)
 from src.shared.data.unit_of_work import BaseUnitOfWork
 
 
@@ -24,11 +27,13 @@ class MessageUnitOfWorkImpl(BaseUnitOfWork, MessageUnitOfWork):
         chat_repository: ChatRepository,
         chat_member_repository: ChatMemberRepository,
         channel_repository: ChannelRepository,
+        server_member_repository: ServerMemberRepository,
     ) -> None:
         super().__init__(session)
         self.messages = message_repository
         self.chats = chat_repository
         self.chat_members = chat_member_repository
         self.channels = channel_repository
+        self.server_members = server_member_repository
 
     def _uow_marker(self) -> None: ...

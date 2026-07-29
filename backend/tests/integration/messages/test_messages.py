@@ -64,6 +64,45 @@ class TestSendChannelMessage:
         )
         assert response.status_code == 422
 
+    async def test_channel_not_found(
+        self,
+        authed_client: AsyncClient,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/channels/00000000-0000-0000-0000-000000000000/messages",
+            json={"body": "hello"},
+        )
+        assert response.status_code == 404
+
+    async def test_not_member(
+        self,
+        ac: AsyncClient,
+        authed_client: AsyncClient,
+        get_all_users: list[User],
+        session: AsyncSession,
+    ) -> None:
+        create_resp = await authed_client.post(
+            "/api/v1/servers",
+            json={"name": "Not Member Server"},
+        )
+        assert create_resp.status_code == 201
+
+        result = await session.execute(
+            select(ChannelOrm).order_by(ChannelOrm.created_at.desc()).limit(1)
+        )
+        channel = result.scalar_one()
+
+        alice = next(u for u in get_all_users if u.username == "alice")
+        await ac.post(
+            "/api/v1/auth/login",
+            json={"username": alice.username, "password": "12345678"},
+        )
+        response = await ac.post(
+            f"/api/v1/channels/{channel.id}/messages",
+            json={"body": "hello"},
+        )
+        assert response.status_code == 403
+
 
 class TestSendChatMessage:
     async def test_success(

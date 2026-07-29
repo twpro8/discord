@@ -27,6 +27,7 @@ from src.modules.messages.infrastructure.message_unit_of_work_impl import (
 from src.modules.messages.infrastructure.persistence.message_repository_impl import (
     MessageRepositoryImpl,
 )
+from src.modules.servers.transport.http.dependencies import ServerMemberRepositoryDep
 
 
 def get_message_repository(session: SessionDep) -> MessageRepository:
@@ -39,6 +40,7 @@ async def get_message_unit_of_work(
     chat_repository: ChatRepositoryDep,
     chat_member_repository: ChatMemberRepositoryDep,
     channel_repository: ChannelRepositoryDep,
+    server_member_repository: ServerMemberRepositoryDep,
 ) -> AsyncGenerator[MessageUnitOfWork]:
     async with MessageUnitOfWorkImpl(
         session,
@@ -46,6 +48,7 @@ async def get_message_unit_of_work(
         chat_repository,
         chat_member_repository,
         channel_repository,
+        server_member_repository,
     ) as message_unit_of_work:
         yield message_unit_of_work
 

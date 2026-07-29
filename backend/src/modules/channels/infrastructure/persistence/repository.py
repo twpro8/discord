@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +18,12 @@ class ChannelRepositoryImpl:
         stmt = insert(ChannelOrm).values(**data.model_dump()).returning(ChannelOrm)
         result = await self._session.execute(stmt)
         return model_to_entity(result.scalar_one())
+
+    async def find_by_id(self, channel_id: UUID) -> Channel | None:
+        query = select(ChannelOrm).filter_by(id=channel_id)
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return model_to_entity(model) if model else None
 
     async def increment_sequence(self, channel_id: UUID) -> int:
         stmt = (

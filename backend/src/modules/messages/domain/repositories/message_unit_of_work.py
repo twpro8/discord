@@ -12,6 +12,9 @@ from src.modules.chats.domain.repositories.chat_repository import (
 from src.modules.messages.domain.repositories.message_repository import (
     MessageRepository,
 )
+from src.modules.servers.domain.repositories.server_member_repository import (
+    ServerMemberRepository,
+)
 
 
 class MessageUnitOfWork(ABC):
@@ -19,6 +22,7 @@ class MessageUnitOfWork(ABC):
     chats: ChatRepository
     chat_members: ChatMemberRepository
     channels: ChannelRepository
+    server_members: ServerMemberRepository
 
     @abstractmethod
     async def commit(self) -> None: ...

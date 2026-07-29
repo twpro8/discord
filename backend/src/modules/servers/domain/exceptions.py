@@ -29,6 +29,15 @@ class YouAreNotOwnerError(ServerError):
     detail = "You are not owner"
 
 
+class ServerPermissionError(ServerError):
+    detail = "You do not have permissions to perform this action"
+    status_code = status.HTTP_403_FORBIDDEN
+
+
+class NotServerMemberError(ServerPermissionError):
+    detail = "User is not a member of this server"
+
+
 class ServerInviteError(LumiereError):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     detail = "Server Invite Error"
