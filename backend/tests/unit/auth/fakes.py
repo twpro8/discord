@@ -1,0 +1,115 @@
+from datetime import UTC, datetime
+from uuid import UUID, uuid4
+
+from pydantic import BaseModel
+
+from src.core.security.hashing import hash_password
+from src.modules.auth.domain.entities.refresh_token import RefreshToken
+from src.modules.auth.domain.entities.schemas import RefreshTokenCreate
+from src.modules.auth.domain.repositories.auth_unit_of_work import (
+    AbstractAuthUnitOfWork,
+)
+from src.modules.users.domain.entities.user import User
+
+
+def make_user(
+    username: str, password: str = "12345678", is_active: bool = True
+) -> User:
+    now = datetime.now(UTC)
+    return User(
+        id=uuid4(),
+        name=username,
+        username=username,
+        email=f"{username}@test.com",
+        password_hash=hash_password(password),
+        avatar_url=None,
+        is_active=is_active,
+        created_at=now,
+        updated_at=now,
+    )
+
+
+class FakeUserRepository:
+    def __init__(self, users: list[User] | None = None) -> None:
+        self.users: dict[UUID, User] = {u.id: u for u in (users or [])}
+
+    async def create(self, data: BaseModel) -> User:
+        now = datetime.now(UTC)
+        dumped = data.model_dump()
+        user = User(
+            id=uuid4(),
+            name=dumped["name"],
+            username=dumped["username"],
+            email=dumped["email"],
+            password_hash=dumped["password_hash"],
+            avatar_url=None,
+            is_active=True,
+            created_at=now,
+            updated_at=now,
+        )
+        self.users[user.id] = user
+        return user
+
+    async def get_by_id(self, user_id: UUID) -> User | None:
+        return self.users.get(user_id)
+
+    async def get_by_username(self, username: str) -> User | None:
+        return next((u for u in self.users.values() if u.username == username), None)
+
+    async def update(
+        self,
+        user_id: UUID,
+        data: BaseModel,
+        exclude_unset: bool = False,
+    ) -> User:
+        raise NotImplementedError
+
+
+class FakeRefreshTokenRepository:
+    def __init__(self) -> None:
+        self.tokens: dict[UUID, RefreshToken] = {}
+        self._hash_by_token_id: dict[UUID, str] = {}
+
+    async def create(self, data: RefreshTokenCreate) -> RefreshToken:
+        token = RefreshToken(
+            id=uuid4(),
+            user_id=data.user_id,
+            is_revoked=False,
+            expires_at=data.expires_at,
+            created_at=datetime.now(UTC),
+        )
+        self.tokens[token.id] = token
+        self._hash_by_token_id[token.id] = data.token_hash
+        return token
+
+    async def find_by_hash(self, token_hash: str) -> RefreshToken | None:
+        for token_id, stored_hash in self._hash_by_token_id.items():
+            if stored_hash == token_hash:
+                return self.tokens[token_id]
+        return None
+
+    async def revoke(self, token_id: UUID) -> None:
+        self.tokens[token_id].is_revoked = True
+
+    async def revoke_all(self, user_id: UUID) -> None:
+        for token in self.tokens.values():
+            if token.user_id == user_id:
+                token.is_revoked = True
+
+
+class FakeAuthUnitOfWork(AbstractAuthUnitOfWork):
+    def __init__(
+        self,
+        users: FakeUserRepository,
+        refresh_tokens: FakeRefreshTokenRepository,
+    ) -> None:
+        self.users = users
+        self.refresh_tokens = refresh_tokens
+        self.committed = False
+        self.rolled_back = False
+
+    async def commit(self) -> None:
+        self.committed = True
+
+    async def rollback(self) -> None:
+        self.rolled_back = True
