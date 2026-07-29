@@ -9,6 +9,7 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_session
+from src.modules.channels.composition import register_channel_handlers
 from src.modules.chats.composition import register_chat_handlers
 from src.modules.friends.composition import register_friend_handlers
 from src.modules.servers.composition import register_server_handlers
@@ -28,6 +29,7 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 async def get_mediator(session: SessionDep) -> AsyncGenerator[Mediator]:
     async with AsyncExitStack() as stack:
         mediator = InProcessMediator()
+        await register_channel_handlers(mediator, session, stack)
         await register_chat_handlers(mediator, session, stack)
         await register_friend_handlers(mediator, session, stack)
         await register_server_handlers(mediator, session, stack)

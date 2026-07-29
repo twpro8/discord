@@ -3,7 +3,7 @@ from contextlib import AsyncExitStack
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.channels.application.commands.create_channel import (
-    CreateChannelCommand,
+    CreateChannelCommandHandler,
 )
 from src.modules.channels.infrastructure.persistence.repository import (
     ChannelRepositoryImpl,
@@ -81,15 +81,14 @@ async def register_server_handlers(
         )
     )
 
-    # CreateServerCommand internally invokes channels' CreateChannelCommand to
-    # auto-create the default "general" channel. channels hasn't migrated to
-    # the mediator yet, so it's wired here the same way the old FastAPI
-    # Depends() chain built it.
+    # CreateServerCommandHandler calls channels' CreateChannelCommandHandler
+    # directly (not via mediator.send()) as part of its own atomic operation,
+    # so it needs a handler instance here rather than a mediator registration.
     channel_repository = ChannelRepositoryImpl(session)
     channel_uow = await stack.enter_async_context(
         ChannelUnitOfWorkImpl(session=session, channel_repository=channel_repository)
     )
-    create_channel_command = CreateChannelCommand(channel_uow)
+    create_channel_command = CreateChannelCommandHandler(channel_uow)
 
     mediator.register_command(
         CreateServerCommand,

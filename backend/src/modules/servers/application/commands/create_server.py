@@ -3,6 +3,7 @@ from uuid import UUID
 
 from src.modules.channels.application.commands.create_channel import (
     CreateChannelCommand,
+    CreateChannelCommandHandler,
 )
 from src.modules.servers.domain.entities.server import (
     Server,
@@ -29,7 +30,7 @@ class CreateServerCommandHandler:
     def __init__(
         self,
         uow: ServerUnitOfWork,
-        create_channel_command: CreateChannelCommand,
+        create_channel_command: CreateChannelCommandHandler,
     ) -> None:
         self._uow = uow
         self._create_channel_command = create_channel_command
@@ -48,10 +49,12 @@ class CreateServerCommandHandler:
         )
         await self._uow.server_members.create(member_data)
 
-        await self._create_channel_command(
-            server.id,
-            name="general",
-            is_commit=False,
+        await self._create_channel_command.handle(
+            CreateChannelCommand(
+                server_id=server.id,
+                name="general",
+                is_commit=False,
+            )
         )
 
         await self._uow.commit()

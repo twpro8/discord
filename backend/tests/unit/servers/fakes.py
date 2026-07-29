@@ -190,20 +190,13 @@ class FakeServerUnitOfWork(ServerUnitOfWork):
         self.rolled_back = True
 
 
-class FakeCreateChannelCommand:
-    """Stand-in for channels' CreateChannelCommand — CreateServerCommandHandler
-    only awaits the call and never inspects its return value."""
+class FakeCreateChannelCommandHandler:
+    """Stand-in for channels' CreateChannelCommandHandler —
+    CreateServerCommandHandler calls .handle() and never inspects the
+    return value."""
 
     def __init__(self) -> None:
         self.calls: list[tuple[UUID, str]] = []
 
-    async def __call__(
-        self,
-        server_id: UUID,
-        name: str,
-        type: Any = None,
-        topic: str | None = None,
-        is_private: bool = False,
-        is_commit: bool = True,
-    ) -> None:
-        self.calls.append((server_id, name))
+    async def handle(self, command: Any) -> None:
+        self.calls.append((command.server_id, command.name))
