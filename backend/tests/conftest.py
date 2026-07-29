@@ -3,20 +3,14 @@ from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
-from src.core.database import Base, get_session
-from src.core.database.session import (
-    get_null_pool_engine,
-    get_null_pool_session_factory,
-)
+from src.core.database import get_session
 from src.main import app
 from src.modules.users.domain.entities.user import User
 from src.shared.data.models import *  # noqa
 from tests.dependency_overrides.redis_client import get_fake_redis_client
 from tests.dependency_overrides.session import get_null_pool_session
-from tests.seeder import populate_database
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -34,28 +28,6 @@ def override_dependencies(
 
     app.dependency_overrides[get_session] = get_null_pool_session
     app.dependency_overrides[get_redis] = get_fake_redis_client
-
-
-@pytest.fixture(scope="session", autouse=True)
-async def setup_database(
-    check_test_mode: None,  # noqa
-) -> None:
-    """Setup database tables"""
-    engine = get_null_pool_engine()
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-
-
-@pytest.fixture(scope="session", autouse=True)
-async def populated_database(
-    setup_database: None,  # noqa
-) -> AsyncGenerator[AsyncSession]:
-    """Populate database"""
-    session_factory = get_null_pool_session_factory()
-    async with session_factory() as session:
-        await populate_database(session)
-        yield session
 
 
 @pytest.fixture(name="ac")
