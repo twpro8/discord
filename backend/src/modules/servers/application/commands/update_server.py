@@ -7,6 +7,7 @@ from src.modules.servers.domain.entities.server import (
 )
 from src.modules.servers.domain.exceptions import ServerNotFoundError
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.result import Result
 
 
 class UpdateServerCommand:
@@ -18,10 +19,10 @@ class UpdateServerCommand:
         update_data: ServerUpdateRequest,
         server_id: UUID,
         owner_id: UUID,
-    ) -> Server:
+    ) -> Result[Server, ServerNotFoundError]:
         server = await self._uow.servers.get_one(id=server_id, owner_id=owner_id)
         if not server:
-            raise ServerNotFoundError
+            return Result.err(ServerNotFoundError())
 
         _update_data = ServerUpdate(
             id=server.id,
@@ -33,4 +34,4 @@ class UpdateServerCommand:
         )
 
         await self._uow.commit()
-        return updated_server
+        return Result.ok(updated_server)

@@ -33,8 +33,10 @@ async def create_server(
     server_data: ServerCreateRequest,
     command: CreateServerCommandDep,
 ) -> ServerResponse:
-    new_server = await command(server_data=server_data, owner_id=current_user_id)
-    return ServerResponse.model_validate(new_server)
+    result = await command(server_data=server_data, owner_id=current_user_id)
+    if result.is_err:
+        raise result.error
+    return ServerResponse.model_validate(result.value)
 
 
 @router.post("/join", status_code=status.HTTP_201_CREATED)
@@ -43,8 +45,10 @@ async def join_server(
     code: ServerInviteCode,
     command: JoinServerCommandDep,
 ) -> ServerMemberResponse:
-    member = await command(user_id=current_user_id, code_schema=code)
-    return ServerMemberResponse.model_validate(member)
+    result = await command(user_id=current_user_id, code_schema=code)
+    if result.is_err:
+        raise result.error
+    return ServerMemberResponse.model_validate(result.value)
 
 
 @router.post("/{server_id}/transfer", status_code=status.HTTP_200_OK)
@@ -54,12 +58,14 @@ async def transfer_ownership(
     command: TransferServerOwnershipCommandDep,
     owner_id: UpdateOwnerID,
 ) -> ServerResponse:
-    new_server = await command(
+    result = await command(
         server_id=server_id,
         current_user_id=current_user_id,
         data=owner_id,
     )
-    return ServerResponse.model_validate(new_server)
+    if result.is_err:
+        raise result.error
+    return ServerResponse.model_validate(result.value)
 
 
 @router.get("", response_model=list[ServerUserSummary])
@@ -67,7 +73,10 @@ async def get_my_servers(
     current_user_id: UserIdDep,
     query: GetServersWhereUserMemberQueryDep,
 ) -> list[ServerUserSummary]:
-    return await query(user_id=current_user_id)
+    result = await query(user_id=current_user_id)
+    if result.is_err:
+        raise result.error
+    return result.value
 
 
 @router.get("/{server_id}", response_model=ServerResponse)
@@ -76,8 +85,10 @@ async def get_my_server(
     server_id: UUID,
     query: GetServerWhereUserMemberQueryDep,
 ) -> ServerResponse:
-    server = await query(user_id=current_user_id, server_id=server_id)
-    return ServerResponse.model_validate(server)
+    result = await query(user_id=current_user_id, server_id=server_id)
+    if result.is_err:
+        raise result.error
+    return ServerResponse.model_validate(result.value)
 
 
 @router.patch("/{server_id}")
@@ -87,12 +98,14 @@ async def update_server(
     update_data: ServerUpdateRequest,
     command: UpdateServerCommandDep,
 ) -> ServerResponse:
-    updated_server = await command(
+    result = await command(
         update_data=update_data,
         server_id=server_id,
         owner_id=current_user_id,
     )
-    return ServerResponse.model_validate(updated_server)
+    if result.is_err:
+        raise result.error
+    return ServerResponse.model_validate(result.value)
 
 
 @router.delete("/{server_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -101,4 +114,6 @@ async def delete_server(
     current_user_id: UserIdDep,
     command: DeleteServerCommandDep,
 ) -> None:
-    await command(server_id=server_id, owner_id=current_user_id)
+    result = await command(server_id=server_id, owner_id=current_user_id)
+    if result.is_err:
+        raise result.error

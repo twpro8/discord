@@ -14,6 +14,8 @@ from src.modules.servers.domain.exceptions import (
     YouAreNotOwnerError,
 )
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 class TransferServerOwnershipCommand:
@@ -25,10 +27,10 @@ class TransferServerOwnershipCommand:
         server_id: UUID,
         current_user_id: UUID,
         data: UpdateOwnerID,
-    ) -> Server:
+    ) -> Result[Server, LumiereError]:
         server = await self._uow.servers.get_one(id=server_id)
         if not server:
-            raise ServerNotFoundError
+            return Result.err(ServerNotFoundError())
 
         current_user = await self._uow.server_members.get_one(
             server_id=server.id,
@@ -37,15 +39,15 @@ class TransferServerOwnershipCommand:
         )
 
         if not current_user:
-            raise MemberNotFoundError
+            return Result.err(MemberNotFoundError())
 
         new_owner_id = data.owner_id
 
         if current_user_id == new_owner_id:
-            raise CannotTransferToSelfError
+            return Result.err(CannotTransferToSelfError())
 
         if current_user.role != ServerMemberRole.owner:
-            raise YouAreNotOwnerError
+            return Result.err(YouAreNotOwnerError())
 
         new_owner = await self._uow.server_members.get_one(
             server_id=server.id,
@@ -54,7 +56,7 @@ class TransferServerOwnershipCommand:
         )
 
         if not new_owner:
-            raise MemberNotFoundError
+            return Result.err(MemberNotFoundError())
 
         await self._uow.server_members.update(
             current_user.id, ServerMemberUpdate(role=ServerMemberRole.member)
@@ -73,4 +75,4 @@ class TransferServerOwnershipCommand:
         )
 
         await self._uow.commit()
-        return new_server
+        return Result.ok(new_server)

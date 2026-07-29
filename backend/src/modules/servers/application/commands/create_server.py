@@ -13,6 +13,8 @@ from src.modules.servers.domain.entities.server_member import (
 )
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 class CreateServerCommand:
@@ -28,7 +30,7 @@ class CreateServerCommand:
         self,
         server_data: ServerCreateRequest,
         owner_id: UUID,
-    ) -> Server:
+    ) -> Result[Server, LumiereError]:
         _server_data = ServerCreate(**server_data.model_dump(), owner_id=owner_id)
         server = await self._uow.servers.create(_server_data)
 
@@ -46,4 +48,4 @@ class CreateServerCommand:
         )
 
         await self._uow.commit()
-        return server
+        return Result.ok(server)

@@ -5,6 +5,8 @@ from src.modules.servers.domain.exceptions import (
     ServerNotFoundError,
 )
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 class DeleteServerCommand:
@@ -15,13 +17,14 @@ class DeleteServerCommand:
         self,
         server_id: UUID,
         owner_id: UUID,
-    ) -> None:
+    ) -> Result[None, LumiereError]:
         server = await self._uow.servers.get_one(id=server_id, owner_id=owner_id)
         if not server:
-            raise ServerNotFoundError
+            return Result.err(ServerNotFoundError())
 
         if server.member_count > 1:
-            raise ServerNotEmptyError
+            return Result.err(ServerNotEmptyError())
 
         await self._uow.servers.delete(server.id)
         await self._uow.commit()
+        return Result.ok(None)

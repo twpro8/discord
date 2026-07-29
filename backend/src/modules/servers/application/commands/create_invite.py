@@ -13,6 +13,8 @@ from src.modules.servers.domain.exceptions import (
     ServerInvitePermissionDeniedError,
 )
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 def _generate_random_code(length: int = 8) -> str:
@@ -26,10 +28,10 @@ class CreateInviteCommand:
 
     async def __call__(
         self, server_id: UUID, user_id: UUID, payload: ServerInviteCreateRequest
-    ) -> ServerInvite:
+    ) -> Result[ServerInvite, LumiereError]:
         server = await self._uow.servers.get_one(id=server_id, owner_id=user_id)
         if not server:
-            raise ServerInvitePermissionDeniedError
+            return Result.err(ServerInvitePermissionDeniedError())
 
         expires_at = None
         if payload.expires_in is not None:
@@ -44,7 +46,7 @@ class CreateInviteCommand:
                 break
 
         if not code:
-            raise ServerInviteGenerationFailedError
+            return Result.err(ServerInviteGenerationFailedError())
 
         db_payload = ServerInviteCreate(
             **payload.model_dump(),
@@ -56,4 +58,4 @@ class CreateInviteCommand:
 
         invite = await self._uow.invites.create(db_payload)
         await self._uow.commit()
-        return invite
+        return Result.ok(invite)

@@ -9,6 +9,7 @@ from src.modules.servers.domain.entities.server_member import (
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import ServerInviteNotFoundError
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.result import Result
 
 
 class JoinServerCommand:
@@ -17,11 +18,11 @@ class JoinServerCommand:
 
     async def __call__(
         self, user_id: UUID, code_schema: ServerInviteCode
-    ) -> ServerMember:
+    ) -> Result[ServerMember, ServerInviteNotFoundError]:
         code = code_schema.code
         invite = await self._uow.invites.get_one(code=code)
         if not invite:
-            raise ServerInviteNotFoundError
+            return Result.err(ServerInviteNotFoundError())
 
         now = datetime.now(UTC)
         if invite.expires_at is not None:
@@ -31,20 +32,20 @@ class JoinServerCommand:
                 else invite.expires_at
             )
             if now > expires_at:
-                raise ServerInviteNotFoundError
+                return Result.err(ServerInviteNotFoundError())
 
         member = await self._uow.server_members.get_one(
             server_id=invite.server_id, user_id=user_id, left_at=None
         )
         if member:
-            return member
+            return Result.ok(member)
 
         affected_rows = await self._uow.invites.increment_use_count_atomic(
             invite_id=invite.id, max_uses=invite.max_uses
         )
 
         if affected_rows == 0:
-            raise ServerInviteNotFoundError
+            return Result.err(ServerInviteNotFoundError())
 
         await self._uow.servers.increment_count(invite.server_id)
 
@@ -55,4 +56,4 @@ class JoinServerCommand:
         )
         member = await self._uow.server_members.create(member_data)
         await self._uow.commit()
-        return member
+        return Result.ok(member)

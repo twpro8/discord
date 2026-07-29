@@ -26,12 +26,14 @@ async def create_invite(
     payload: ServerInviteCreateRequest,
     command: CreateInviteCommandDep,
 ) -> ServerInviteResponse:
-    invite = await command(
+    result = await command(
         server_id=server_id,
         user_id=current_user_id,
         payload=payload,
     )
-    return ServerInviteResponse.model_validate(invite)
+    if result.is_err:
+        raise result.error
+    return ServerInviteResponse.model_validate(result.value)
 
 
 @router.get("", response_model=list[ServerInviteWithStatus])
@@ -42,12 +44,15 @@ async def get_invites(
     limit: int = Query(default=100, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ) -> list[ServerInviteWithStatus]:
-    return await query(
+    result = await query(
         user_id=user_id,
         server_id=server_id,
         limit=limit,
         offset=offset,
     )
+    if result.is_err:
+        raise result.error
+    return result.value
 
 
 @router.delete("/{code}", status_code=status.HTTP_204_NO_CONTENT)
@@ -57,8 +62,10 @@ async def delete_invite(
     current_user_id: UserIdDep,
     command: DeleteInviteCommandDep,
 ) -> None:
-    await command(
+    result = await command(
         server_id=server_id,
         user_id=current_user_id,
         code=code,
     )
+    if result.is_err:
+        raise result.error
