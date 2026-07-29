@@ -31,7 +31,10 @@ async def authenticate(
     response: Response,
 ) -> SuccessResponse:
     result = await command(form_data.username, form_data.password)
-    set_token_cookies(response, result.access_token, result.refresh_token)
+    if result.is_err:
+        raise result.error
+    tokens = result.value
+    set_token_cookies(response, tokens.access_token, tokens.refresh_token)
     return SuccessResponse()
 
 
@@ -45,7 +48,10 @@ async def register(
     request: Request,
     response: Response,
 ) -> UserResponse:
-    user = await command(form_data)
+    result = await command(form_data)
+    if result.is_err:
+        raise result.error
+    user = result.value
     response.headers["location"] = f"{request.url.path}/{user.id}"
     return UserResponse.model_validate(user)
 
@@ -56,7 +62,10 @@ async def refresh(
     command: RefreshCommandDep,
     response: Response,
 ) -> SuccessResponse:
-    tokens = await command(refresh_token)
+    result = await command(refresh_token)
+    if result.is_err:
+        raise result.error
+    tokens = result.value
     set_token_cookies(response, tokens.access_token, tokens.refresh_token)
     return SuccessResponse()
 
@@ -70,4 +79,6 @@ async def logout(
     delete_token_cookies(response)
     if refresh_token is None:
         return
-    await command(refresh_token)
+    result = await command(refresh_token)
+    if result.is_err:
+        raise result.error

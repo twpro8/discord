@@ -3,18 +3,26 @@ from src.modules.auth.application.token_helper import (
     issue_tokens,
 )
 from src.modules.auth.domain.entities.schemas import TokenPair
+from src.modules.auth.domain.exceptions import InvalidRefreshTokenError
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AbstractAuthUnitOfWork,
 )
+from src.shared.result import Result
 
 
 class RefreshCommand:
     def __init__(self, uow: AbstractAuthUnitOfWork) -> None:
         self._uow = uow
 
-    async def __call__(self, refresh_token: str) -> TokenPair:
-        stored = await get_valid_refresh_token(self._uow, refresh_token)
+    async def __call__(
+        self, refresh_token: str
+    ) -> Result[TokenPair, InvalidRefreshTokenError]:
+        try:
+            stored = await get_valid_refresh_token(self._uow, refresh_token)
+        except InvalidRefreshTokenError as error:
+            return Result.err(error)
+
         await self._uow.refresh_tokens.revoke(stored.id)
         tokens = await issue_tokens(self._uow, stored.user_id)
         await self._uow.commit()
-        return tokens
+        return Result.ok(tokens)
