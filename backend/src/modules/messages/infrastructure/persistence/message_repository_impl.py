@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.messages.domain.entities.schemas import Message, MessageCreate
 from src.modules.messages.domain.exceptions import MessageNotFoundError
 from src.modules.messages.infrastructure.persistence.mappers import model_to_entity
-from src.modules.messages.models import MessageOrm
+from src.modules.messages.infrastructure.persistence.models import MessageOrm
 
 
 class MessageRepositoryImpl:

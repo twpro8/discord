@@ -14,7 +14,7 @@ from src.modules.chats.infrastructure.persistence.mappers import (
     chat_summary_to_entity,
 )
 from src.modules.chats.infrastructure.persistence.models import ChatMemberOrm, ChatOrm
-from src.modules.messages.models import MessageOrm
+from src.modules.messages.infrastructure.persistence.models import MessageOrm
 from src.modules.users.infrastructure.persistence.models import UserOrm
 
 SNIPPET_LEN = 120

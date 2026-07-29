@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.modules.messages.transport.http.router import channel_message_router
+from src.modules.messages.module import get_channel_message_router
 
 router = APIRouter(prefix="/channels", tags=["Channels"])
-router.include_router(channel_message_router, prefix="/{channel_id}")
+router.include_router(get_channel_message_router(), prefix="/{channel_id}")
