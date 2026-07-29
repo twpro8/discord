@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_session
 from src.modules.chats.composition import register_chat_handlers
+from src.modules.friends.composition import register_friend_handlers
 from src.shared.application.in_process_mediator import InProcessMediator
 from src.shared.application.mediator import Mediator
 
@@ -27,6 +28,7 @@ async def get_mediator(session: SessionDep) -> AsyncGenerator[Mediator]:
     async with AsyncExitStack() as stack:
         mediator = InProcessMediator()
         await register_chat_handlers(mediator, session, stack)
+        await register_friend_handlers(mediator, session, stack)
         yield mediator
 
 

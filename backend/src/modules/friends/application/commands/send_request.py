@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.friends.domain.entities.schemas import (
@@ -13,17 +14,25 @@ from src.modules.friends.domain.repositories.friend_unit_of_work import (
     FriendUnitOfWork,
 )
 from src.modules.users.domain.exceptions import UserNotFoundError
+from src.shared.application.command import Command
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 
 
-class SendFriendRequestCommand:
+@dataclass(frozen=True, kw_only=True)
+class SendFriendRequestCommand(Command):
+    sender_id: UUID
+    data: SendFriendRequest
+
+
+class SendFriendRequestCommandHandler:
     def __init__(self, uow: FriendUnitOfWork) -> None:
         self._uow = uow
 
-    async def __call__(
-        self, sender_id: UUID, data: SendFriendRequest
+    async def handle(
+        self, command: SendFriendRequestCommand
     ) -> Result[FriendRequest, LumiereError]:
+        sender_id, data = command.sender_id, command.data
         target_user = await self._uow.users.get_by_username(username=data.username)
         if not target_user or not target_user.is_active:
             return Result.err(UserNotFoundError())
