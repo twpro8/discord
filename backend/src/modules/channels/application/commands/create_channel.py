@@ -6,6 +6,8 @@ from src.modules.channels.domain.enums import ChannelType
 from src.modules.channels.domain.repositories.channel_unit_of_work import (
     ChannelUnitOfWork,
 )
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 class CreateChannelCommand:
@@ -20,7 +22,7 @@ class CreateChannelCommand:
         topic: str | None = None,
         is_private: bool = False,
         is_commit: bool = True,
-    ) -> Channel:
+    ) -> Result[Channel, LumiereError]:
         channel_data = ChannelCreate(
             server_id=server_id,
             name=name,
@@ -34,4 +36,4 @@ class CreateChannelCommand:
         if is_commit:
             await self._uow.commit()
 
-        return channel
+        return Result.ok(channel)
