@@ -38,4 +38,4 @@ class SendChannelMessageCommand:
             )
         )
         await self._uow.commit()
-        return ChannelMessage(**message.model_dump(exclude={"chat_id"}))
+        return ChannelMessage.model_validate(message)
