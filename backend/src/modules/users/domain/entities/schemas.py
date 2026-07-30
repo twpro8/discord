@@ -6,3 +6,7 @@ class UserCreate(BaseSchema):
     username: str
     email: str
     password_hash: str
+
+
+class UserDeactivate(BaseSchema):
+    is_active: bool = False

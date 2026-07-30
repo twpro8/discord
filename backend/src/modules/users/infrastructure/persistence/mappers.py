@@ -14,15 +14,3 @@ def model_to_entity(model: UserOrm) -> User:
         created_at=model.created_at,
         updated_at=model.updated_at,
     )
-
-
-def entity_to_model(user: User) -> UserOrm:
-    return UserOrm(
-        id=user.id,
-        name=user.name,
-        email=user.email,
-        username=user.username,
-        password_hash=user.password_hash,
-        avatar_url=user.avatar_url,
-        is_active=user.is_active,
-    )

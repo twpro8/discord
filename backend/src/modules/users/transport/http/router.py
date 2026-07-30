@@ -52,16 +52,7 @@ async def update_user(
     update_user_command: UpdateUserCommandDep,
 ) -> UserResponse:
     user = await update_user_command(user_id, data)
-    return UserResponse(
-        id=user.id,
-        name=user.name,
-        username=user.username,
-        email=user.email,
-        avatar_url=user.avatar_url,
-        is_active=user.is_active,
-        created_at=user.created_at,
-        updated_at=user.updated_at,
-    )
+    return UserResponse.model_validate(user)
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
