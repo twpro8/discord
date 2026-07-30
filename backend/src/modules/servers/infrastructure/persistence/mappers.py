@@ -2,10 +2,8 @@ from typing import Any, cast
 
 from sqlalchemy import Row
 
-from src.modules.servers.domain.entities.server import (
-    Server,
-    ServerUserSummary,
-)
+from src.modules.servers.domain.entities.dtos import ServerUserSummary
+from src.modules.servers.domain.entities.server import Server
 from src.modules.servers.domain.entities.server_invite import ServerInvite
 from src.modules.servers.domain.entities.server_member import ServerMember
 from src.modules.servers.domain.enums import ServerMemberRole

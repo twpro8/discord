@@ -6,8 +6,6 @@ from src.shared.domain.entity import Entity
 
 
 class FriendRequest(Entity):
-    """A persisted friend request."""
-
     def __init__(
         self,
         id: UUID,

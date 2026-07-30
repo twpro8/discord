@@ -2,12 +2,12 @@ from collections.abc import Sequence
 from typing import Any, Protocol
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server import (
-    Server,
+from src.modules.servers.domain.entities.dtos import (
     ServerCreate,
     ServerUpdate,
     ServerUserSummary,
 )
+from src.modules.servers.domain.entities.server import Server
 
 
 class ServerRepository(Protocol):

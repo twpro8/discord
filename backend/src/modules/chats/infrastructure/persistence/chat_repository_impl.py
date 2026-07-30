@@ -11,8 +11,8 @@ from src.modules.chats.domain.entities.chat import Chat
 from src.modules.chats.domain.entities.dtos import ChatCreate, ChatSummaryPage
 from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.infrastructure.persistence.mappers import (
-    chat_model_to_entity,
-    chat_summary_to_entity,
+    ChatDataMapper,
+    ChatSummaryDataMapper,
 )
 from src.modules.chats.infrastructure.persistence.models import ChatMemberOrm, ChatOrm
 from src.modules.messages.infrastructure.persistence.models import MessageOrm
@@ -28,7 +28,7 @@ class ChatRepositoryImpl:
     async def create(self, data: ChatCreate) -> Chat:
         stmt = insert(ChatOrm).values(**asdict(data)).returning(ChatOrm)
         result = await self._session.execute(stmt)
-        return chat_model_to_entity(result.scalar_one())
+        return ChatDataMapper.to_entity(result.scalar_one())
 
     async def find_private_chat(self, user_a: UUID, user_b: UUID) -> Chat | None:
         """Find private chat between users"""
@@ -50,7 +50,7 @@ class ChatRepositoryImpl:
         )
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()
-        return chat_model_to_entity(model) if model else None
+        return ChatDataMapper.to_entity(model) if model else None
 
     async def list_chats_for_user(
         self,
@@ -66,7 +66,7 @@ class ChatRepositoryImpl:
         has_next = len(rows) > limit
         rows = rows[:limit]
 
-        items = [chat_summary_to_entity(r) for r in rows]
+        items = [ChatSummaryDataMapper.to_entity(r) for r in rows]
         next_cursor = (
             encode_cursor(rows[-1].sort_key, rows[-1].id) if has_next else None
         )
@@ -173,7 +173,7 @@ class ChatRepositoryImpl:
         query = select(ChatOrm).filter_by(id=chat_id)
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()
-        return chat_model_to_entity(model) if model else None
+        return ChatDataMapper.to_entity(model) if model else None
 
     async def increment_sequence(self, chat_id: UUID) -> int:
         stmt = (

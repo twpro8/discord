@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
-    AbstractAuthUnitOfWork,
+    AuthUnitOfWork,
 )
 from src.modules.auth.infrastructure.persistence.refresh_token_repository_impl import (
     RefreshTokenRepositoryImpl,
@@ -9,7 +9,7 @@ from src.modules.auth.infrastructure.persistence.refresh_token_repository_impl i
 from src.shared.data.unit_of_work import BaseUnitOfWork
 
 
-class AuthUnitOfWork(BaseUnitOfWork, AbstractAuthUnitOfWork):
+class AuthUnitOfWorkImpl(BaseUnitOfWork, AuthUnitOfWork):
     def __init__(
         self,
         session: AsyncSession,

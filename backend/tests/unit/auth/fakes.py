@@ -5,7 +5,7 @@ from src.core.security.hashing import hash_password, verify_password
 from src.modules.auth.domain.entities.dtos import RefreshTokenCreate
 from src.modules.auth.domain.entities.refresh_token import RefreshToken
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
-    AbstractAuthUnitOfWork,
+    AuthUnitOfWork,
 )
 from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
 from src.modules.users.domain.entities.user import User
@@ -116,7 +116,7 @@ class FakeRefreshTokenRepository:
                 token.is_revoked = True
 
 
-class FakeAuthUnitOfWork(AbstractAuthUnitOfWork):
+class FakeAuthUnitOfWork(AuthUnitOfWork):
     def __init__(
         self,
         refresh_tokens: FakeRefreshTokenRepository,

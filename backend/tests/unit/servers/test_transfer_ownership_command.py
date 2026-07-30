@@ -4,8 +4,7 @@ from src.modules.servers.application.commands.transfer_ownership import (
     TransferServerOwnershipCommand,
     TransferServerOwnershipCommandHandler,
 )
-from src.modules.servers.domain.entities.server import ServerCreate
-from src.modules.servers.domain.entities.server_member import ServerMemberCreate
+from src.modules.servers.domain.entities.dtos import ServerCreate, ServerMemberCreate
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import (
     CannotTransferToSelfError,

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server import Server, ServerUpdate
-from src.modules.servers.domain.entities.server_member import ServerMemberUpdate
+from src.modules.servers.domain.entities.dtos import ServerMemberUpdate, ServerUpdate
+from src.modules.servers.domain.entities.server import Server
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import (
     CannotTransferToSelfError,

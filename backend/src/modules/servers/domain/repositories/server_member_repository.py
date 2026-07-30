@@ -1,11 +1,11 @@
 from typing import Any, Protocol
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server_member import (
-    ServerMember,
+from src.modules.servers.domain.entities.dtos import (
     ServerMemberCreate,
     ServerMemberUpdate,
 )
+from src.modules.servers.domain.entities.server_member import ServerMember
 
 
 class ServerMemberRepository(Protocol):

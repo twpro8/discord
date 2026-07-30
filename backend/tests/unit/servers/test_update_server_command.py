@@ -4,7 +4,7 @@ from src.modules.servers.application.commands.update_server import (
     UpdateServerCommand,
     UpdateServerCommandHandler,
 )
-from src.modules.servers.domain.entities.server import (
+from src.modules.servers.domain.entities.dtos import (
     ServerCreate,
     ServerUpdateData,
 )

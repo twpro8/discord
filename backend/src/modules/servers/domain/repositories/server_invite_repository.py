@@ -2,10 +2,8 @@ from collections.abc import Sequence
 from typing import Any, Protocol
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server_invite import (
-    ServerInvite,
-    ServerInviteCreate,
-)
+from src.modules.servers.domain.entities.dtos import ServerInviteCreate
+from src.modules.servers.domain.entities.server_invite import ServerInvite
 
 
 class ServerInviteRepository(Protocol):

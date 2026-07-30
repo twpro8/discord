@@ -7,7 +7,7 @@ from src.modules.auth.application.token_helper import (
 from src.modules.auth.domain.entities.dtos import TokenPair
 from src.modules.auth.domain.exceptions import InvalidRefreshTokenError
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
-    AbstractAuthUnitOfWork,
+    AuthUnitOfWork,
 )
 from src.shared.application.command import Command
 from src.shared.result import Result
@@ -19,7 +19,7 @@ class RefreshCommand(Command):
 
 
 class RefreshCommandHandler:
-    def __init__(self, uow: AbstractAuthUnitOfWork) -> None:
+    def __init__(self, uow: AuthUnitOfWork) -> None:
         self._uow = uow
 
     async def handle(

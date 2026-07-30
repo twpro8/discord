@@ -6,21 +6,17 @@ from uuid import UUID, uuid4
 from src.modules.channels.domain.entities.dtos import ChannelDTO
 from src.modules.channels.domain.enums import ChannelType
 from src.modules.servers.domain import services as server_permission_services
-from src.modules.servers.domain.entities.server import (
-    Server,
+from src.modules.servers.domain.entities.dtos import (
     ServerCreate,
+    ServerInviteCreate,
+    ServerMemberCreate,
+    ServerMemberUpdate,
     ServerUpdate,
     ServerUserSummary,
 )
-from src.modules.servers.domain.entities.server_invite import (
-    ServerInvite,
-    ServerInviteCreate,
-)
-from src.modules.servers.domain.entities.server_member import (
-    ServerMember,
-    ServerMemberCreate,
-    ServerMemberUpdate,
-)
+from src.modules.servers.domain.entities.server import Server
+from src.modules.servers.domain.entities.server_invite import ServerInvite
+from src.modules.servers.domain.entities.server_member import ServerMember
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 from src.shared.domain.unset import set_fields
 from src.shared.errors import LumiereError
