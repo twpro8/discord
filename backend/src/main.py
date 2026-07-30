@@ -4,11 +4,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.errors import register_exception_handlers
+from src.api.v1.router import build_api_v1_router
+from src.composition.container import build_container
+from src.core.cache import RedisCache
 from src.core.config import settings
-from src.core.errors import LumiereError, app_exception_handler
+from src.core.event_bus import InMemoryEventBus, RedisStreamsEventBus
 from src.core.logging import configure_logging, get_logger
 from src.core.redis import close_redis, init_redis
-from src.core.router import api_router
 from src.utils import custom_generate_unique_id
 
 logger = get_logger(__name__)
@@ -16,34 +19,50 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # --- Startup ---
     configure_logging()
     logger.info("app.startup", env=settings.ENVIRONMENT)
-
     # Initialize Redis connection pool
     app.state.redis = await init_redis()
+    # Read-model cache (cache-aside), shares the pool above
+    app.state.cache = RedisCache(app.state.redis)
+    # Process-wide event bus for cross-module domain events. In-memory in
+    # tests (no Redis dependency for assertions); Redis Streams otherwise
+    # so events survive a process restart.
+    app.state.event_bus = (
+        InMemoryEventBus()
+        if settings.ENVIRONMENT == "testing"
+        else RedisStreamsEventBus(app.state.redis)
+    )
 
     yield
 
-    # --- Shutdown ---
     logger.info("app.shutdown")
-
-    # Gracefully close Redis connection
+    # Close Redis connection
     await close_redis(app.state.redis)
 
 
-app = FastAPI(
-    title=settings.APP_NAME,
-    lifespan=lifespan,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    generate_unique_id_function=custom_generate_unique_id,
-)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.ALL_CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-app.add_exception_handler(LumiereError, app_exception_handler)  # type: ignore
-app.include_router(api_router, prefix=settings.API_V1_STR)
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=settings.APP_NAME,
+        lifespan=lifespan,
+        openapi_url="/api/v1/openapi.json",
+        generate_unique_id_function=custom_generate_unique_id,
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.ALL_CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    register_exception_handlers(app)
+
+    container = build_container()
+    app.state.container = container
+    app.include_router(build_api_v1_router(container))
+
+    return app
+
+
+app = create_app()
