@@ -24,11 +24,14 @@ async def send_channel_message(
     command: SendChannelMessageCommandDep,
     channel_id: UUID,
 ) -> ChannelMessage:
-    return await command(
+    result = await command(
         channel_id=channel_id,
         sender_id=user_id,
         data=data,
     )
+    if result.is_err:
+        raise result.error
+    return result.value
 
 
 @chat_message_router.post("")
@@ -38,8 +41,11 @@ async def send_chat_message(
     command: SendChatMessageCommandDep,
     chat_id: UUID,
 ) -> ChatMessage:
-    return await command(
+    result = await command(
         chat_id=chat_id,
         sender_id=user_id,
         data=data,
     )
+    if result.is_err:
+        raise result.error
+    return result.value
