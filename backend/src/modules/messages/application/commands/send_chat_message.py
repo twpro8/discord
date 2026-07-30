@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.messages.domain.entities.schemas import (
@@ -8,18 +9,27 @@ from src.modules.messages.domain.entities.schemas import (
 from src.modules.messages.domain.repositories.message_unit_of_work import (
     MessageUnitOfWork,
 )
+from src.shared.application.command import Command
 from src.shared.errors import LumiereError
 from src.shared.permissions import assert_is_chat_member
 from src.shared.result import Result
 
 
-class SendChatMessageCommand:
+@dataclass(frozen=True, kw_only=True)
+class SendChatMessageCommand(Command):
+    chat_id: UUID
+    sender_id: UUID
+    data: MessageCreateRequest
+
+
+class SendChatMessageCommandHandler:
     def __init__(self, uow: MessageUnitOfWork) -> None:
         self._uow = uow
 
-    async def __call__(
-        self, chat_id: UUID, sender_id: UUID, data: MessageCreateRequest
+    async def handle(
+        self, command: SendChatMessageCommand
     ) -> Result[ChatMessage, LumiereError]:
+        chat_id, sender_id, data = command.chat_id, command.sender_id, command.data
         try:
             await assert_is_chat_member(self._uow, sender_id, chat_id)
             sequence = await self._uow.chats.increment_sequence(chat_id)

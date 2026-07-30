@@ -13,6 +13,7 @@ from src.modules.auth.composition import register_auth_handlers
 from src.modules.channels.composition import register_channel_handlers
 from src.modules.chats.composition import register_chat_handlers
 from src.modules.friends.composition import register_friend_handlers
+from src.modules.messages.composition import register_message_handlers
 from src.modules.servers.composition import register_server_handlers
 from src.shared.application.in_process_mediator import InProcessMediator
 from src.shared.application.mediator import Mediator
@@ -34,6 +35,7 @@ async def get_mediator(session: SessionDep) -> AsyncGenerator[Mediator]:
         await register_channel_handlers(mediator, session, stack)
         await register_chat_handlers(mediator, session, stack)
         await register_friend_handlers(mediator, session, stack)
+        await register_message_handlers(mediator, session, stack)
         await register_server_handlers(mediator, session, stack)
         yield mediator
 
