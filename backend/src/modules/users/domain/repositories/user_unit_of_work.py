@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from src.modules.users.domain.repositories.user_repository import UserRepository
 
 
-class AbstractUserUnitOfWork(ABC):
+class UserUnitOfWork(ABC):
     users: UserRepository
 
     @abstractmethod

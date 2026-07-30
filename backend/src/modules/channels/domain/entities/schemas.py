@@ -1,3 +1,4 @@
+from datetime import datetime
 from re import match
 from uuid import UUID
 
@@ -24,3 +25,16 @@ class ChannelCreateRequest(BaseSchema):
 
 class ChannelCreate(ChannelCreateRequest):
     server_id: UUID
+
+
+class ChannelDTO(BaseSchema):
+    id: UUID
+    name: str
+    server_id: UUID
+    type: ChannelType
+    topic: str | None
+    position: int
+    last_sequence: int
+    is_private: bool
+    created_at: datetime
+    updated_at: datetime

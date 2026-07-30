@@ -1,10 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.channels.application.commands.create_channel import (
-    CreateChannelCommand,
-    CreateChannelCommandHandler,
-)
+from src.modules.channels.public.facade import ChannelsFacade
 from src.modules.servers.domain.entities.server import (
     Server,
     ServerCreate,
@@ -30,10 +27,10 @@ class CreateServerCommandHandler:
     def __init__(
         self,
         uow: ServerUnitOfWork,
-        create_channel_command: CreateChannelCommandHandler,
+        channels_facade: ChannelsFacade,
     ) -> None:
         self._uow = uow
-        self._create_channel_command = create_channel_command
+        self._channels_facade = channels_facade
 
     async def handle(
         self, command: CreateServerCommand
@@ -49,13 +46,7 @@ class CreateServerCommandHandler:
         )
         await self._uow.server_members.create(member_data)
 
-        await self._create_channel_command.handle(
-            CreateChannelCommand(
-                server_id=server.id,
-                name="general",
-                is_commit=False,
-            )
-        )
+        await self._channels_facade.create_default_channel(server.id)
 
         await self._uow.commit()
         return Result.ok(server)

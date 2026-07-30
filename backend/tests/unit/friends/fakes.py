@@ -1,8 +1,6 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel
-
 from src.modules.friends.domain.entities.schemas import (
     FriendRequest,
     FriendRequestCreate,
@@ -13,7 +11,10 @@ from src.modules.friends.domain.enums import FriendStatus
 from src.modules.friends.domain.repositories.friend_unit_of_work import (
     FriendUnitOfWork,
 )
+from src.modules.users.domain.entities.schemas import UserDTO
 from src.modules.users.domain.entities.user import User
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 def make_user(username: str, is_active: bool = True) -> User:
@@ -99,28 +100,31 @@ class FakeFriendRepository:
         self.requests.pop(request_id, None)
 
 
-class FakeUserRepository:
+class FakeUsersFacade:
     def __init__(self, users: list[User] | None = None) -> None:
         self.users: dict[UUID, User] = {u.id: u for u in (users or [])}
 
-    async def create(self, data: BaseModel) -> User:
-        raise NotImplementedError
+    async def get_user(self, user_id: UUID) -> UserDTO | None:
+        user = self.users.get(user_id)
+        return UserDTO.model_validate(user) if user else None
 
-    async def get_by_id(self, user_id: UUID) -> User | None:
-        return self.users.get(user_id)
-
-    async def get_by_username(self, username: str) -> User | None:
+    async def get_user_by_username(self, username: str) -> UserDTO | None:
         for user in self.users.values():
-            if user.username == username:
-                return user
+            if user.username == username and user.is_active:
+                return UserDTO.model_validate(user)
         return None
 
-    async def update(
-        self,
-        user_id: UUID,
-        data: BaseModel,
-        exclude_unset: bool = False,
-    ) -> User:
+    async def user_exists(self, user_id: UUID) -> bool:
+        return user_id in self.users
+
+    async def create_user(
+        self, *, name: str, username: str, email: str, plain_password: str
+    ) -> Result[UserDTO, LumiereError]:
+        raise NotImplementedError
+
+    async def verify_credentials(
+        self, *, username: str, plain_password: str
+    ) -> Result[UserDTO, LumiereError]:
         raise NotImplementedError
 
 
@@ -128,10 +132,8 @@ class FakeFriendUnitOfWork(FriendUnitOfWork):
     def __init__(
         self,
         friends: FakeFriendRepository,
-        users: FakeUserRepository,
     ) -> None:
         self.friends = friends
-        self.users = users
         self.committed = False
         self.rolled_back = False
 

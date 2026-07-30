@@ -1,18 +1,18 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.channels.domain.exceptions import ChannelNotFoundError
 from src.modules.messages.domain.entities.schemas import (
     ChannelMessage,
     MessageCreate,
     MessageCreateRequest,
 )
+from src.modules.messages.domain.exceptions import ChannelNotFoundError
 from src.modules.messages.domain.repositories.message_unit_of_work import (
     MessageUnitOfWork,
 )
+from src.modules.servers.public.facade import ServersFacade
 from src.shared.application.command import Command
 from src.shared.errors import LumiereError
-from src.shared.permissions import assert_is_server_member
 from src.shared.result import Result
 
 
@@ -24,8 +24,9 @@ class SendChannelMessageCommand(Command):
 
 
 class SendChannelMessageCommandHandler:
-    def __init__(self, uow: MessageUnitOfWork) -> None:
+    def __init__(self, uow: MessageUnitOfWork, servers_facade: ServersFacade) -> None:
         self._uow = uow
+        self._servers_facade = servers_facade
 
     async def handle(
         self, command: SendChannelMessageCommand
@@ -40,7 +41,9 @@ class SendChannelMessageCommandHandler:
             return Result.err(ChannelNotFoundError())
 
         try:
-            await assert_is_server_member(self._uow, sender_id, channel.server_id)
+            await self._servers_facade.assert_is_server_member(
+                sender_id, channel.server_id
+            )
             sequence = await self._uow.channels.increment_sequence(channel_id)
             message = await self._uow.messages.create(
                 MessageCreate(

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.core.logging import get_logger
+from src.core.event_bus import EventBus
 from src.modules.chats.domain.entities.chat import Chat
 from src.modules.chats.domain.entities.schemas import (
     ChatCreate,
@@ -17,8 +17,6 @@ from src.modules.chats.domain.repositories.chat_unit_of_work import (
 from src.shared.application.command import Command
 from src.shared.result import Result
 
-logger = get_logger(__name__)
-
 
 @dataclass(frozen=True, kw_only=True)
 class CreateChatCommand(Command):
@@ -27,17 +25,12 @@ class CreateChatCommand(Command):
 
 
 class CreateChatCommandHandler:
-    def __init__(self, uow: ChatUnitOfWork) -> None:
+    def __init__(self, uow: ChatUnitOfWork, event_bus: EventBus) -> None:
         self._uow = uow
+        self._event_bus = event_bus
 
-    def _log_events(self, chat: Chat) -> None:
-        for event in chat.pull_events():
-            logger.info(
-                "domain_event",
-                event_type=type(event).__name__,
-                event_id=str(event.event_id),
-                chat_id=str(chat.id),
-            )
+    async def _publish_events(self, chat: Chat) -> None:
+        await self._event_bus.publish_many(chat.pull_events())
 
     async def handle(
         self, command: CreateChatCommand
@@ -74,7 +67,7 @@ class CreateChatCommandHandler:
 
         await self._uow.members.add_members(members)
         await self._uow.commit()
-        self._log_events(chat)
+        await self._publish_events(chat)
 
         return Result.ok(chat)
 
@@ -115,6 +108,6 @@ class CreateChatCommandHandler:
 
         await self._uow.members.add_members(members)
         await self._uow.commit()
-        self._log_events(chat)
+        await self._publish_events(chat)
 
         return Result.ok(chat)

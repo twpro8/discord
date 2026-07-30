@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from src.modules.users.domain.entities.user import User
 from src.modules.users.domain.repositories.user_unit_of_work import (
-    AbstractUserUnitOfWork,
+    UserUnitOfWork,
 )
 
 
@@ -49,7 +49,7 @@ class FakeUserRepository:
         return user
 
 
-class FakeUserUnitOfWork(AbstractUserUnitOfWork):
+class FakeUserUnitOfWork(UserUnitOfWork):
     def __init__(self, users: FakeUserRepository) -> None:
         self.users = users
         self.committed = False

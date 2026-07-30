@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 from contextlib import AsyncExitStack
 from typing import Annotated, cast
+from uuid import UUID
 
 from fastapi import Depends
 from fastapi.requests import Request
@@ -9,13 +10,17 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_session
+from src.core.event_bus import EventBus
+from src.core.security.jwt import decode_access_token
 from src.modules.auth.composition import register_auth_handlers
+from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.modules.channels.composition import register_channel_handlers
 from src.modules.chats.composition import register_chat_handlers
 from src.modules.friends.composition import register_friend_handlers
 from src.modules.messages.composition import register_message_handlers
 from src.modules.servers.composition import register_server_handlers
 from src.modules.users.composition import register_user_handlers
+from src.modules.users.public.facade import MediatorUsersFacade
 from src.shared.application.in_process_mediator import InProcessMediator
 from src.shared.application.mediator import Mediator
 
@@ -26,16 +31,39 @@ def get_redis(request: Request) -> Redis:
     return cast(Redis, request.app.state.redis)
 
 
+def get_event_bus(request: Request) -> EventBus:
+    return cast(EventBus, request.app.state.event_bus)
+
+
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
+EventBusDep = Annotated[EventBus, Depends(get_event_bus)]
+AccessTokenDep = Annotated[str, Depends(access_cookie_scheme)]
 
 
-async def get_mediator(session: SessionDep) -> AsyncGenerator[Mediator]:
+def get_current_user_id(access_token: AccessTokenDep) -> UUID:
+    user_id = decode_access_token(access_token).get("sub")
+    if not user_id:
+        raise InvalidAccessTokenError
+    return UUID(user_id)
+
+
+UserIdDep = Annotated[UUID, Depends(get_current_user_id)]
+
+
+async def get_mediator(
+    session: SessionDep, event_bus: EventBusDep
+) -> AsyncGenerator[Mediator]:
     async with AsyncExitStack() as stack:
         mediator = InProcessMediator()
-        await register_auth_handlers(mediator, session, stack)
+        # Facades only close over `mediator`, not any handler yet registered
+        # on it — safe to build before the modules they wrap are registered
+        # below, since dispatch never happens before this generator yields.
+        users_facade = MediatorUsersFacade(mediator)
+
+        await register_auth_handlers(mediator, session, stack, users_facade)
         await register_channel_handlers(mediator, session, stack)
-        await register_chat_handlers(mediator, session, stack)
-        await register_friend_handlers(mediator, session, stack)
+        await register_chat_handlers(mediator, session, stack, event_bus)
+        await register_friend_handlers(mediator, session, stack, users_facade)
         await register_message_handlers(mediator, session, stack)
         await register_server_handlers(mediator, session, stack)
         await register_user_handlers(mediator, session, stack)
@@ -44,4 +72,3 @@ async def get_mediator(session: SessionDep) -> AsyncGenerator[Mediator]:
 
 MediatorDep = Annotated[Mediator, Depends(get_mediator)]
 RedisDep = Annotated[Redis, Depends(get_redis)]
-AccessTokenDep = Annotated[str, Depends(access_cookie_scheme)]

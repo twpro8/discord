@@ -2,11 +2,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from src.api.v1.dependencies import MediatorDep
+from src.api.v1.dependencies import MediatorDep, UserIdDep
 from src.modules.users.application.commands.delete_user import DeleteUserCommand
 from src.modules.users.application.commands.update_user import UpdateUserCommand
 from src.modules.users.application.queries.get_user_by_id import GetUserByIDQuery
-from src.modules.users.transport.http.dependencies import UserIdDep
 from src.modules.users.transport.http.schemas import UserResponse, UserUpdateRequest
 
 router = APIRouter(prefix="/users", tags=["Users"])

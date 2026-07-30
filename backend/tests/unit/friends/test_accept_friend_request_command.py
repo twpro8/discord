@@ -11,16 +11,12 @@ from src.modules.friends.domain.exceptions import (
     FriendRequestNotPendingError,
     NotParticipantError,
 )
-from tests.unit.friends.fakes import (
-    FakeFriendRepository,
-    FakeFriendUnitOfWork,
-    FakeUserRepository,
-)
+from tests.unit.friends.fakes import FakeFriendRepository, FakeFriendUnitOfWork
 
 
 def _handler() -> tuple[AcceptFriendRequestCommandHandler, FakeFriendRepository]:
     friends = FakeFriendRepository()
-    uow = FakeFriendUnitOfWork(friends, FakeUserRepository())
+    uow = FakeFriendUnitOfWork(friends)
     return AcceptFriendRequestCommandHandler(uow), friends
 
 

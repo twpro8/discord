@@ -2,13 +2,7 @@ from contextlib import AsyncExitStack
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.channels.application.commands.create_channel import (
-    CreateChannelCommandHandler,
-)
-from src.modules.channels.infrastructure.persistence.repository import (
-    ChannelRepositoryImpl,
-)
-from src.modules.channels.infrastructure.unit_of_work import ChannelUnitOfWorkImpl
+from src.modules.channels.public.facade import build_channels_facade
 from src.modules.servers.application.commands.create_invite import (
     CreateInviteCommand,
     CreateInviteCommandHandler,
@@ -81,18 +75,14 @@ async def register_server_handlers(
         )
     )
 
-    # CreateServerCommandHandler calls channels' CreateChannelCommandHandler
-    # directly (not via mediator.send()) as part of its own atomic operation,
-    # so it needs a handler instance here rather than a mediator registration.
-    channel_repository = ChannelRepositoryImpl(session)
-    channel_uow = await stack.enter_async_context(
-        ChannelUnitOfWorkImpl(session=session, channel_repository=channel_repository)
-    )
-    create_channel_command = CreateChannelCommandHandler(channel_uow)
+    # CreateServerCommandHandler delegates default-channel creation to
+    # channels as part of its own atomic operation (not via mediator.send()),
+    # so it needs a same-session facade rather than a mediator registration.
+    channels_facade = await build_channels_facade(session, stack)
 
     mediator.register_command(
         CreateServerCommand,
-        CreateServerCommandHandler(uow, create_channel_command),
+        CreateServerCommandHandler(uow, channels_facade),
     )
     mediator.register_command(UpdateServerCommand, UpdateServerCommandHandler(uow))
     mediator.register_command(DeleteServerCommand, DeleteServerCommandHandler(uow))

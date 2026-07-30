@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Query, status
 
-from src.api.v1.dependencies import MediatorDep
+from src.api.v1.dependencies import MediatorDep, UserIdDep
 from src.modules.chats.application.commands.create_chat import CreateChatCommand
 from src.modules.chats.application.queries.get_chats import GetChatsQuery
 from src.modules.chats.domain.entities.schemas import ChatCreateRequest, ChatSummaryPage
 from src.modules.messages.module import get_chat_message_router
-from src.modules.users.transport.http.dependencies import UserIdDep
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 

@@ -1,6 +1,9 @@
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from src.core.event_bus import EventHandler
+from src.modules.chats.domain import services as chat_permission_services
 from src.modules.chats.domain.entities.chat import Chat, ChatMember
 from src.modules.chats.domain.entities.schemas import (
     ChatCreate,
@@ -9,6 +12,7 @@ from src.modules.chats.domain.entities.schemas import (
 )
 from src.modules.chats.domain.enums import ChatMemberRole
 from src.modules.chats.domain.repositories.chat_unit_of_work import ChatUnitOfWork
+from src.shared.domain.domain_event import DomainEvent
 
 
 class FakeChatRepository:
@@ -103,3 +107,38 @@ class FakeChatUnitOfWork(ChatUnitOfWork):
 
     async def rollback(self) -> None:
         self.rolled_back = True
+
+
+class FakeChatsFacade:
+    def __init__(
+        self,
+        chats: FakeChatRepository,
+        chat_members: FakeChatMemberRepository,
+    ) -> None:
+        self._chats = chats
+        self._chat_members = chat_members
+
+    async def assert_is_chat_member(self, user_id: UUID, chat_id: UUID) -> None:
+        await chat_permission_services.assert_is_chat_member(
+            self._chats, self._chat_members, user_id, chat_id
+        )
+
+    async def assert_is_chat_owner(self, user_id: UUID, chat_id: UUID) -> None:
+        await chat_permission_services.assert_is_chat_owner(
+            self._chats, self._chat_members, user_id, chat_id
+        )
+
+
+class RecordingEventBus:
+    def __init__(self) -> None:
+        self.published: list[DomainEvent] = []
+
+    def subscribe(self, event_type: type[DomainEvent], handler: EventHandler) -> None:
+        pass
+
+    async def publish(self, event: DomainEvent) -> None:
+        self.published.append(event)
+
+    async def publish_many(self, events: Sequence[DomainEvent]) -> None:
+        for event in events:
+            await self.publish(event)

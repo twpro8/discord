@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from src.api.v1.dependencies import MediatorDep
+from src.api.v1.dependencies import MediatorDep, UserIdDep
 from src.modules.friends.application.commands.accept_request import (
     AcceptFriendRequestCommand,
 )
@@ -26,7 +26,6 @@ from src.modules.friends.domain.entities.schemas import (
     SendFriendRequest,
 )
 from src.modules.friends.domain.enums import FriendStatus
-from src.modules.users.transport.http.dependencies import UserIdDep
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 

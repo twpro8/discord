@@ -8,6 +8,7 @@ from src.api.errors import register_exception_handlers
 from src.api.v1.router import build_api_v1_router
 from src.composition.container import build_container
 from src.core.config import settings
+from src.core.event_bus import InMemoryEventBus
 from src.core.logging import configure_logging, get_logger
 from src.core.redis import close_redis, init_redis
 from src.utils import custom_generate_unique_id
@@ -21,6 +22,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("app.startup", env=settings.ENVIRONMENT)
     # Initialize Redis connection pool
     app.state.redis = await init_redis()
+    # Process-wide event bus for cross-module domain events
+    app.state.event_bus = InMemoryEventBus()
 
     yield
 

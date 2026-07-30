@@ -7,16 +7,12 @@ from src.modules.auth.application.commands.logout import (
 )
 from src.modules.auth.domain.entities.schemas import RefreshTokenCreate
 from src.modules.auth.infrastructure.security import hash_refresh_token
-from tests.unit.auth.fakes import (
-    FakeAuthUnitOfWork,
-    FakeRefreshTokenRepository,
-    FakeUserRepository,
-)
+from tests.unit.auth.fakes import FakeAuthUnitOfWork, FakeRefreshTokenRepository
 
 
 def _handler() -> tuple[LogoutCommandHandler, FakeRefreshTokenRepository]:
     refresh_tokens = FakeRefreshTokenRepository()
-    uow = FakeAuthUnitOfWork(FakeUserRepository(), refresh_tokens)
+    uow = FakeAuthUnitOfWork(refresh_tokens)
     return LogoutCommandHandler(uow), refresh_tokens
 
 

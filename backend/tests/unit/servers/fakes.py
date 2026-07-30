@@ -3,6 +3,9 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
+from src.modules.channels.domain.entities.schemas import ChannelDTO
+from src.modules.channels.domain.enums import ChannelType
+from src.modules.servers.domain import services as server_permission_services
 from src.modules.servers.domain.entities.server import (
     Server,
     ServerCreate,
@@ -19,6 +22,8 @@ from src.modules.servers.domain.entities.server_member import (
     ServerMemberUpdate,
 )
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 # ServerMemberOrm has left_at/joined_at columns that the domain ServerMember
 # entity never exposed (pre-existing gap) — callers still filter on left_at
@@ -127,6 +132,16 @@ class FakeServerMemberRepository:
         return member
 
 
+class FakeServersFacade:
+    def __init__(self, server_members: FakeServerMemberRepository) -> None:
+        self._server_members = server_members
+
+    async def assert_is_server_member(self, user_id: UUID, server_id: UUID) -> None:
+        await server_permission_services.assert_is_server_member(
+            self._server_members, user_id, server_id
+        )
+
+
 class FakeServerInviteRepository:
     def __init__(self) -> None:
         self.invites: dict[UUID, ServerInvite] = {}
@@ -190,13 +205,29 @@ class FakeServerUnitOfWork(ServerUnitOfWork):
         self.rolled_back = True
 
 
-class FakeCreateChannelCommandHandler:
-    """Stand-in for channels' CreateChannelCommandHandler —
-    CreateServerCommandHandler calls .handle() and never inspects the
-    return value."""
+class FakeChannelsFacade:
+    """Stand-in for channels' ChannelsFacade — CreateServerCommandHandler
+    calls .create_default_channel() and never inspects the return value."""
 
     def __init__(self) -> None:
         self.calls: list[tuple[UUID, str]] = []
 
-    async def handle(self, command: Any) -> None:
-        self.calls.append((command.server_id, command.name))
+    async def create_default_channel(
+        self, server_id: UUID
+    ) -> Result[ChannelDTO, LumiereError]:
+        self.calls.append((server_id, "general"))
+        now = datetime.now(UTC)
+        return Result.ok(
+            ChannelDTO(
+                id=uuid4(),
+                name="general",
+                server_id=server_id,
+                type=ChannelType.text,
+                topic=None,
+                position=0,
+                last_sequence=0,
+                is_private=False,
+                created_at=now,
+                updated_at=now,
+            )
+        )

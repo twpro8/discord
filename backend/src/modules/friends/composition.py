@@ -36,9 +36,7 @@ from src.modules.friends.infrastructure.friend_unit_of_work_impl import (
 from src.modules.friends.infrastructure.persistence.friend_repository_impl import (
     FriendRepositoryImpl,
 )
-from src.modules.users.infrastructure.persistence.repository import (
-    UserRepositoryImpl,
-)
+from src.modules.users.public.facade import UsersFacade
 from src.shared.application.in_process_mediator import InProcessMediator
 
 
@@ -46,15 +44,16 @@ async def register_friend_handlers(
     mediator: InProcessMediator,
     session: AsyncSession,
     stack: AsyncExitStack,
+    users_facade: UsersFacade,
 ) -> None:
     friend_repository = FriendRepositoryImpl(session)
-    user_repository = UserRepositoryImpl(session)
     uow = await stack.enter_async_context(
-        FriendUnitOfWorkImpl(session, friend_repository, user_repository)
+        FriendUnitOfWorkImpl(session, friend_repository)
     )
 
     mediator.register_command(
-        SendFriendRequestCommand, SendFriendRequestCommandHandler(uow)
+        SendFriendRequestCommand,
+        SendFriendRequestCommandHandler(uow, users_facade),
     )
     mediator.register_command(
         AcceptFriendRequestCommand, AcceptFriendRequestCommandHandler(uow)

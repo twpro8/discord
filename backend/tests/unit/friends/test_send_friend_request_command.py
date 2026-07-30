@@ -10,13 +10,13 @@ from src.modules.friends.domain.enums import FriendStatus
 from src.modules.friends.domain.exceptions import (
     CannotSendFriendRequestToSelfError,
     FriendRequestAlreadyExistsError,
+    TargetUserNotFoundError,
 )
 from src.modules.users.domain.entities.user import User
-from src.modules.users.domain.exceptions import UserNotFoundError
 from tests.unit.friends.fakes import (
     FakeFriendRepository,
     FakeFriendUnitOfWork,
-    FakeUserRepository,
+    FakeUsersFacade,
     make_user,
 )
 
@@ -25,8 +25,8 @@ def _handler(
     users: list[User] | None = None,
 ) -> tuple[SendFriendRequestCommandHandler, FakeFriendRepository]:
     friends = FakeFriendRepository()
-    uow = FakeFriendUnitOfWork(friends, FakeUserRepository(users))
-    return SendFriendRequestCommandHandler(uow), friends
+    uow = FakeFriendUnitOfWork(friends)
+    return SendFriendRequestCommandHandler(uow, FakeUsersFacade(users)), friends
 
 
 async def test_rejects_unknown_username() -> None:
@@ -40,7 +40,7 @@ async def test_rejects_unknown_username() -> None:
     )
 
     assert result.is_err
-    assert isinstance(result.error, UserNotFoundError)
+    assert isinstance(result.error, TargetUserNotFoundError)
 
 
 async def test_rejects_self_request() -> None:

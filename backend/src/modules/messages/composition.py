@@ -2,15 +2,13 @@ from contextlib import AsyncExitStack
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.channels.infrastructure.persistence.repository import (
+from src.modules.channels.infrastructure.persistence.channel_repository_impl import (
     ChannelRepositoryImpl,
-)
-from src.modules.chats.infrastructure.persistence.chat_member_repository_impl import (
-    ChatMemberRepositoryImpl,
 )
 from src.modules.chats.infrastructure.persistence.chat_repository_impl import (
     ChatRepositoryImpl,
 )
+from src.modules.chats.public.facade import build_chats_facade
 from src.modules.messages.application.commands.send_channel_message import (
     SendChannelMessageCommand,
     SendChannelMessageCommandHandler,
@@ -25,9 +23,7 @@ from src.modules.messages.infrastructure.message_unit_of_work_impl import (
 from src.modules.messages.infrastructure.persistence.message_repository_impl import (
     MessageRepositoryImpl,
 )
-from src.modules.servers.infrastructure.persistence.server_member_repository_impl import (
-    ServerMemberRepositoryImpl,
-)
+from src.modules.servers.public.facade import build_servers_facade
 from src.shared.application.in_process_mediator import InProcessMediator
 
 
@@ -38,23 +34,23 @@ async def register_message_handlers(
 ) -> None:
     message_repository = MessageRepositoryImpl(session)
     chat_repository = ChatRepositoryImpl(session)
-    chat_member_repository = ChatMemberRepositoryImpl(session)
     channel_repository = ChannelRepositoryImpl(session)
-    server_member_repository = ServerMemberRepositoryImpl(session)
     uow = await stack.enter_async_context(
         MessageUnitOfWorkImpl(
             session,
             message_repository,
             chat_repository,
-            chat_member_repository,
             channel_repository,
-            server_member_repository,
         )
     )
 
+    chats_facade = build_chats_facade(session)
+    servers_facade = build_servers_facade(session)
+
     mediator.register_command(
-        SendChannelMessageCommand, SendChannelMessageCommandHandler(uow)
+        SendChannelMessageCommand,
+        SendChannelMessageCommandHandler(uow, servers_facade),
     )
     mediator.register_command(
-        SendChatMessageCommand, SendChatMessageCommandHandler(uow)
+        SendChatMessageCommand, SendChatMessageCommandHandler(uow, chats_facade)
     )

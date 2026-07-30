@@ -32,6 +32,16 @@ class FriendRequestNotFoundError(FriendError, NotFoundError):
     status_code = status.HTTP_404_NOT_FOUND
 
 
+class TargetUserNotFoundError(FriendError, NotFoundError):
+    """Raised when a friend request's target username has no active user.
+
+    Friends' own error — deliberately not users.domain.exceptions.
+    UserNotFoundError, since that would mean importing users' domain layer
+    directly instead of going through UsersFacade."""
+
+    detail = "User not found"
+
+
 class FriendRequestNotPendingError(FriendError):
     """Raised when trying to act on a non-pending friend request."""
 

@@ -9,9 +9,12 @@ from src.modules.messages.application.commands.send_chat_message import (
 )
 from src.modules.messages.domain.entities.schemas import MessageCreateRequest
 from tests.unit.channels.fakes import FakeChannelRepository
-from tests.unit.chats.fakes import FakeChatMemberRepository, FakeChatRepository
+from tests.unit.chats.fakes import (
+    FakeChatMemberRepository,
+    FakeChatRepository,
+    FakeChatsFacade,
+)
 from tests.unit.messages.fakes import FakeMessageRepository, FakeMessageUnitOfWork
-from tests.unit.servers.fakes import FakeServerMemberRepository
 
 
 def _handler() -> tuple[
@@ -22,11 +25,10 @@ def _handler() -> tuple[
     uow = FakeMessageUnitOfWork(
         FakeMessageRepository(),
         chats,
-        chat_members,
         FakeChannelRepository(),
-        FakeServerMemberRepository(),
     )
-    return SendChatMessageCommandHandler(uow), chats, chat_members
+    chats_facade = FakeChatsFacade(chats, chat_members)
+    return SendChatMessageCommandHandler(uow, chats_facade), chats, chat_members
 
 
 async def test_rejects_unknown_chat() -> None:

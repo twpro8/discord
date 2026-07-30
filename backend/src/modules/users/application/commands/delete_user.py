@@ -4,7 +4,7 @@ from uuid import UUID
 from src.modules.users.domain.entities.schemas import UserDeactivate
 from src.modules.users.domain.exceptions import UserNotFoundError
 from src.modules.users.domain.repositories.user_unit_of_work import (
-    AbstractUserUnitOfWork,
+    UserUnitOfWork,
 )
 from src.shared.application.command import Command
 from src.shared.errors import LumiereError
@@ -17,7 +17,7 @@ class DeleteUserCommand(Command):
 
 
 class DeleteUserCommandHandler:
-    def __init__(self, uow: AbstractUserUnitOfWork) -> None:
+    def __init__(self, uow: UserUnitOfWork) -> None:
         self._uow = uow
 
     async def handle(self, command: DeleteUserCommand) -> Result[None, LumiereError]:

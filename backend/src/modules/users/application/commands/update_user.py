@@ -3,7 +3,7 @@ from uuid import UUID
 
 from src.modules.users.domain.entities.user import User
 from src.modules.users.domain.repositories.user_unit_of_work import (
-    AbstractUserUnitOfWork,
+    UserUnitOfWork,
 )
 from src.modules.users.transport.http.schemas import UserUpdateRequest
 from src.shared.application.command import Command
@@ -18,7 +18,7 @@ class UpdateUserCommand(Command):
 
 
 class UpdateUserCommandHandler:
-    def __init__(self, uow: AbstractUserUnitOfWork) -> None:
+    def __init__(self, uow: UserUnitOfWork) -> None:
         self._uow = uow
 
     async def handle(self, command: UpdateUserCommand) -> Result[User, LumiereError]:

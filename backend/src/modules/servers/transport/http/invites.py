@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
-from src.api.v1.dependencies import MediatorDep
+from src.api.v1.dependencies import MediatorDep, UserIdDep
 from src.modules.servers.application.commands.create_invite import CreateInviteCommand
 from src.modules.servers.application.commands.delete_invite import DeleteInviteCommand
 from src.modules.servers.application.queries.get_invites import GetInvitesQuery
@@ -11,7 +11,6 @@ from src.modules.servers.domain.entities.server_invite import (
     ServerInviteResponse,
     ServerInviteWithStatus,
 )
-from src.modules.users.transport.http.dependencies import UserIdDep
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 

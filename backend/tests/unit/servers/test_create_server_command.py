@@ -7,7 +7,7 @@ from src.modules.servers.application.commands.create_server import (
 from src.modules.servers.domain.entities.server import ServerCreateRequest
 from src.modules.servers.domain.enums import ServerMemberRole
 from tests.unit.servers.fakes import (
-    FakeCreateChannelCommandHandler,
+    FakeChannelsFacade,
     FakeServerInviteRepository,
     FakeServerMemberRepository,
     FakeServerRepository,
@@ -19,8 +19,8 @@ async def test_creates_server_owner_membership_and_default_channel() -> None:
     servers = FakeServerRepository()
     members = FakeServerMemberRepository()
     uow = FakeServerUnitOfWork(servers, members, FakeServerInviteRepository())
-    create_channel_command = FakeCreateChannelCommandHandler()
-    handler = CreateServerCommandHandler(uow, create_channel_command)  # type: ignore[arg-type]
+    channels_facade = FakeChannelsFacade()
+    handler = CreateServerCommandHandler(uow, channels_facade)
     owner_id = uuid4()
 
     result = await handler.handle(
@@ -39,5 +39,5 @@ async def test_creates_server_owner_membership_and_default_channel() -> None:
     assert owner_membership.user_id == owner_id
     assert owner_membership.role == ServerMemberRole.owner
 
-    assert create_channel_command.calls == [(server.id, "general")]
+    assert channels_facade.calls == [(server.id, "general")]
     assert uow.committed

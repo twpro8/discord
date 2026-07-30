@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from src.api.v1.dependencies import MediatorDep
+from src.api.v1.dependencies import MediatorDep, UserIdDep
 from src.modules.messages.application.commands.send_channel_message import (
     SendChannelMessageCommand,
 )
@@ -14,7 +14,6 @@ from src.modules.messages.domain.entities.schemas import (
     ChatMessage,
     MessageCreateRequest,
 )
-from src.modules.users.transport.http.dependencies import UserIdDep
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 

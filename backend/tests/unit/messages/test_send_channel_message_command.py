@@ -1,18 +1,18 @@
 from uuid import uuid4
 
 from src.modules.channels.domain.entities.schemas import ChannelCreate
-from src.modules.channels.domain.exceptions import ChannelNotFoundError
 from src.modules.messages.application.commands.send_channel_message import (
     SendChannelMessageCommand,
     SendChannelMessageCommandHandler,
 )
 from src.modules.messages.domain.entities.schemas import MessageCreateRequest
+from src.modules.messages.domain.exceptions import ChannelNotFoundError
 from src.modules.servers.domain.entities.server_member import ServerMemberCreate
 from src.modules.servers.domain.exceptions import NotServerMemberError
 from tests.unit.channels.fakes import FakeChannelRepository
-from tests.unit.chats.fakes import FakeChatMemberRepository, FakeChatRepository
+from tests.unit.chats.fakes import FakeChatRepository
 from tests.unit.messages.fakes import FakeMessageRepository, FakeMessageUnitOfWork
-from tests.unit.servers.fakes import FakeServerMemberRepository
+from tests.unit.servers.fakes import FakeServerMemberRepository, FakeServersFacade
 
 
 def _handler() -> tuple[
@@ -23,11 +23,14 @@ def _handler() -> tuple[
     uow = FakeMessageUnitOfWork(
         FakeMessageRepository(),
         FakeChatRepository(),
-        FakeChatMemberRepository(),
+        channels,
+    )
+    servers_facade = FakeServersFacade(server_members)
+    return (
+        SendChannelMessageCommandHandler(uow, servers_facade),
         channels,
         server_members,
     )
-    return SendChannelMessageCommandHandler(uow), channels, server_members
 
 
 async def test_rejects_unknown_channel() -> None:

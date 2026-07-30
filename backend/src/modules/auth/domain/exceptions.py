@@ -8,10 +8,6 @@ class AuthenticationError(LumiereError):
     status_code = status.HTTP_401_UNAUTHORIZED
 
 
-class IncorrectPasswordError(AuthenticationError):
-    detail = "Incorrect password"
-
-
 class InvalidAccessTokenError(AuthenticationError):
     detail = "Invalid access token"
 

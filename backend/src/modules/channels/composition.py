@@ -6,10 +6,12 @@ from src.modules.channels.application.commands.create_channel import (
     CreateChannelCommand,
     CreateChannelCommandHandler,
 )
-from src.modules.channels.infrastructure.persistence.repository import (
+from src.modules.channels.infrastructure.channel_unit_of_work_impl import (
+    ChannelUnitOfWorkImpl,
+)
+from src.modules.channels.infrastructure.persistence.channel_repository_impl import (
     ChannelRepositoryImpl,
 )
-from src.modules.channels.infrastructure.unit_of_work import ChannelUnitOfWorkImpl
 from src.shared.application.in_process_mediator import InProcessMediator
 
 

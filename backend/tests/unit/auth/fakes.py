@@ -1,15 +1,20 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel
-
-from src.core.security.hashing import hash_password
+from src.core.security.hashing import hash_password, verify_password
 from src.modules.auth.domain.entities.refresh_token import RefreshToken
 from src.modules.auth.domain.entities.schemas import RefreshTokenCreate
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AbstractAuthUnitOfWork,
 )
+from src.modules.users.domain.entities.schemas import UserDTO
 from src.modules.users.domain.entities.user import User
+from src.modules.users.domain.exceptions import (
+    IncorrectPasswordError,
+    UserNotFoundError,
+)
+from src.shared.errors import LumiereError
+from src.shared.result import Result
 
 
 def make_user(
@@ -29,40 +34,48 @@ def make_user(
     )
 
 
-class FakeUserRepository:
+class FakeUsersFacade:
     def __init__(self, users: list[User] | None = None) -> None:
         self.users: dict[UUID, User] = {u.id: u for u in (users or [])}
 
-    async def create(self, data: BaseModel) -> User:
+    async def get_user(self, user_id: UUID) -> UserDTO | None:
+        user = self.users.get(user_id)
+        return UserDTO.model_validate(user) if user else None
+
+    async def get_user_by_username(self, username: str) -> UserDTO | None:
+        user = next((u for u in self.users.values() if u.username == username), None)
+        return UserDTO.model_validate(user) if user else None
+
+    async def user_exists(self, user_id: UUID) -> bool:
+        return user_id in self.users
+
+    async def create_user(
+        self, *, name: str, username: str, email: str, plain_password: str
+    ) -> Result[UserDTO, LumiereError]:
         now = datetime.now(UTC)
-        dumped = data.model_dump()
         user = User(
             id=uuid4(),
-            name=dumped["name"],
-            username=dumped["username"],
-            email=dumped["email"],
-            password_hash=dumped["password_hash"],
+            name=name,
+            username=username,
+            email=email,
+            password_hash=hash_password(plain_password),
             avatar_url=None,
             is_active=True,
             created_at=now,
             updated_at=now,
         )
         self.users[user.id] = user
-        return user
+        return Result.ok(UserDTO.model_validate(user))
 
-    async def get_by_id(self, user_id: UUID) -> User | None:
-        return self.users.get(user_id)
-
-    async def get_by_username(self, username: str) -> User | None:
-        return next((u for u in self.users.values() if u.username == username), None)
-
-    async def update(
-        self,
-        user_id: UUID,
-        data: BaseModel,
-        exclude_unset: bool = False,
-    ) -> User:
-        raise NotImplementedError
+    async def verify_credentials(
+        self, *, username: str, plain_password: str
+    ) -> Result[UserDTO, LumiereError]:
+        user = next((u for u in self.users.values() if u.username == username), None)
+        if user is None or not user.is_active:
+            return Result.err(UserNotFoundError())
+        if not verify_password(plain_password, user.password_hash):
+            return Result.err(IncorrectPasswordError())
+        return Result.ok(UserDTO.model_validate(user))
 
 
 class FakeRefreshTokenRepository:
@@ -100,10 +113,8 @@ class FakeRefreshTokenRepository:
 class FakeAuthUnitOfWork(AbstractAuthUnitOfWork):
     def __init__(
         self,
-        users: FakeUserRepository,
         refresh_tokens: FakeRefreshTokenRepository,
     ) -> None:
-        self.users = users
         self.refresh_tokens = refresh_tokens
         self.committed = False
         self.rolled_back = False

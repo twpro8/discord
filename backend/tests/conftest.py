@@ -9,6 +9,7 @@ from src.core.database import get_session
 from src.main import app
 from src.modules.users.domain.entities.user import User
 from src.shared.data.models import *  # noqa
+from tests.dependency_overrides.event_bus import get_test_event_bus
 from tests.dependency_overrides.redis_client import get_fake_redis_client
 from tests.dependency_overrides.session import get_null_pool_session
 
@@ -24,10 +25,11 @@ def override_dependencies(
     check_test_mode: None,  # noqa
 ) -> None:
     """Override dependencies once for all tests"""
-    from src.api.v1.dependencies import get_redis
+    from src.api.v1.dependencies import get_event_bus, get_redis
 
     app.dependency_overrides[get_session] = get_null_pool_session
     app.dependency_overrides[get_redis] = get_fake_redis_client
+    app.dependency_overrides[get_event_bus] = get_test_event_bus
 
 
 @pytest.fixture(name="ac")

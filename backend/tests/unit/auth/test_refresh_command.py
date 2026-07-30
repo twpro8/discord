@@ -8,16 +8,12 @@ from src.modules.auth.application.commands.refresh import (
 from src.modules.auth.domain.entities.schemas import RefreshTokenCreate
 from src.modules.auth.domain.exceptions import InvalidRefreshTokenError
 from src.modules.auth.infrastructure.security import hash_refresh_token
-from tests.unit.auth.fakes import (
-    FakeAuthUnitOfWork,
-    FakeRefreshTokenRepository,
-    FakeUserRepository,
-)
+from tests.unit.auth.fakes import FakeAuthUnitOfWork, FakeRefreshTokenRepository
 
 
 def _handler() -> tuple[RefreshCommandHandler, FakeRefreshTokenRepository]:
     refresh_tokens = FakeRefreshTokenRepository()
-    uow = FakeAuthUnitOfWork(FakeUserRepository(), refresh_tokens)
+    uow = FakeAuthUnitOfWork(refresh_tokens)
     return RefreshCommandHandler(uow), refresh_tokens
 
 

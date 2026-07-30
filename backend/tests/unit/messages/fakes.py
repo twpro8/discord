@@ -6,11 +6,13 @@ from src.modules.messages.domain.repositories.message_unit_of_work import (
     MessageUnitOfWork,
 )
 
-# MessageUnitOfWork composes repositories from three other modules; reuse
-# their already-built fakes rather than duplicating them here.
+# MessageUnitOfWork still composes chats'/channels' repositories directly
+# for the same-transaction increment_sequence write; reuse their
+# already-built fakes rather than duplicating them here. Permission checks
+# go through ChatsFacade/ServersFacade instead (see tests.unit.chats.fakes
+# / tests.unit.servers.fakes).
 from tests.unit.channels.fakes import FakeChannelRepository
-from tests.unit.chats.fakes import FakeChatMemberRepository, FakeChatRepository
-from tests.unit.servers.fakes import FakeServerMemberRepository
+from tests.unit.chats.fakes import FakeChatRepository
 
 
 class FakeMessageRepository:
@@ -42,15 +44,11 @@ class FakeMessageUnitOfWork(MessageUnitOfWork):
         self,
         messages: FakeMessageRepository,
         chats: FakeChatRepository,
-        chat_members: FakeChatMemberRepository,
         channels: FakeChannelRepository,
-        server_members: FakeServerMemberRepository,
     ) -> None:
         self.messages = messages
         self.chats = chats
-        self.chat_members = chat_members
         self.channels = channels
-        self.server_members = server_members
         self.committed = False
         self.rolled_back = False
 

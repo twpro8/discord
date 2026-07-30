@@ -2,13 +2,15 @@ from src.modules.auth.application.commands.login import (
     LoginCommand,
     LoginCommandHandler,
 )
-from src.modules.auth.domain.exceptions import IncorrectPasswordError
 from src.modules.users.domain.entities.user import User
-from src.modules.users.domain.exceptions import UserNotFoundError
+from src.modules.users.domain.exceptions import (
+    IncorrectPasswordError,
+    UserNotFoundError,
+)
 from tests.unit.auth.fakes import (
     FakeAuthUnitOfWork,
     FakeRefreshTokenRepository,
-    FakeUserRepository,
+    FakeUsersFacade,
     make_user,
 )
 
@@ -17,8 +19,8 @@ def _handler(
     users: list[User] | None = None,
 ) -> tuple[LoginCommandHandler, FakeRefreshTokenRepository]:
     refresh_tokens = FakeRefreshTokenRepository()
-    uow = FakeAuthUnitOfWork(FakeUserRepository(users), refresh_tokens)
-    return LoginCommandHandler(uow), refresh_tokens
+    uow = FakeAuthUnitOfWork(refresh_tokens)
+    return LoginCommandHandler(uow, FakeUsersFacade(users)), refresh_tokens
 
 
 async def test_rejects_unknown_username() -> None:
