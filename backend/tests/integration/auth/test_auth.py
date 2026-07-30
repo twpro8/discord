@@ -48,7 +48,7 @@ class TestLogin:
     ) -> None:
         response = await ac.post(
             "/api/v1/auth/login",
-            json={"username": current_user.username, "password": "12345678"},
+            json={"username": str(current_user.username), "password": "12345678"},
         )
         assert response.status_code == 200
         assert response.json() == {"status": "OK"}
@@ -62,7 +62,7 @@ class TestLogin:
     ) -> None:
         response = await ac.post(
             "/api/v1/auth/login",
-            json={"username": current_user.username, "password": "wrongpass"},
+            json={"username": str(current_user.username), "password": "wrongpass"},
         )
         assert response.status_code == 401
         assert response.json()["detail"] == "Incorrect password"
@@ -91,7 +91,7 @@ class TestRefresh:
     ) -> None:
         await ac.post(
             "/api/v1/auth/login",
-            json={"username": current_user.username, "password": "12345678"},
+            json={"username": str(current_user.username), "password": "12345678"},
         )
         response = await ac.post("/api/v1/auth/refresh")
         assert response.status_code == 200
@@ -119,7 +119,7 @@ class TestLogout:
     ) -> None:
         await ac.post(
             "/api/v1/auth/login",
-            json={"username": current_user.username, "password": "12345678"},
+            json={"username": str(current_user.username), "password": "12345678"},
         )
         assert ac.cookies.get("refresh_token")
 

@@ -92,10 +92,10 @@ class TestSendChannelMessage:
         )
         channel = result.scalar_one()
 
-        alice = next(u for u in get_all_users if u.username == "alice")
+        alice = next(u for u in get_all_users if str(u.username) == "alice")
         await ac.post(
             "/api/v1/auth/login",
-            json={"username": alice.username, "password": "12345678"},
+            json={"username": str(alice.username), "password": "12345678"},
         )
         response = await ac.post(
             f"/api/v1/channels/{channel.id}/messages",
@@ -192,10 +192,10 @@ class TestSendChatMessage:
         result = await session.execute(select(ChatOrm).limit(1))
         chat = result.scalar_one()
 
-        alice = next(u for u in get_all_users if u.username == "alice")
+        alice = next(u for u in get_all_users if str(u.username) == "alice")
         await ac.post(
             "/api/v1/auth/login",
-            json={"username": alice.username, "password": "12345678"},
+            json={"username": str(alice.username), "password": "12345678"},
         )
         response = await ac.post(
             f"/api/v1/chats/{chat.id}/messages",

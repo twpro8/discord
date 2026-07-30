@@ -25,7 +25,7 @@ async def test_get_sent_friend_requests_shape(
     target = next(user for user in get_all_users if user.id != current_user.id)
 
     await authed_client.post(
-        "/api/v1/friends/requests", json={"username": target.username}
+        "/api/v1/friends/requests", json={"username": str(target.username)}
     )
     response = await authed_client.get("/api/v1/friends/requests/sent")
 
@@ -33,7 +33,7 @@ async def test_get_sent_friend_requests_shape(
     body = response.json()
     assert len(body) == 1
     entry = body[0]
-    assert entry["username"] == target.username
+    assert entry["username"] == str(target.username)
     assert set(entry.keys()) == {
         "id",
         "user_id",

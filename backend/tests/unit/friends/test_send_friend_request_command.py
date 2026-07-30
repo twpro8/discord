@@ -34,7 +34,7 @@ async def test_rejects_unknown_username() -> None:
 
     result = await handler.handle(
         SendFriendRequestCommand(
-            sender_id=make_user("me").id,
+            sender_id=make_user("mem").id,
             data=SendFriendRequestData(username="ghost"),
         )
     )
@@ -59,7 +59,7 @@ async def test_rejects_self_request() -> None:
 
 
 async def test_rejects_duplicate_relationship() -> None:
-    me, target = make_user("me"), make_user("target")
+    me, target = make_user("mem"), make_user("target")
     handler, friends = _handler([me, target])
     await friends.create(FriendRequestCreate(user_id=me.id, target_user_id=target.id))
 
@@ -75,7 +75,7 @@ async def test_rejects_duplicate_relationship() -> None:
 
 
 async def test_creates_pending_request() -> None:
-    me, target = make_user("me"), make_user("target")
+    me, target = make_user("mem"), make_user("target")
     handler, friends = _handler([me, target])
 
     result = await handler.handle(

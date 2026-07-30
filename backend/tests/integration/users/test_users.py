@@ -15,8 +15,8 @@ class TestUsersAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == str(current_user.id)
-        assert data["username"] == current_user.username
-        assert data["email"] == current_user.email
+        assert data["username"] == str(current_user.username)
+        assert data["email"] == str(current_user.email)
         assert "password_hash" not in data
 
     async def test_get_current_user_unauthorized(self, ac: AsyncClient) -> None:
@@ -32,7 +32,7 @@ class TestUsersAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == str(current_user.id)
-        assert data["username"] == current_user.username
+        assert data["username"] == str(current_user.username)
 
     async def test_get_user_by_id_not_found(self, authed_client: AsyncClient) -> None:
         random_id = uuid.uuid4()

@@ -7,14 +7,6 @@ from src.shared.domain.unset import UNSET, Unsettable
 
 
 @dataclass(frozen=True, kw_only=True)
-class UserCreate:
-    name: str
-    username: str
-    email: str
-    password_hash: str
-
-
-@dataclass(frozen=True, kw_only=True)
 class UserUpdate:
     name: Unsettable[str] = UNSET
     username: Unsettable[str] = UNSET
@@ -41,8 +33,8 @@ def user_to_dto(user: User) -> UserDTO:
     return UserDTO(
         id=user.id,
         name=user.name,
-        username=user.username,
-        email=user.email,
+        username=str(user.username),
+        email=str(user.email),
         avatar_url=user.avatar_url,
         is_active=user.is_active,
         created_at=user.created_at,

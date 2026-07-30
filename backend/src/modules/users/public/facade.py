@@ -48,12 +48,12 @@ class MediatorUsersFacade:
         self._mediator = mediator
 
     async def get_user(self, user_id: UUID) -> UserDTO | None:
-        result: Result[User, LumiereError] = await self._mediator.query(
+        result: Result[UserDTO, LumiereError] = await self._mediator.query(
             GetUserByIDQuery(user_id=user_id)
         )
         if result.is_err:
             return None
-        return user_to_dto(result.value)
+        return result.value
 
     async def get_user_by_username(self, username: str) -> UserDTO | None:
         result: Result[User, LumiereError] = await self._mediator.query(

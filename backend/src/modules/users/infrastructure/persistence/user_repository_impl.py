@@ -1,12 +1,12 @@
 import uuid
-from dataclasses import asdict
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.users.domain.entities.dtos import UserCreate, UserUpdate
+from src.modules.users.domain.entities.dtos import UserUpdate
 from src.modules.users.domain.entities.user import User
 from src.modules.users.infrastructure.persistence.mappers import (
+    entity_to_model,
     model_to_entity,
 )
 from src.modules.users.infrastructure.persistence.models import UserOrm
@@ -17,10 +17,8 @@ class UserRepositoryImpl:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def create(self, data: UserCreate) -> User:
-        statement = insert(UserOrm).values(**asdict(data)).returning(UserOrm)
-        result = await self._session.execute(statement)
-        return model_to_entity(result.scalar_one())
+    async def add(self, user: User) -> None:
+        self._session.add(entity_to_model(user))
 
     async def get_by_id(self, user_id: uuid.UUID) -> User | None:
         query = select(UserOrm).where(UserOrm.id == user_id)

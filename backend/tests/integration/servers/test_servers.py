@@ -5,12 +5,13 @@ from uuid import UUID, uuid4
 from httpx import AsyncClient
 
 from src.modules.users.domain.entities.user import User
+from src.modules.users.domain.value_objects.username import Username
 
 
-async def _login(ac: AsyncClient, username: str) -> None:
+async def _login(ac: AsyncClient, username: Username) -> None:
     response = await ac.post(
         "/api/v1/auth/login",
-        json={"username": username, "password": "12345678"},
+        json={"username": str(username), "password": "12345678"},
     )
     assert response.status_code == 200
 

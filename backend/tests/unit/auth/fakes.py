@@ -13,6 +13,8 @@ from src.modules.users.domain.exceptions import (
     IncorrectPasswordError,
     UserNotFoundError,
 )
+from src.modules.users.domain.value_objects.email import Email
+from src.modules.users.domain.value_objects.username import Username
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 
@@ -24,8 +26,8 @@ def make_user(
     return User(
         id=uuid4(),
         name=username,
-        username=username,
-        email=f"{username}@test.com",
+        username=Username(username),
+        email=Email(f"{username}@test.com"),
         password_hash=hash_password(password),
         avatar_url=None,
         is_active=is_active,
@@ -43,7 +45,9 @@ class FakeUsersFacade:
         return user_to_dto(user) if user else None
 
     async def get_user_by_username(self, username: str) -> UserDTO | None:
-        user = next((u for u in self.users.values() if u.username == username), None)
+        user = next(
+            (u for u in self.users.values() if str(u.username) == username), None
+        )
         return user_to_dto(user) if user else None
 
     async def user_exists(self, user_id: UUID) -> bool:
@@ -56,8 +60,8 @@ class FakeUsersFacade:
         user = User(
             id=uuid4(),
             name=name,
-            username=username,
-            email=email,
+            username=Username(username),
+            email=Email(email),
             password_hash=hash_password(plain_password),
             avatar_url=None,
             is_active=True,
@@ -70,7 +74,9 @@ class FakeUsersFacade:
     async def verify_credentials(
         self, *, username: str, plain_password: str
     ) -> Result[UserDTO, LumiereError]:
-        user = next((u for u in self.users.values() if u.username == username), None)
+        user = next(
+            (u for u in self.users.values() if str(u.username) == username), None
+        )
         if user is None or not user.is_active:
             return Result.err(UserNotFoundError())
         if not verify_password(plain_password, user.password_hash):

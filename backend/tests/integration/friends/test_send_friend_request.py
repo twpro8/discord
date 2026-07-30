@@ -26,7 +26,7 @@ async def test_send_friend_request_creates_pending_relationship(
 
     response = await authed_client.post(
         "/api/v1/friends/requests",
-        json={"username": target_user.username},
+        json={"username": str(target_user.username)},
     )
 
     assert response.status_code == 201
@@ -49,7 +49,7 @@ async def test_send_friend_request_rejects_duplicate_relationship(
 ) -> None:
     """The same users cannot create multiple requests in either direction."""
     target_user = get_all_users[2]
-    payload = {"username": target_user.username}
+    payload = {"username": str(target_user.username)}
 
     first_response = await authed_client.post("/api/v1/friends/requests", json=payload)
     second_response = await authed_client.post("/api/v1/friends/requests", json=payload)
@@ -65,7 +65,7 @@ async def test_send_friend_request_rejects_self_request(
     """A user cannot send a friend request to their own username."""
     response = await authed_client.post(
         "/api/v1/friends/requests",
-        json={"username": current_user.username},
+        json={"username": str(current_user.username)},
     )
 
     assert response.status_code == 400

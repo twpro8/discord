@@ -7,8 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.errors import register_exception_handlers
 from src.api.v1.router import build_api_v1_router
 from src.composition.container import build_container
+from src.core.cache import RedisCache
 from src.core.config import settings
-from src.core.event_bus import InMemoryEventBus
+from src.core.event_bus import InMemoryEventBus, RedisStreamsEventBus
 from src.core.logging import configure_logging, get_logger
 from src.core.redis import close_redis, init_redis
 from src.utils import custom_generate_unique_id
@@ -22,8 +23,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("app.startup", env=settings.ENVIRONMENT)
     # Initialize Redis connection pool
     app.state.redis = await init_redis()
-    # Process-wide event bus for cross-module domain events
-    app.state.event_bus = InMemoryEventBus()
+    # Read-model cache (cache-aside), shares the pool above
+    app.state.cache = RedisCache(app.state.redis)
+    # Process-wide event bus for cross-module domain events. In-memory in
+    # tests (no Redis dependency for assertions); Redis Streams otherwise
+    # so events survive a process restart.
+    app.state.event_bus = (
+        InMemoryEventBus()
+        if settings.ENVIRONMENT == "testing"
+        else RedisStreamsEventBus(app.state.redis)
+    )
 
     yield
 
