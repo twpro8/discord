@@ -7,7 +7,7 @@ from uuid import UUID
 from src.modules.servers.domain.entities.server_invite import (
     ServerInvite,
     ServerInviteCreate,
-    ServerInviteCreateRequest,
+    ServerInviteCreateData,
 )
 from src.modules.servers.domain.exceptions import (
     ServerInviteGenerationFailedError,
@@ -28,7 +28,7 @@ def _generate_random_code(length: int = 8) -> str:
 class CreateInviteCommand(Command):
     server_id: UUID
     user_id: UUID
-    payload: ServerInviteCreateRequest
+    payload: ServerInviteCreateData
 
 
 class CreateInviteCommandHandler:
@@ -63,10 +63,10 @@ class CreateInviteCommandHandler:
             return Result.err(ServerInviteGenerationFailedError())
 
         db_payload = ServerInviteCreate(
-            **payload.model_dump(),
             server_id=server_id,
             created_by=user_id,
             code=code,
+            max_uses=payload.max_uses,
             expires_at=expires_at,
         )
 

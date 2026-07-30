@@ -9,7 +9,7 @@ from src.modules.users.application.queries.get_user_by_username import (
 from src.modules.users.application.queries.verify_credentials import (
     VerifyCredentialsQuery,
 )
-from src.modules.users.domain.entities.schemas import UserDTO
+from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
 from src.modules.users.domain.entities.user import User
 from src.shared.application.mediator import Mediator
 from src.shared.errors import LumiereError
@@ -53,7 +53,7 @@ class MediatorUsersFacade:
         )
         if result.is_err:
             return None
-        return UserDTO.model_validate(result.value)
+        return user_to_dto(result.value)
 
     async def get_user_by_username(self, username: str) -> UserDTO | None:
         result: Result[User, LumiereError] = await self._mediator.query(
@@ -61,7 +61,7 @@ class MediatorUsersFacade:
         )
         if result.is_err:
             return None
-        return UserDTO.model_validate(result.value)
+        return user_to_dto(result.value)
 
     async def user_exists(self, user_id: UUID) -> bool:
         return await self.get_user(user_id) is not None
@@ -84,7 +84,7 @@ class MediatorUsersFacade:
         )
         if result.is_err:
             return Result.err(result.error)
-        return Result.ok(UserDTO.model_validate(result.value))
+        return Result.ok(user_to_dto(result.value))
 
     async def verify_credentials(
         self,
@@ -97,4 +97,4 @@ class MediatorUsersFacade:
         )
         if result.is_err:
             return Result.err(result.error)
-        return Result.ok(UserDTO.model_validate(result.value))
+        return Result.ok(user_to_dto(result.value))

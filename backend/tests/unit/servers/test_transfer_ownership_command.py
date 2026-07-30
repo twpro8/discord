@@ -4,7 +4,7 @@ from src.modules.servers.application.commands.transfer_ownership import (
     TransferServerOwnershipCommand,
     TransferServerOwnershipCommandHandler,
 )
-from src.modules.servers.domain.entities.server import ServerCreate, UpdateOwnerID
+from src.modules.servers.domain.entities.server import ServerCreate
 from src.modules.servers.domain.entities.server_member import ServerMemberCreate
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import (
@@ -38,7 +38,7 @@ async def test_rejects_unknown_server() -> None:
         TransferServerOwnershipCommand(
             server_id=uuid4(),
             current_user_id=uuid4(),
-            data=UpdateOwnerID(owner_id=uuid4()),
+            new_owner_id=uuid4(),
         )
     )
 
@@ -61,7 +61,7 @@ async def test_rejects_transfer_to_self() -> None:
         TransferServerOwnershipCommand(
             server_id=server.id,
             current_user_id=owner_id,
-            data=UpdateOwnerID(owner_id=owner_id),
+            new_owner_id=owner_id,
         )
     )
 
@@ -84,7 +84,7 @@ async def test_rejects_non_owner() -> None:
         TransferServerOwnershipCommand(
             server_id=server.id,
             current_user_id=member_id,
-            data=UpdateOwnerID(owner_id=other_id),
+            new_owner_id=other_id,
         )
     )
 
@@ -107,7 +107,7 @@ async def test_rejects_unknown_new_owner() -> None:
         TransferServerOwnershipCommand(
             server_id=server.id,
             current_user_id=owner_id,
-            data=UpdateOwnerID(owner_id=uuid4()),
+            new_owner_id=uuid4(),
         )
     )
 
@@ -135,7 +135,7 @@ async def test_transfers_ownership_and_swaps_roles() -> None:
         TransferServerOwnershipCommand(
             server_id=server.id,
             current_user_id=owner_id,
-            data=UpdateOwnerID(owner_id=new_owner_id),
+            new_owner_id=new_owner_id,
         )
     )
 

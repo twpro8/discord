@@ -17,7 +17,6 @@ class ServerRepository(Protocol):
         self,
         server_id: UUID,
         data: ServerUpdate,
-        exclude_unset: bool = False,
     ) -> Server: ...
 
     async def delete(self, server_id: UUID) -> None: ...

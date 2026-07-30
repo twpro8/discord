@@ -1,9 +1,12 @@
+from dataclasses import asdict
+
 from asyncpg.exceptions import ForeignKeyViolationError
 from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.messages.domain.entities.schemas import Message, MessageCreate
+from src.modules.messages.domain.entities.dtos import MessageCreate
+from src.modules.messages.domain.entities.message import Message
 from src.modules.messages.domain.exceptions import MessageNotFoundError
 from src.modules.messages.infrastructure.persistence.mappers import model_to_entity
 from src.modules.messages.infrastructure.persistence.models import MessageOrm
@@ -14,7 +17,7 @@ class MessageRepositoryImpl:
         self._session = session
 
     async def create(self, data: MessageCreate) -> Message:
-        stmt = insert(MessageOrm).values(**data.model_dump()).returning(MessageOrm)
+        stmt = insert(MessageOrm).values(**asdict(data)).returning(MessageOrm)
         try:
             result = await self._session.execute(stmt)
         except IntegrityError as e:

@@ -1,11 +1,10 @@
+from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field
-
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.shared.domain.entity import Entity
-from src.shared.schemas import BaseSchema
+from src.shared.domain.unset import UNSET, Unsettable
 
 
 class Server(Entity):
@@ -30,41 +29,39 @@ class Server(Entity):
         self.updated_at = updated_at
 
 
-class ServerResponse(BaseSchema):
-    id: UUID
+@dataclass(frozen=True, kw_only=True)
+class ServerCreateData:
+    """Mirrors the transport-layer create request; used as a Command field."""
+
     name: str
-    description: str | None
-    icon_url: str | None
-    owner_id: UUID
-    member_count: int
-    created_at: datetime
-    updated_at: datetime
+    description: str | None = None
 
 
-class ServerCreateRequest(BaseSchema):
-    name: str = Field(..., min_length=1, max_length=100)
-    description: str | None = Field(default=None, max_length=300)
+@dataclass(frozen=True, kw_only=True)
+class ServerCreate(ServerCreateData):
+    """Persistence payload for a new server."""
 
-
-class ServerCreate(ServerCreateRequest):
     owner_id: UUID
 
 
-class ServerUpdateRequest(BaseSchema):
-    name: str | None = Field(default=None, min_length=1, max_length=100)
-    description: str | None = Field(default=None, min_length=1, max_length=300)
+@dataclass(frozen=True, kw_only=True)
+class ServerUpdateData:
+    """Mirrors the transport-layer update request; used as a Command field."""
+
+    name: Unsettable[str] = UNSET
+    description: Unsettable[str] = UNSET
 
 
-class ServerUpdate(ServerUpdateRequest):
+@dataclass(frozen=True, kw_only=True)
+class ServerUpdate(ServerUpdateData):
+    """Persistence payload for a server update."""
+
     id: UUID
     owner_id: UUID
 
 
-class UpdateOwnerID(BaseSchema):
-    owner_id: UUID
-
-
-class ServerUserSummary(BaseSchema):
+@dataclass(frozen=True, kw_only=True)
+class ServerUserSummary:
     id: UUID
     name: str
     icon_url: str | None
@@ -72,7 +69,3 @@ class ServerUserSummary(BaseSchema):
     member_count: int
     role: ServerMemberRole
     joined_at: datetime
-
-
-class ServerInviteCode(BaseSchema):
-    code: str

@@ -1,11 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server import (
-    Server,
-    ServerUpdate,
-    UpdateOwnerID,
-)
+from src.modules.servers.domain.entities.server import Server, ServerUpdate
 from src.modules.servers.domain.entities.server_member import ServerMemberUpdate
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import (
@@ -24,7 +20,7 @@ from src.shared.result import Result
 class TransferServerOwnershipCommand(Command):
     server_id: UUID
     current_user_id: UUID
-    data: UpdateOwnerID
+    new_owner_id: UUID
 
 
 class TransferServerOwnershipCommandHandler:
@@ -47,7 +43,7 @@ class TransferServerOwnershipCommandHandler:
         if not current_user:
             return Result.err(MemberNotFoundError())
 
-        new_owner_id = command.data.owner_id
+        new_owner_id = command.new_owner_id
 
         if command.current_user_id == new_owner_id:
             return Result.err(CannotTransferToSelfError())
@@ -74,11 +70,7 @@ class TransferServerOwnershipCommandHandler:
         )
 
         update_server_schema = ServerUpdate(id=server.id, owner_id=new_owner_id)
-        new_server = await self._uow.servers.update(
-            server.id,
-            update_server_schema,
-            exclude_unset=True,
-        )
+        new_server = await self._uow.servers.update(server.id, update_server_schema)
 
         await self._uow.commit()
         return Result.ok(new_server)

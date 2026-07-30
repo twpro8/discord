@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.friends.domain.entities.schemas import FriendRequestWithUser
+from src.modules.friends.domain.entities.dtos import FriendRequestWithUser
 from src.modules.friends.domain.enums import FriendStatus
 from src.modules.friends.domain.repositories.friend_repository import (
     FriendRepository,

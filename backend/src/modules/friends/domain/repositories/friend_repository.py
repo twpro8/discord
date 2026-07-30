@@ -1,12 +1,12 @@
 from typing import Protocol
 from uuid import UUID
 
-from src.modules.friends.domain.entities.schemas import (
-    FriendRequest,
+from src.modules.friends.domain.entities.dtos import (
     FriendRequestCreate,
     FriendRequestUpdate,
     FriendRequestWithUser,
 )
+from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.domain.enums import FriendStatus
 
 
@@ -39,7 +39,6 @@ class FriendRepository(Protocol):
         self,
         request_id: UUID,
         data: FriendRequestUpdate,
-        exclude_unset: bool = False,
     ) -> FriendRequest: ...
 
     async def delete(self, request_id: UUID) -> None: ...

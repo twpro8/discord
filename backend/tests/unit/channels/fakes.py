@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from src.modules.channels.domain.entities.channel import Channel
-from src.modules.channels.domain.entities.schemas import ChannelCreate
+from src.modules.channels.domain.entities.dtos import ChannelCreate
 from src.modules.channels.domain.repositories.channel_unit_of_work import (
     ChannelUnitOfWork,
 )
@@ -20,7 +20,7 @@ class FakeChannelRepository:
             server_id=data.server_id,
             type=data.type,
             topic=data.topic,
-            position=data.position or 0,
+            position=data.position,
             last_sequence=0,
             is_private=data.is_private,
             created_at=now,

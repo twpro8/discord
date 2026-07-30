@@ -3,7 +3,11 @@ from fastapi import APIRouter, Query, status
 from src.api.v1.dependencies import MediatorDep, UserIdDep
 from src.modules.chats.application.commands.create_chat import CreateChatCommand
 from src.modules.chats.application.queries.get_chats import GetChatsQuery
-from src.modules.chats.domain.entities.schemas import ChatCreateRequest, ChatSummaryPage
+from src.modules.chats.domain.entities.dtos import ChatCreateData, ChatSummaryPage
+from src.modules.chats.transport.http.schemas import (
+    ChatCreateRequest,
+    ChatSummaryPageResponse,
+)
 from src.modules.messages.module import get_chat_message_router
 from src.shared.errors import LumiereError
 from src.shared.result import Result
@@ -19,7 +23,10 @@ async def create_chat(
     data: ChatCreateRequest,
 ) -> ChatCreateRequest:
     result = await mediator.send(
-        CreateChatCommand(creator_id=current_user_id, data=data)
+        CreateChatCommand(
+            creator_id=current_user_id,
+            data=ChatCreateData(**data.model_dump()),
+        )
     )
     if result.is_err:
         raise result.error
@@ -32,10 +39,10 @@ async def get_my_chats(
     mediator: MediatorDep,
     limit: int = Query(20, gt=0, le=100),
     cursor: str | None = Query(None, max_length=128),
-) -> ChatSummaryPage:
+) -> ChatSummaryPageResponse:
     result: Result[ChatSummaryPage, LumiereError] = await mediator.query(
         GetChatsQuery(user_id=current_user_id, limit=limit, cursor=cursor)
     )
     if result.is_err:
         raise result.error
-    return result.value
+    return ChatSummaryPageResponse.model_validate(result.value)

@@ -1,18 +1,19 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from src.modules.friends.domain.entities.schemas import (
-    FriendRequest,
+from src.modules.friends.domain.entities.dtos import (
     FriendRequestCreate,
     FriendRequestUpdate,
     FriendRequestWithUser,
 )
+from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.domain.enums import FriendStatus
 from src.modules.friends.domain.repositories.friend_unit_of_work import (
     FriendUnitOfWork,
 )
-from src.modules.users.domain.entities.schemas import UserDTO
+from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
 from src.modules.users.domain.entities.user import User
+from src.shared.domain.unset import set_fields
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 
@@ -89,10 +90,10 @@ class FakeFriendRepository:
         self,
         request_id: UUID,
         data: FriendRequestUpdate,
-        exclude_unset: bool = False,
     ) -> FriendRequest:
         request = self.requests[request_id]
-        request.status = data.status
+        for key, value in set_fields(data).items():
+            setattr(request, key, value)
         request.updated_at = datetime.now(UTC)
         return request
 
@@ -106,12 +107,12 @@ class FakeUsersFacade:
 
     async def get_user(self, user_id: UUID) -> UserDTO | None:
         user = self.users.get(user_id)
-        return UserDTO.model_validate(user) if user else None
+        return user_to_dto(user) if user else None
 
     async def get_user_by_username(self, username: str) -> UserDTO | None:
         for user in self.users.values():
             if user.username == username and user.is_active:
-                return UserDTO.model_validate(user)
+                return user_to_dto(user)
         return None
 
     async def user_exists(self, user_id: UUID) -> bool:

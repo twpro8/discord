@@ -2,7 +2,7 @@ from typing import Protocol
 from uuid import UUID
 
 from src.modules.chats.domain.entities.chat import Chat
-from src.modules.chats.domain.entities.schemas import (
+from src.modules.chats.domain.entities.dtos import (
     ChatCreate,
     ChatSummaryPage,
 )

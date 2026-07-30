@@ -1,18 +1,20 @@
+from dataclasses import asdict
 from uuid import UUID
 
 from sqlalchemy import delete, insert, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from src.modules.friends.domain.entities.schemas import (
-    FriendRequest,
+from src.modules.friends.domain.entities.dtos import (
     FriendRequestCreate,
     FriendRequestUpdate,
     FriendRequestWithUser,
 )
+from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.domain.enums import FriendStatus
 from src.modules.friends.infrastructure.persistence.mappers import model_to_entity
 from src.modules.friends.infrastructure.persistence.models import FriendOrm
+from src.shared.domain.unset import set_fields
 
 
 class FriendRepositoryImpl:
@@ -20,7 +22,7 @@ class FriendRepositoryImpl:
         self._session = session
 
     async def create(self, data: FriendRequestCreate) -> FriendRequest:
-        stmt = insert(FriendOrm).values(**data.model_dump()).returning(FriendOrm)
+        stmt = insert(FriendOrm).values(**asdict(data)).returning(FriendOrm)
         result = await self._session.execute(stmt)
         return model_to_entity(result.scalar_one())
 
@@ -28,12 +30,11 @@ class FriendRepositoryImpl:
         self,
         request_id: UUID,
         data: FriendRequestUpdate,
-        exclude_unset: bool = False,
     ) -> FriendRequest:
         stmt = (
             update(FriendOrm)
             .where(FriendOrm.id == request_id)
-            .values(**data.model_dump(exclude_unset=exclude_unset))
+            .values(**set_fields(data))
             .returning(FriendOrm)
         )
         result = await self._session.execute(stmt)

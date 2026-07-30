@@ -4,7 +4,7 @@ from src.modules.servers.application.commands.create_server import (
     CreateServerCommand,
     CreateServerCommandHandler,
 )
-from src.modules.servers.domain.entities.server import ServerCreateRequest
+from src.modules.servers.domain.entities.server import ServerCreateData
 from src.modules.servers.domain.enums import ServerMemberRole
 from tests.unit.servers.fakes import (
     FakeChannelsFacade,
@@ -25,7 +25,7 @@ async def test_creates_server_owner_membership_and_default_channel() -> None:
 
     result = await handler.handle(
         CreateServerCommand(
-            server_data=ServerCreateRequest(name="My Server", description="desc"),
+            server_data=ServerCreateData(name="My Server", description="desc"),
             owner_id=owner_id,
         )
     )

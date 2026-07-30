@@ -1,13 +1,13 @@
 from uuid import uuid4
 
-from src.modules.chats.domain.entities.schemas import ChatCreate, MemberCreate
+from src.modules.chats.domain.entities.dtos import ChatCreate, MemberCreate
 from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.domain.exceptions import ChatNotFoundError, NotChatMemberError
 from src.modules.messages.application.commands.send_chat_message import (
     SendChatMessageCommand,
     SendChatMessageCommandHandler,
 )
-from src.modules.messages.domain.entities.schemas import MessageCreateRequest
+from src.modules.messages.domain.entities.dtos import MessageCreateData
 from tests.unit.channels.fakes import FakeChannelRepository
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
@@ -38,7 +38,7 @@ async def test_rejects_unknown_chat() -> None:
         SendChatMessageCommand(
             chat_id=uuid4(),
             sender_id=uuid4(),
-            data=MessageCreateRequest(body="hello"),
+            data=MessageCreateData(body="hello"),
         )
     )
 
@@ -54,7 +54,7 @@ async def test_rejects_non_member() -> None:
         SendChatMessageCommand(
             chat_id=chat.id,
             sender_id=uuid4(),
-            data=MessageCreateRequest(body="hello"),
+            data=MessageCreateData(body="hello"),
         )
     )
 
@@ -72,7 +72,7 @@ async def test_success() -> None:
         SendChatMessageCommand(
             chat_id=chat.id,
             sender_id=sender_id,
-            data=MessageCreateRequest(body="hello"),
+            data=MessageCreateData(body="hello"),
         )
     )
 

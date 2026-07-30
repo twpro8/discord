@@ -3,8 +3,8 @@ from uuid import UUID
 
 from src.core.config import settings
 from src.core.security.jwt import create_access_token
+from src.modules.auth.domain.entities.dtos import RefreshTokenCreate, TokenPair
 from src.modules.auth.domain.entities.refresh_token import RefreshToken
-from src.modules.auth.domain.entities.schemas import RefreshTokenCreate, TokenPair
 from src.modules.auth.domain.exceptions import InvalidRefreshTokenError
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AbstractAuthUnitOfWork,

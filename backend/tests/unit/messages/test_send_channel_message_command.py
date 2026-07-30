@@ -1,11 +1,11 @@
 from uuid import uuid4
 
-from src.modules.channels.domain.entities.schemas import ChannelCreate
+from src.modules.channels.domain.entities.dtos import ChannelCreate
 from src.modules.messages.application.commands.send_channel_message import (
     SendChannelMessageCommand,
     SendChannelMessageCommandHandler,
 )
-from src.modules.messages.domain.entities.schemas import MessageCreateRequest
+from src.modules.messages.domain.entities.dtos import MessageCreateData
 from src.modules.messages.domain.exceptions import ChannelNotFoundError
 from src.modules.servers.domain.entities.server_member import ServerMemberCreate
 from src.modules.servers.domain.exceptions import NotServerMemberError
@@ -40,7 +40,7 @@ async def test_rejects_unknown_channel() -> None:
         SendChannelMessageCommand(
             channel_id=uuid4(),
             sender_id=uuid4(),
-            data=MessageCreateRequest(body="hello"),
+            data=MessageCreateData(body="hello"),
         )
     )
 
@@ -51,14 +51,14 @@ async def test_rejects_unknown_channel() -> None:
 async def test_rejects_non_server_member() -> None:
     handler, channels, _ = _handler()
     channel = await channels.create(
-        ChannelCreate(server_id=uuid4(), name="general", topic=None, position=None)
+        ChannelCreate(server_id=uuid4(), name="general", topic=None)
     )
 
     result = await handler.handle(
         SendChannelMessageCommand(
             channel_id=channel.id,
             sender_id=uuid4(),
-            data=MessageCreateRequest(body="hello"),
+            data=MessageCreateData(body="hello"),
         )
     )
 
@@ -71,7 +71,7 @@ async def test_success() -> None:
     server_id = uuid4()
     sender_id = uuid4()
     channel = await channels.create(
-        ChannelCreate(server_id=server_id, name="general", topic=None, position=None)
+        ChannelCreate(server_id=server_id, name="general", topic=None)
     )
     await server_members.create(
         ServerMemberCreate(server_id=server_id, user_id=sender_id)
@@ -81,7 +81,7 @@ async def test_success() -> None:
         SendChannelMessageCommand(
             channel_id=channel.id,
             sender_id=sender_id,
-            data=MessageCreateRequest(body="hello"),
+            data=MessageCreateData(body="hello"),
         )
     )
 

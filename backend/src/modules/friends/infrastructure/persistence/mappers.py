@@ -1,4 +1,4 @@
-from src.modules.friends.domain.entities.schemas import FriendRequest
+from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.infrastructure.persistence.models import FriendOrm
 
 

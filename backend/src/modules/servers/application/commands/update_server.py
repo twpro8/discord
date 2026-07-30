@@ -4,7 +4,7 @@ from uuid import UUID
 from src.modules.servers.domain.entities.server import (
     Server,
     ServerUpdate,
-    ServerUpdateRequest,
+    ServerUpdateData,
 )
 from src.modules.servers.domain.exceptions import ServerNotFoundError
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
@@ -14,7 +14,7 @@ from src.shared.result import Result
 
 @dataclass(frozen=True, kw_only=True)
 class UpdateServerCommand(Command):
-    update_data: ServerUpdateRequest
+    update_data: ServerUpdateData
     server_id: UUID
     owner_id: UUID
 
@@ -35,11 +35,10 @@ class UpdateServerCommandHandler:
         _update_data = ServerUpdate(
             id=server.id,
             owner_id=command.owner_id,
-            **command.update_data.model_dump(exclude_unset=True),
+            name=command.update_data.name,
+            description=command.update_data.description,
         )
-        updated_server = await self._uow.servers.update(
-            server.id, _update_data, exclude_unset=True
-        )
+        updated_server = await self._uow.servers.update(server.id, _update_data)
 
         await self._uow.commit()
         return Result.ok(updated_server)

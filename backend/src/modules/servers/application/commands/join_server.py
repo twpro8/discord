@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server import ServerInviteCode
 from src.modules.servers.domain.entities.server_member import (
     ServerMember,
     ServerMemberCreate,
@@ -17,7 +16,7 @@ from src.shared.result import Result
 @dataclass(frozen=True, kw_only=True)
 class JoinServerCommand(Command):
     user_id: UUID
-    code_schema: ServerInviteCode
+    code: str
 
 
 class JoinServerCommandHandler:
@@ -28,7 +27,7 @@ class JoinServerCommandHandler:
         self, command: JoinServerCommand
     ) -> Result[ServerMember, ServerInviteNotFoundError]:
         user_id = command.user_id
-        code = command.code_schema.code
+        code = command.code
         invite = await self._uow.invites.get_one(code=code)
         if not invite:
             return Result.err(ServerInviteNotFoundError())

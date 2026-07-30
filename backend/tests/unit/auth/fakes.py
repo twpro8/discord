@@ -2,12 +2,12 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from src.core.security.hashing import hash_password, verify_password
+from src.modules.auth.domain.entities.dtos import RefreshTokenCreate
 from src.modules.auth.domain.entities.refresh_token import RefreshToken
-from src.modules.auth.domain.entities.schemas import RefreshTokenCreate
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AbstractAuthUnitOfWork,
 )
-from src.modules.users.domain.entities.schemas import UserDTO
+from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
 from src.modules.users.domain.entities.user import User
 from src.modules.users.domain.exceptions import (
     IncorrectPasswordError,
@@ -40,11 +40,11 @@ class FakeUsersFacade:
 
     async def get_user(self, user_id: UUID) -> UserDTO | None:
         user = self.users.get(user_id)
-        return UserDTO.model_validate(user) if user else None
+        return user_to_dto(user) if user else None
 
     async def get_user_by_username(self, username: str) -> UserDTO | None:
         user = next((u for u in self.users.values() if u.username == username), None)
-        return UserDTO.model_validate(user) if user else None
+        return user_to_dto(user) if user else None
 
     async def user_exists(self, user_id: UUID) -> bool:
         return user_id in self.users
@@ -65,7 +65,7 @@ class FakeUsersFacade:
             updated_at=now,
         )
         self.users[user.id] = user
-        return Result.ok(UserDTO.model_validate(user))
+        return Result.ok(user_to_dto(user))
 
     async def verify_credentials(
         self, *, username: str, plain_password: str
@@ -75,7 +75,7 @@ class FakeUsersFacade:
             return Result.err(UserNotFoundError())
         if not verify_password(plain_password, user.password_hash):
             return Result.err(IncorrectPasswordError())
-        return Result.ok(UserDTO.model_validate(user))
+        return Result.ok(user_to_dto(user))
 
 
 class FakeRefreshTokenRepository:

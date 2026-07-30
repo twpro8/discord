@@ -3,7 +3,7 @@ from typing import Any, cast
 from sqlalchemy import Row
 
 from src.modules.chats.domain.entities.chat import Chat, ChatMember
-from src.modules.chats.domain.entities.schemas import (
+from src.modules.chats.domain.entities.dtos import (
     ChatSummary,
     GroupChatSummary,
     LastMessagePreview,

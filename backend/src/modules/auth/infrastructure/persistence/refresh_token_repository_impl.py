@@ -1,10 +1,11 @@
+from dataclasses import asdict
 from uuid import UUID
 
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.auth.domain.entities.dtos import RefreshTokenCreate
 from src.modules.auth.domain.entities.refresh_token import RefreshToken
-from src.modules.auth.domain.entities.schemas import RefreshTokenCreate
 from src.modules.auth.infrastructure.persistence.mappers import model_to_entity
 from src.modules.auth.infrastructure.persistence.models import RefreshTokenOrm
 
@@ -14,11 +15,7 @@ class RefreshTokenRepositoryImpl:
         self._session = session
 
     async def create(self, data: RefreshTokenCreate) -> RefreshToken:
-        stmt = (
-            insert(RefreshTokenOrm)
-            .values(**data.model_dump())
-            .returning(RefreshTokenOrm)
-        )
+        stmt = insert(RefreshTokenOrm).values(**asdict(data)).returning(RefreshTokenOrm)
         result = await self._session.execute(stmt)
         return model_to_entity(result.scalar_one())
 

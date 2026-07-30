@@ -1,7 +1,8 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from src.modules.messages.domain.entities.schemas import Message, MessageCreate
+from src.modules.messages.domain.entities.dtos import MessageCreate
+from src.modules.messages.domain.entities.message import Message
 from src.modules.messages.domain.repositories.message_unit_of_work import (
     MessageUnitOfWork,
 )

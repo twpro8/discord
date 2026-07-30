@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from src.modules.auth.application.token_helper import issue_tokens
-from src.modules.auth.domain.entities.schemas import TokenPair
+from src.modules.auth.domain.entities.dtos import TokenPair
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AbstractAuthUnitOfWork,
 )

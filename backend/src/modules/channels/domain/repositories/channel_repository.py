@@ -2,7 +2,7 @@ from typing import Protocol
 from uuid import UUID
 
 from src.modules.channels.domain.entities.channel import Channel
-from src.modules.channels.domain.entities.schemas import ChannelCreate
+from src.modules.channels.domain.entities.dtos import ChannelCreate
 
 
 class ChannelRepository(Protocol):

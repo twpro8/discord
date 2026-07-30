@@ -5,7 +5,7 @@ from src.modules.auth.application.commands.logout import (
     LogoutCommand,
     LogoutCommandHandler,
 )
-from src.modules.auth.domain.entities.schemas import RefreshTokenCreate
+from src.modules.auth.domain.entities.dtos import RefreshTokenCreate
 from src.modules.auth.infrastructure.security import hash_refresh_token
 from tests.unit.auth.fakes import FakeAuthUnitOfWork, FakeRefreshTokenRepository
 

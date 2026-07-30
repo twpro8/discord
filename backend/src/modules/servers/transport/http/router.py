@@ -17,17 +17,23 @@ from src.modules.servers.application.queries.get_servers_where_user_member impor
     GetServersWhereUserMemberQuery,
 )
 from src.modules.servers.domain.entities.server import (
+    ServerCreateData,
+    ServerUpdateData,
+    ServerUserSummary,
+)
+from src.modules.servers.transport.http.invites import router as invite_router
+from src.modules.servers.transport.http.schemas import (
     ServerCreateRequest,
     ServerInviteCode,
+    ServerMemberResponse,
     ServerResponse,
     ServerUpdateRequest,
-    ServerUserSummary,
+    ServerUserSummaryResponse,
     UpdateOwnerID,
 )
-from src.modules.servers.domain.entities.server_member import ServerMemberResponse
-from src.modules.servers.transport.http.invites import router as invite_router
 from src.shared.errors import LumiereError
 from src.shared.result import Result
+from src.shared.schemas.bridge import unsettable_from_request
 
 router = APIRouter(prefix="/servers", tags=["Servers"])
 router.include_router(invite_router, prefix="/{server_id}")
@@ -40,7 +46,10 @@ async def create_server(
     mediator: MediatorDep,
 ) -> ServerResponse:
     result = await mediator.send(
-        CreateServerCommand(server_data=server_data, owner_id=current_user_id)
+        CreateServerCommand(
+            server_data=ServerCreateData(**server_data.model_dump()),
+            owner_id=current_user_id,
+        )
     )
     if result.is_err:
         raise result.error
@@ -54,7 +63,7 @@ async def join_server(
     mediator: MediatorDep,
 ) -> ServerMemberResponse:
     result = await mediator.send(
-        JoinServerCommand(user_id=current_user_id, code_schema=code)
+        JoinServerCommand(user_id=current_user_id, code=code.code)
     )
     if result.is_err:
         raise result.error
@@ -72,7 +81,7 @@ async def transfer_ownership(
         TransferServerOwnershipCommand(
             server_id=server_id,
             current_user_id=current_user_id,
-            data=owner_id,
+            new_owner_id=owner_id.owner_id,
         )
     )
     if result.is_err:
@@ -80,17 +89,17 @@ async def transfer_ownership(
     return ServerResponse.model_validate(result.value)
 
 
-@router.get("", response_model=list[ServerUserSummary])
+@router.get("", response_model=list[ServerUserSummaryResponse])
 async def get_my_servers(
     current_user_id: UserIdDep,
     mediator: MediatorDep,
-) -> list[ServerUserSummary]:
+) -> list[ServerUserSummaryResponse]:
     result: Result[list[ServerUserSummary], LumiereError] = await mediator.query(
         GetServersWhereUserMemberQuery(user_id=current_user_id)
     )
     if result.is_err:
         raise result.error
-    return result.value
+    return [ServerUserSummaryResponse.model_validate(s) for s in result.value]
 
 
 @router.get("/{server_id}", response_model=ServerResponse)
@@ -116,7 +125,7 @@ async def update_server(
 ) -> ServerResponse:
     result = await mediator.send(
         UpdateServerCommand(
-            update_data=update_data,
+            update_data=unsettable_from_request(update_data, ServerUpdateData),
             server_id=server_id,
             owner_id=current_user_id,
         )

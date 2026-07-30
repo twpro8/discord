@@ -8,7 +8,7 @@ from src.modules.channels.application.commands.create_channel import (
     CreateChannelCommand,
     CreateChannelCommandHandler,
 )
-from src.modules.channels.domain.entities.schemas import ChannelDTO
+from src.modules.channels.domain.entities.dtos import ChannelDTO, channel_to_dto
 from src.modules.channels.infrastructure.channel_unit_of_work_impl import (
     ChannelUnitOfWorkImpl,
 )
@@ -49,7 +49,7 @@ class HandlerBackedChannelsFacade:
         )
         if result.is_err:
             return Result.err(result.error)
-        return Result.ok(ChannelDTO.model_validate(result.value))
+        return Result.ok(channel_to_dto(result.value))
 
 
 async def build_channels_facade(

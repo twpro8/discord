@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from src.modules.auth.domain.entities.schemas import RegisterForm
-from src.modules.users.domain.entities.schemas import UserDTO
+from src.modules.auth.domain.entities.dtos import RegisterData
+from src.modules.users.domain.entities.dtos import UserDTO
 from src.modules.users.public.facade import UsersFacade
 from src.shared.application.command import Command
 from src.shared.errors import LumiereError
@@ -10,7 +10,7 @@ from src.shared.result import Result
 
 @dataclass(frozen=True, kw_only=True)
 class RegisterCommand(Command):
-    form_data: RegisterForm
+    data: RegisterData
 
 
 class RegisterCommandHandler:
@@ -18,10 +18,10 @@ class RegisterCommandHandler:
         self._users_facade = users_facade
 
     async def handle(self, command: RegisterCommand) -> Result[UserDTO, LumiereError]:
-        form_data = command.form_data
+        data = command.data
         return await self._users_facade.create_user(
-            name=form_data.name,
-            username=form_data.username,
-            email=form_data.email,
-            plain_password=form_data.password,
+            name=data.name,
+            username=data.username,
+            email=data.email,
+            plain_password=data.password,
         )

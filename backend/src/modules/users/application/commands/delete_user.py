@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.users.domain.entities.schemas import UserDeactivate
+from src.modules.users.domain.entities.dtos import UserUpdate
 from src.modules.users.domain.exceptions import UserNotFoundError
 from src.modules.users.domain.repositories.user_unit_of_work import (
     UserUnitOfWork,
@@ -26,6 +26,6 @@ class DeleteUserCommandHandler:
             return Result.err(UserNotFoundError())
 
         user.mark_as_inactive()
-        await self._uow.users.update(user.id, UserDeactivate())
+        await self._uow.users.update(user.id, UserUpdate(is_active=False))
         await self._uow.commit()
         return Result.ok(None)

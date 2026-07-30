@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from src.core.security.hashing import hash_password
-from src.modules.users.domain.entities.schemas import UserCreate
+from src.modules.users.domain.entities.dtos import UserCreate
 from src.modules.users.domain.entities.user import User
 from src.modules.users.domain.repositories.user_unit_of_work import UserUnitOfWork
 from src.shared.application.command import Command

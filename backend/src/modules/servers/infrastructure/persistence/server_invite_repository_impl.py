@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from dataclasses import asdict
 from typing import Any
 from uuid import UUID
 
@@ -35,11 +36,7 @@ class ServerInviteRepositoryImpl:
         ]
 
     async def create(self, data: ServerInviteCreate) -> ServerInvite:
-        stmt = (
-            insert(ServerInviteOrm)
-            .values(**data.model_dump())
-            .returning(ServerInviteOrm)
-        )
+        stmt = insert(ServerInviteOrm).values(**asdict(data)).returning(ServerInviteOrm)
         result = await self._session.execute(stmt)
         return ServerInviteDataMapper.to_entity(result.scalar_one())
 

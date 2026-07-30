@@ -33,8 +33,16 @@ class ServerDataMapper:
 
 class ServerUserSummaryDataMapper:
     @staticmethod
-    def to_entity(row: Row[Any] | ServerOrm) -> ServerUserSummary:
-        return ServerUserSummary.model_validate(row)
+    def to_entity(row: Row[Any]) -> ServerUserSummary:
+        return ServerUserSummary(
+            id=row.id,
+            name=row.name,
+            icon_url=row.icon_url,
+            owner_id=row.owner_id,
+            member_count=row.member_count,
+            role=row.role,
+            joined_at=row.joined_at,
+        )
 
 
 class ServerMemberDataMapper:

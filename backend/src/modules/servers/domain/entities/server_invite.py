@@ -1,11 +1,9 @@
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import Field
-
 from src.shared.domain.entity import Entity
-from src.shared.schemas import BaseSchema
 
 
 class ServerInvite(Entity):
@@ -30,23 +28,18 @@ class ServerInvite(Entity):
         self.created_at = created_at
 
 
-class ServerInviteResponse(BaseSchema):
-    id: UUID
-    server_id: UUID
-    code: str
-    created_by: UUID
-    max_uses: int | None
-    use_count: int
-    expires_at: datetime | None
-    created_at: datetime
+@dataclass(frozen=True, kw_only=True)
+class ServerInviteCreateData:
+    """Mirrors the transport-layer create request; used as a Command field."""
+
+    expires_in: int | None = None
+    max_uses: int | None = None
 
 
-class ServerInviteCreateRequest(BaseSchema):
-    expires_in: int | None = Field(None)
-    max_uses: int | None = Field(default=None)
+@dataclass(frozen=True, kw_only=True)
+class ServerInviteCreate:
+    """Persistence payload for a new server invite."""
 
-
-class ServerInviteCreate(BaseSchema):
     server_id: UUID
     code: str
     created_by: UUID
@@ -54,7 +47,8 @@ class ServerInviteCreate(BaseSchema):
     expires_at: datetime | None
 
 
-class ServerInviteWithStatus(BaseSchema):
+@dataclass(frozen=True, kw_only=True)
+class ServerInviteWithStatus:
     """Read-model DTO — independent of the ServerInvite entity (was a Pydantic
     subclass of it before ServerInvite became a rich entity)."""
 

@@ -7,11 +7,12 @@ from src.modules.auth.application.commands.login import LoginCommand
 from src.modules.auth.application.commands.logout import LogoutCommand
 from src.modules.auth.application.commands.refresh import RefreshCommand
 from src.modules.auth.application.commands.register import RegisterCommand
-from src.modules.auth.domain.entities.schemas import LoginForm, RegisterForm
+from src.modules.auth.domain.entities.dtos import RegisterData
 from src.modules.auth.transport.http.dependencies import (
     OptionalRefreshTokenDep,
     RefreshTokenDep,
 )
+from src.modules.auth.transport.http.schemas import LoginForm, RegisterForm
 from src.modules.auth.transport.http.utils import (
     delete_token_cookies,
     set_token_cookies,
@@ -51,7 +52,9 @@ async def register(
     request: Request,
     response: Response,
 ) -> UserResponse:
-    result = await mediator.send(RegisterCommand(form_data=form_data))
+    result = await mediator.send(
+        RegisterCommand(data=RegisterData(**form_data.model_dump()))
+    )
     if result.is_err:
         raise result.error
     user = result.value

@@ -4,7 +4,7 @@ from src.modules.chats.application.commands.create_chat import (
     CreateChatCommand,
     CreateChatCommandHandler,
 )
-from src.modules.chats.domain.entities.schemas import ChatCreate, ChatCreateRequest
+from src.modules.chats.domain.entities.dtos import ChatCreate, ChatCreateData
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
 from src.modules.chats.domain.events import ChatCreatedEvent
 from src.modules.chats.domain.exceptions import SelfChatForbiddenError
@@ -36,7 +36,7 @@ async def test_self_chat_is_rejected() -> None:
     result = await handler.handle(
         CreateChatCommand(
             creator_id=user_id,
-            data=ChatCreateRequest(
+            data=ChatCreateData(
                 type=ChatType.private,
                 target_user_id=user_id,
                 name=None,
@@ -57,7 +57,7 @@ async def test_creates_private_chat_and_adds_both_members() -> None:
     result = await handler.handle(
         CreateChatCommand(
             creator_id=creator_id,
-            data=ChatCreateRequest(
+            data=ChatCreateData(
                 type=ChatType.private,
                 target_user_id=target_id,
                 name=None,
@@ -83,7 +83,7 @@ async def test_reuses_existing_private_chat_without_adding_members() -> None:
     result = await handler.handle(
         CreateChatCommand(
             creator_id=creator_id,
-            data=ChatCreateRequest(
+            data=ChatCreateData(
                 type=ChatType.private,
                 target_user_id=target_id,
                 name=None,
@@ -105,7 +105,7 @@ async def test_creates_group_chat_with_owner_and_members() -> None:
     result = await handler.handle(
         CreateChatCommand(
             creator_id=creator_id,
-            data=ChatCreateRequest(
+            data=ChatCreateData(
                 type=ChatType.group,
                 name="Test Group",
                 description=None,

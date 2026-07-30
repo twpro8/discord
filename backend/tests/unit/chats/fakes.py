@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 from src.core.event_bus import EventHandler
 from src.modules.chats.domain import services as chat_permission_services
 from src.modules.chats.domain.entities.chat import Chat, ChatMember
-from src.modules.chats.domain.entities.schemas import (
+from src.modules.chats.domain.entities.dtos import (
     ChatCreate,
     ChatSummaryPage,
     MemberCreate,

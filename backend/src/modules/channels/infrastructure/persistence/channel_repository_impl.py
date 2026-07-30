@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from uuid import UUID
 
 from sqlalchemy import select, update
@@ -5,7 +6,7 @@ from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.channels.domain.entities.channel import Channel
-from src.modules.channels.domain.entities.schemas import ChannelCreate
+from src.modules.channels.domain.entities.dtos import ChannelCreate
 from src.modules.channels.infrastructure.persistence.mappers import model_to_entity
 from src.modules.channels.infrastructure.persistence.models import ChannelOrm
 
@@ -15,7 +16,7 @@ class ChannelRepositoryImpl:
         self._session = session
 
     async def create(self, data: ChannelCreate) -> Channel:
-        stmt = insert(ChannelOrm).values(**data.model_dump()).returning(ChannelOrm)
+        stmt = insert(ChannelOrm).values(**asdict(data)).returning(ChannelOrm)
         result = await self._session.execute(stmt)
         return model_to_entity(result.scalar_one())
 

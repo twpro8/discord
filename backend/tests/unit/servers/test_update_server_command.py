@@ -6,7 +6,7 @@ from src.modules.servers.application.commands.update_server import (
 )
 from src.modules.servers.domain.entities.server import (
     ServerCreate,
-    ServerUpdateRequest,
+    ServerUpdateData,
 )
 from src.modules.servers.domain.exceptions import ServerNotFoundError
 from tests.unit.servers.fakes import (
@@ -30,7 +30,7 @@ async def test_rejects_unknown_server() -> None:
 
     result = await handler.handle(
         UpdateServerCommand(
-            update_data=ServerUpdateRequest(name="New"),
+            update_data=ServerUpdateData(name="New"),
             server_id=uuid4(),
             owner_id=uuid4(),
         )
@@ -49,7 +49,7 @@ async def test_partial_update_only_touches_provided_fields() -> None:
 
     result = await handler.handle(
         UpdateServerCommand(
-            update_data=ServerUpdateRequest(name="Only Name Changed"),
+            update_data=ServerUpdateData(name="Only Name Changed"),
             server_id=server.id,
             owner_id=owner_id,
         )

@@ -5,7 +5,7 @@ from src.modules.channels.public.facade import ChannelsFacade
 from src.modules.servers.domain.entities.server import (
     Server,
     ServerCreate,
-    ServerCreateRequest,
+    ServerCreateData,
 )
 from src.modules.servers.domain.entities.server_member import (
     ServerMemberCreate,
@@ -19,7 +19,7 @@ from src.shared.result import Result
 
 @dataclass(frozen=True, kw_only=True)
 class CreateServerCommand(Command):
-    server_data: ServerCreateRequest
+    server_data: ServerCreateData
     owner_id: UUID
 
 
@@ -36,7 +36,11 @@ class CreateServerCommandHandler:
         self, command: CreateServerCommand
     ) -> Result[Server, LumiereError]:
         server_data, owner_id = command.server_data, command.owner_id
-        _server_data = ServerCreate(**server_data.model_dump(), owner_id=owner_id)
+        _server_data = ServerCreate(
+            name=server_data.name,
+            description=server_data.description,
+            owner_id=owner_id,
+        )
         server = await self._uow.servers.create(_server_data)
 
         member_data = ServerMemberCreate(

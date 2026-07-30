@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from src.modules.channels.domain.entities.schemas import ChannelDTO
+from src.modules.channels.domain.entities.dtos import ChannelDTO
 from src.modules.channels.domain.enums import ChannelType
 from src.modules.servers.domain import services as server_permission_services
 from src.modules.servers.domain.entities.server import (
@@ -22,6 +22,7 @@ from src.modules.servers.domain.entities.server_member import (
     ServerMemberUpdate,
 )
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.shared.domain.unset import set_fields
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 
@@ -65,10 +66,10 @@ class FakeServerRepository:
         self,
         server_id: UUID,
         data: ServerUpdate,
-        exclude_unset: bool = False,
     ) -> Server:
         server = self.servers[server_id]
-        updates = data.model_dump(exclude_unset=exclude_unset, exclude={"id"})
+        updates = set_fields(data)
+        updates.pop("id", None)
         for key, value in updates.items():
             setattr(server, key, value)
         server.updated_at = datetime.now(UTC)
@@ -125,10 +126,10 @@ class FakeServerMemberRepository:
         self,
         id_: UUID,
         data: ServerMemberUpdate,
-        exclude_unset: bool = False,
     ) -> ServerMember:
         member = self.members[id_]
-        member.role = data.role
+        for key, value in set_fields(data).items():
+            setattr(member, key, value)
         return member
 
 

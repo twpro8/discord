@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from dataclasses import asdict
 from typing import Any
 from uuid import UUID
 
@@ -19,6 +20,7 @@ from src.modules.servers.infrastructure.persistence.models import (
     ServerMemberOrm,
     ServerOrm,
 )
+from src.shared.domain.unset import set_fields
 from src.shared.errors import NotFoundError
 
 
@@ -27,7 +29,7 @@ class ServerRepositoryImpl:
         self._session = session
 
     async def create(self, data: ServerCreate) -> Server:
-        stmt = insert(ServerOrm).values(**data.model_dump()).returning(ServerOrm)
+        stmt = insert(ServerOrm).values(**asdict(data)).returning(ServerOrm)
         result = await self._session.execute(stmt)
         return ServerDataMapper.to_entity(result.scalar_one())
 
@@ -41,12 +43,11 @@ class ServerRepositoryImpl:
         self,
         server_id: UUID,
         data: ServerUpdate,
-        exclude_unset: bool = False,
     ) -> Server:
         stmt = (
             update(ServerOrm)
             .where(ServerOrm.id == server_id)
-            .values(**data.model_dump(exclude_unset=exclude_unset))
+            .values(**set_fields(data))
             .returning(ServerOrm)
         )
         result = await self._session.execute(stmt)

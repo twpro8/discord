@@ -2,7 +2,7 @@ from typing import Protocol
 from uuid import UUID
 
 from src.modules.chats.domain.entities.chat import ChatMember
-from src.modules.chats.domain.entities.schemas import MemberCreate
+from src.modules.chats.domain.entities.dtos import MemberCreate
 
 
 class ChatMemberRepository(Protocol):

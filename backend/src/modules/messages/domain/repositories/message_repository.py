@@ -1,6 +1,7 @@
 from typing import Protocol
 
-from src.modules.messages.domain.entities.schemas import Message, MessageCreate
+from src.modules.messages.domain.entities.dtos import MessageCreate
+from src.modules.messages.domain.entities.message import Message
 
 
 class MessageRepository(Protocol):

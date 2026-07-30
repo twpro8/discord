@@ -2,10 +2,11 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.chats.public.facade import ChatsFacade
-from src.modules.messages.domain.entities.schemas import (
+from src.modules.messages.domain.entities.dtos import (
     ChatMessage,
     MessageCreate,
-    MessageCreateRequest,
+    MessageCreateData,
+    chat_message_from_message,
 )
 from src.modules.messages.domain.repositories.message_unit_of_work import (
     MessageUnitOfWork,
@@ -19,7 +20,7 @@ from src.shared.result import Result
 class SendChatMessageCommand(Command):
     chat_id: UUID
     sender_id: UUID
-    data: MessageCreateRequest
+    data: MessageCreateData
 
 
 class SendChatMessageCommandHandler:
@@ -39,11 +40,12 @@ class SendChatMessageCommandHandler:
                     chat_id=chat_id,
                     sender_id=sender_id,
                     sequence=sequence,
-                    **data.model_dump(),
+                    body=data.body,
+                    parent_id=data.parent_id,
                 )
             )
         except LumiereError as error:
             return Result.err(error)
 
         await self._uow.commit()
-        return Result.ok(ChatMessage.model_validate(message))
+        return Result.ok(chat_message_from_message(message))

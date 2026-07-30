@@ -15,5 +15,4 @@ class ServerMemberRepository(Protocol):
         self,
         id_: UUID,
         data: ServerMemberUpdate,
-        exclude_unset: bool = False,
     ) -> ServerMember: ...

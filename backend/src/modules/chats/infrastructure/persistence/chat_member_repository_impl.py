@@ -1,10 +1,11 @@
+from dataclasses import asdict
 from uuid import UUID
 
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.chats.domain.entities.chat import ChatMember
-from src.modules.chats.domain.entities.schemas import MemberCreate
+from src.modules.chats.domain.entities.dtos import MemberCreate
 from src.modules.chats.infrastructure.persistence.mappers import (
     chat_member_model_to_entity,
 )
@@ -16,7 +17,7 @@ class ChatMemberRepositoryImpl:
         self._session = session
 
     async def add_members(self, members: list[MemberCreate]) -> None:
-        stmt = insert(ChatMemberOrm).values([m.model_dump() for m in members])
+        stmt = insert(ChatMemberOrm).values([asdict(m) for m in members])
         await self._session.execute(stmt)
 
     async def find_active(self, chat_id: UUID, user_id: UUID) -> ChatMember | None:

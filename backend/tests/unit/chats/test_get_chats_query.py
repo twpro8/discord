@@ -4,7 +4,7 @@ from src.modules.chats.application.queries.get_chats import (
     GetChatsQuery,
     GetChatsQueryHandler,
 )
-from src.modules.chats.domain.entities.schemas import ChatSummaryPage
+from src.modules.chats.domain.entities.dtos import ChatSummaryPage
 from tests.unit.chats.fakes import FakeChatRepository
 
 

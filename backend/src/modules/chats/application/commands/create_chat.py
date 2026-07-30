@@ -3,9 +3,9 @@ from uuid import UUID
 
 from src.core.event_bus import EventBus
 from src.modules.chats.domain.entities.chat import Chat
-from src.modules.chats.domain.entities.schemas import (
+from src.modules.chats.domain.entities.dtos import (
     ChatCreate,
-    ChatCreateRequest,
+    ChatCreateData,
     MemberCreate,
 )
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
@@ -21,7 +21,7 @@ from src.shared.result import Result
 @dataclass(frozen=True, kw_only=True)
 class CreateChatCommand(Command):
     creator_id: UUID
-    data: ChatCreateRequest
+    data: ChatCreateData
 
 
 class CreateChatCommandHandler:
@@ -43,7 +43,7 @@ class CreateChatCommandHandler:
     async def _get_or_create_private_chat(
         self,
         creator_id: UUID,
-        data: ChatCreateRequest,
+        data: ChatCreateData,
     ) -> Result[Chat, SelfChatForbiddenError]:
         if creator_id == data.target_user_id:
             return Result.err(SelfChatForbiddenError())
@@ -74,7 +74,7 @@ class CreateChatCommandHandler:
     async def _create_group_chat(
         self,
         creator_id: UUID,
-        data: ChatCreateRequest,
+        data: ChatCreateData,
     ) -> Result[Chat, SelfChatForbiddenError]:
         chat = await self._uow.chats.create(
             ChatCreate(

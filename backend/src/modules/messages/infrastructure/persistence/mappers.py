@@ -1,4 +1,4 @@
-from src.modules.messages.domain.entities.schemas import Message
+from src.modules.messages.domain.entities.message import Message
 from src.modules.messages.infrastructure.persistence.models import MessageOrm
 
 

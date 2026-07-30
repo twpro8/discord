@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from typing import Any
 from uuid import UUID
 
@@ -13,6 +14,7 @@ from src.modules.servers.infrastructure.persistence.mappers import (
     ServerMemberDataMapper,
 )
 from src.modules.servers.infrastructure.persistence.models import ServerMemberOrm
+from src.shared.domain.unset import set_fields
 from src.shared.errors import NotFoundError
 
 
@@ -21,11 +23,7 @@ class ServerMemberRepositoryImpl:
         self._session = session
 
     async def create(self, data: ServerMemberCreate) -> ServerMember:
-        stmt = (
-            insert(ServerMemberOrm)
-            .values(**data.model_dump())
-            .returning(ServerMemberOrm)
-        )
+        stmt = insert(ServerMemberOrm).values(**asdict(data)).returning(ServerMemberOrm)
         result = await self._session.execute(stmt)
         return ServerMemberDataMapper.to_entity(result.scalar_one())
 
@@ -39,12 +37,11 @@ class ServerMemberRepositoryImpl:
         self,
         id_: UUID,
         data: ServerMemberUpdate,
-        exclude_unset: bool = False,
     ) -> ServerMember:
         stmt = (
             update(ServerMemberOrm)
             .where(ServerMemberOrm.id == id_)
-            .values(**data.model_dump(exclude_unset=exclude_unset))
+            .values(**set_fields(data))
             .returning(ServerMemberOrm)
         )
         result = await self._session.execute(stmt)

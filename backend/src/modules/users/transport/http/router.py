@@ -6,7 +6,9 @@ from src.api.v1.dependencies import MediatorDep, UserIdDep
 from src.modules.users.application.commands.delete_user import DeleteUserCommand
 from src.modules.users.application.commands.update_user import UpdateUserCommand
 from src.modules.users.application.queries.get_user_by_id import GetUserByIDQuery
+from src.modules.users.domain.entities.dtos import UserUpdate
 from src.modules.users.transport.http.schemas import UserResponse, UserUpdateRequest
+from src.shared.schemas.bridge import unsettable_from_request
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -52,7 +54,8 @@ async def update_user(
     data: UserUpdateRequest,
     mediator: MediatorDep,
 ) -> UserResponse:
-    result = await mediator.send(UpdateUserCommand(user_id=user_id, data=data))
+    update_data = unsettable_from_request(data, UserUpdate)
+    result = await mediator.send(UpdateUserCommand(user_id=user_id, data=update_data))
     if result.is_err:
         raise result.error
     return UserResponse.model_validate(result.value)

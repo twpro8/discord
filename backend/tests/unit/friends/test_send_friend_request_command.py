@@ -2,9 +2,9 @@ from src.modules.friends.application.commands.send_request import (
     SendFriendRequestCommand,
     SendFriendRequestCommandHandler,
 )
-from src.modules.friends.domain.entities.schemas import (
+from src.modules.friends.domain.entities.dtos import (
     FriendRequestCreate,
-    SendFriendRequest,
+    SendFriendRequestData,
 )
 from src.modules.friends.domain.enums import FriendStatus
 from src.modules.friends.domain.exceptions import (
@@ -35,7 +35,7 @@ async def test_rejects_unknown_username() -> None:
     result = await handler.handle(
         SendFriendRequestCommand(
             sender_id=make_user("me").id,
-            data=SendFriendRequest(username="ghost"),
+            data=SendFriendRequestData(username="ghost"),
         )
     )
 
@@ -50,7 +50,7 @@ async def test_rejects_self_request() -> None:
     result = await handler.handle(
         SendFriendRequestCommand(
             sender_id=me.id,
-            data=SendFriendRequest(username="myself"),
+            data=SendFriendRequestData(username="myself"),
         )
     )
 
@@ -66,7 +66,7 @@ async def test_rejects_duplicate_relationship() -> None:
     result = await handler.handle(
         SendFriendRequestCommand(
             sender_id=me.id,
-            data=SendFriendRequest(username="target"),
+            data=SendFriendRequestData(username="target"),
         )
     )
 
@@ -81,7 +81,7 @@ async def test_creates_pending_request() -> None:
     result = await handler.handle(
         SendFriendRequestCommand(
             sender_id=me.id,
-            data=SendFriendRequest(username="target"),
+            data=SendFriendRequestData(username="target"),
         )
     )
 

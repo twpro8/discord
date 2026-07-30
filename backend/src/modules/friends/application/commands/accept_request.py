@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.friends.domain.entities.schemas import (
-    FriendRequest,
-    FriendRequestUpdate,
-)
+from src.modules.friends.domain.entities.dtos import FriendRequestUpdate
+from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.domain.enums import FriendStatus
 from src.modules.friends.domain.exceptions import (
     FriendRequestNotFoundError,

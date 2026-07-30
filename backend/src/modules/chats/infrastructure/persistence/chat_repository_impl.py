@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from datetime import datetime
 from uuid import UUID
 
@@ -7,7 +8,7 @@ from sqlalchemy.orm import aliased
 
 from src.modules.chats.domain.cursor import decode_cursor, encode_cursor
 from src.modules.chats.domain.entities.chat import Chat
-from src.modules.chats.domain.entities.schemas import ChatCreate, ChatSummaryPage
+from src.modules.chats.domain.entities.dtos import ChatCreate, ChatSummaryPage
 from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.infrastructure.persistence.mappers import (
     chat_model_to_entity,
@@ -25,7 +26,7 @@ class ChatRepositoryImpl:
         self._session = session
 
     async def create(self, data: ChatCreate) -> Chat:
-        stmt = insert(ChatOrm).values(**data.model_dump()).returning(ChatOrm)
+        stmt = insert(ChatOrm).values(**asdict(data)).returning(ChatOrm)
         result = await self._session.execute(stmt)
         return chat_model_to_entity(result.scalar_one())
 

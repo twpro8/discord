@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.shared.domain.entity import Entity
-from src.shared.schemas import BaseSchema
+from src.shared.domain.unset import UNSET, Unsettable
 
 
 class ServerMember(Entity):
@@ -19,18 +20,13 @@ class ServerMember(Entity):
         self.role = role
 
 
-class ServerMemberResponse(BaseSchema):
-    id: UUID
-    server_id: UUID
-    user_id: UUID
-    role: ServerMemberRole
-
-
-class ServerMemberCreate(BaseSchema):
+@dataclass(frozen=True, kw_only=True)
+class ServerMemberCreate:
     server_id: UUID
     user_id: UUID
     role: ServerMemberRole = ServerMemberRole.member
 
 
-class ServerMemberUpdate(BaseSchema):
-    role: ServerMemberRole
+@dataclass(frozen=True, kw_only=True)
+class ServerMemberUpdate:
+    role: Unsettable[ServerMemberRole] = UNSET

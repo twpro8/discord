@@ -7,9 +7,13 @@ from src.modules.servers.application.commands.create_invite import CreateInviteC
 from src.modules.servers.application.commands.delete_invite import DeleteInviteCommand
 from src.modules.servers.application.queries.get_invites import GetInvitesQuery
 from src.modules.servers.domain.entities.server_invite import (
+    ServerInviteCreateData,
+    ServerInviteWithStatus,
+)
+from src.modules.servers.transport.http.schemas import (
     ServerInviteCreateRequest,
     ServerInviteResponse,
-    ServerInviteWithStatus,
+    ServerInviteWithStatusResponse,
 )
 from src.shared.errors import LumiereError
 from src.shared.result import Result
@@ -30,7 +34,7 @@ async def create_invite(
         CreateInviteCommand(
             server_id=server_id,
             user_id=current_user_id,
-            payload=payload,
+            payload=ServerInviteCreateData(**payload.model_dump()),
         )
     )
     if result.is_err:
@@ -38,14 +42,14 @@ async def create_invite(
     return ServerInviteResponse.model_validate(result.value)
 
 
-@router.get("", response_model=list[ServerInviteWithStatus])
+@router.get("", response_model=list[ServerInviteWithStatusResponse])
 async def get_invites(
     user_id: UserIdDep,
     server_id: UUID,
     mediator: MediatorDep,
     limit: int = Query(default=100, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-) -> list[ServerInviteWithStatus]:
+) -> list[ServerInviteWithStatusResponse]:
     result: Result[list[ServerInviteWithStatus], LumiereError] = await mediator.query(
         GetInvitesQuery(
             user_id=user_id,
@@ -56,7 +60,7 @@ async def get_invites(
     )
     if result.is_err:
         raise result.error
-    return result.value
+    return [ServerInviteWithStatusResponse.model_validate(i) for i in result.value]
 
 
 @router.delete("/{code}", status_code=status.HTTP_204_NO_CONTENT)

@@ -20,12 +20,16 @@ from src.modules.friends.application.queries.get_requests import (
 from src.modules.friends.application.queries.get_sent_requests import (
     GetSentFriendRequestsQuery,
 )
-from src.modules.friends.domain.entities.schemas import (
-    FriendRequestResponse,
+from src.modules.friends.domain.entities.dtos import (
     FriendRequestWithUser,
-    SendFriendRequest,
+    SendFriendRequestData,
 )
 from src.modules.friends.domain.enums import FriendStatus
+from src.modules.friends.transport.http.schemas import (
+    FriendRequestResponse,
+    FriendRequestWithUserResponse,
+    SendFriendRequest,
+)
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 
@@ -44,7 +48,10 @@ async def send_friend_request(
     mediator: MediatorDep,
 ) -> FriendRequestResponse:
     result = await mediator.send(
-        SendFriendRequestCommand(sender_id=current_user_id, data=data)
+        SendFriendRequestCommand(
+            sender_id=current_user_id,
+            data=SendFriendRequestData(username=data.username),
+        )
     )
     if result.is_err:
         raise result.error
@@ -54,54 +61,54 @@ async def send_friend_request(
 @router.get(
     "/requests",
     summary="Get friend requests",
-    response_model=list[FriendRequestWithUser],
+    response_model=list[FriendRequestWithUserResponse],
 )
 async def get_friend_requests(
     current_user_id: UserIdDep,
     mediator: MediatorDep,
     status: FriendStatus = FriendStatus.PENDING,
-) -> list[FriendRequestWithUser]:
+) -> list[FriendRequestWithUserResponse]:
     result: Result[list[FriendRequestWithUser], LumiereError] = await mediator.query(
         GetFriendRequestsQuery(user_id=current_user_id, status=status)
     )
     if result.is_err:
         raise result.error
-    return result.value
+    return [FriendRequestWithUserResponse.model_validate(r) for r in result.value]
 
 
 @router.get(
     "/requests/sent",
     summary="Get sent friend requests",
-    response_model=list[FriendRequestWithUser],
+    response_model=list[FriendRequestWithUserResponse],
 )
 async def get_user_sent_requests(
     current_user_id: UserIdDep,
     mediator: MediatorDep,
     status: FriendStatus = FriendStatus.PENDING,
-) -> list[FriendRequestWithUser]:
+) -> list[FriendRequestWithUserResponse]:
     result: Result[list[FriendRequestWithUser], LumiereError] = await mediator.query(
         GetSentFriendRequestsQuery(user_id=current_user_id, status=status)
     )
     if result.is_err:
         raise result.error
-    return result.value
+    return [FriendRequestWithUserResponse.model_validate(r) for r in result.value]
 
 
 @router.get(
     "",
     summary="Get friends list",
-    response_model=list[FriendRequestWithUser],
+    response_model=list[FriendRequestWithUserResponse],
 )
 async def get_friends(
     current_user_id: UserIdDep,
     mediator: MediatorDep,
-) -> list[FriendRequestWithUser]:
+) -> list[FriendRequestWithUserResponse]:
     result: Result[list[FriendRequestWithUser], LumiereError] = await mediator.query(
         GetFriendsQuery(user_id=current_user_id)
     )
     if result.is_err:
         raise result.error
-    return result.value
+    return [FriendRequestWithUserResponse.model_validate(r) for r in result.value]
 
 
 @router.patch(

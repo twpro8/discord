@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.friends.domain.entities.schemas import (
-    FriendRequest,
+from src.modules.friends.domain.entities.dtos import (
     FriendRequestCreate,
-    SendFriendRequest,
+    SendFriendRequestData,
 )
+from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.domain.exceptions import (
     CannotSendFriendRequestToSelfError,
     FriendRequestAlreadyExistsError,
@@ -23,7 +23,7 @@ from src.shared.result import Result
 @dataclass(frozen=True, kw_only=True)
 class SendFriendRequestCommand(Command):
     sender_id: UUID
-    data: SendFriendRequest
+    data: SendFriendRequestData
 
 
 class SendFriendRequestCommandHandler:

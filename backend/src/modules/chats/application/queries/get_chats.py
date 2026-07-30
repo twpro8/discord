@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.chats.domain.entities.schemas import ChatSummaryPage
+from src.modules.chats.domain.entities.dtos import ChatSummaryPage
 from src.modules.chats.domain.repositories.chat_repository import ChatRepository
 from src.shared.application.query import Query
 from src.shared.errors import LumiereError

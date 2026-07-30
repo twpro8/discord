@@ -5,7 +5,7 @@ from src.modules.friends.application.queries.get_friends import (
     GetFriendsQuery,
     GetFriendsQueryHandler,
 )
-from src.modules.friends.domain.entities.schemas import FriendRequestWithUser
+from src.modules.friends.domain.entities.dtos import FriendRequestWithUser
 from src.modules.friends.domain.enums import FriendStatus
 from tests.unit.friends.fakes import FakeFriendRepository
 

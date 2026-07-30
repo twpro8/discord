@@ -4,7 +4,7 @@ from src.modules.friends.application.commands.accept_request import (
     AcceptFriendRequestCommand,
     AcceptFriendRequestCommandHandler,
 )
-from src.modules.friends.domain.entities.schemas import FriendRequestCreate
+from src.modules.friends.domain.entities.dtos import FriendRequestCreate
 from src.modules.friends.domain.enums import FriendStatus
 from src.modules.friends.domain.exceptions import (
     FriendRequestNotFoundError,
