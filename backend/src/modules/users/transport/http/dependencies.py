@@ -58,7 +58,10 @@ async def get_current_user(
     user_id: UserIdDep,
     user_use_case: GetUserByIDQueryDep,
 ) -> User:
-    return await user_use_case(user_id)
+    result = await user_use_case(user_id)
+    if result.is_err:
+        raise result.error
+    return result.value
 
 
 UserRepositoryDep = Annotated[UserRepositoryImpl, Depends(get_user_repository)]

@@ -23,8 +23,10 @@ async def get_current_user(
     user_id: UserIdDep,
     get_user_use_case: GetUserByIDQueryDep,
 ) -> UserResponse:
-    user = await get_user_use_case(user_id=user_id)
-    return UserResponse.model_validate(user)
+    result = await get_user_use_case(user_id=user_id)
+    if result.is_err:
+        raise result.error
+    return UserResponse.model_validate(result.value)
 
 
 @router.get(
@@ -37,8 +39,10 @@ async def get_user_by_id(
     user_id: UUID,
     get_user_use_case: GetUserByIDQueryDep,
 ) -> UserResponse:
-    user = await get_user_use_case(user_id=user_id)
-    return UserResponse.model_validate(user)
+    result = await get_user_use_case(user_id=user_id)
+    if result.is_err:
+        raise result.error
+    return UserResponse.model_validate(result.value)
 
 
 @router.patch(
@@ -51,8 +55,10 @@ async def update_user(
     data: UserUpdateRequest,
     update_user_command: UpdateUserCommandDep,
 ) -> UserResponse:
-    user = await update_user_command(user_id, data)
-    return UserResponse.model_validate(user)
+    result = await update_user_command(user_id, data)
+    if result.is_err:
+        raise result.error
+    return UserResponse.model_validate(result.value)
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
@@ -60,4 +66,6 @@ async def delete_user(
     user: CurrentUserDep,
     delete_user_command: DeleteUserCommandDep,
 ) -> None:
-    await delete_user_command(user)
+    result = await delete_user_command(user)
+    if result.is_err:
+        raise result.error
