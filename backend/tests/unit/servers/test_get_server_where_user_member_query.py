@@ -4,7 +4,7 @@ from src.modules.servers.application.queries.get_server_where_user_member import
     GetServerWhereUserMemberQuery,
     GetServerWhereUserMemberQueryHandler,
 )
-from src.modules.servers.domain.entities.server import ServerCreate
+from src.modules.servers.domain.entities.dtos import ServerCreate
 from src.modules.servers.domain.exceptions import ServerNotFoundError
 from tests.unit.servers.fakes import FakeServerRepository
 

@@ -18,7 +18,7 @@ from src.modules.auth.application.commands.register import (
     RegisterCommand,
     RegisterCommandHandler,
 )
-from src.modules.auth.infrastructure.auth_unit_of_work_impl import AuthUnitOfWork
+from src.modules.auth.infrastructure.auth_unit_of_work_impl import AuthUnitOfWorkImpl
 from src.modules.auth.infrastructure.persistence.refresh_token_repository_impl import (
     RefreshTokenRepositoryImpl,
 )
@@ -34,7 +34,7 @@ async def register_auth_handlers(
 ) -> None:
     refresh_token_repository = RefreshTokenRepositoryImpl(session)
     uow = await stack.enter_async_context(
-        AuthUnitOfWork(session, refresh_token_repository)
+        AuthUnitOfWorkImpl(session, refresh_token_repository)
     )
 
     mediator.register_command(LoginCommand, LoginCommandHandler(uow, users_facade))

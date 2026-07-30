@@ -2,10 +2,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server_member import (
-    ServerMember,
-    ServerMemberCreate,
-)
+from src.modules.servers.domain.entities.dtos import ServerMemberCreate
+from src.modules.servers.domain.entities.server_member import ServerMember
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import ServerInviteNotFoundError
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork

@@ -7,7 +7,7 @@ from src.modules.messages.application.commands.send_channel_message import (
 )
 from src.modules.messages.domain.entities.dtos import MessageCreateData
 from src.modules.messages.domain.exceptions import ChannelNotFoundError
-from src.modules.servers.domain.entities.server_member import ServerMemberCreate
+from src.modules.servers.domain.entities.dtos import ServerMemberCreate
 from src.modules.servers.domain.exceptions import NotServerMemberError
 from tests.unit.channels.fakes import FakeChannelRepository
 from tests.unit.chats.fakes import FakeChatRepository

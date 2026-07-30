@@ -6,7 +6,7 @@ from src.api.v1.dependencies import MediatorDep, UserIdDep
 from src.modules.servers.application.commands.create_invite import CreateInviteCommand
 from src.modules.servers.application.commands.delete_invite import DeleteInviteCommand
 from src.modules.servers.application.queries.get_invites import GetInvitesQuery
-from src.modules.servers.domain.entities.server_invite import (
+from src.modules.servers.domain.entities.dtos import (
     ServerInviteCreateData,
     ServerInviteWithStatus,
 )

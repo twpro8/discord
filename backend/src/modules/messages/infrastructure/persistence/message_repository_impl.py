@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.messages.domain.entities.dtos import MessageCreate
 from src.modules.messages.domain.entities.message import Message
 from src.modules.messages.domain.exceptions import MessageNotFoundError
-from src.modules.messages.infrastructure.persistence.mappers import model_to_entity
+from src.modules.messages.infrastructure.persistence.mappers import MessageDataMapper
 from src.modules.messages.infrastructure.persistence.models import MessageOrm
 
 
@@ -29,4 +29,4 @@ class MessageRepositoryImpl:
                         raise MessageNotFoundError
                 raise
             raise
-        return model_to_entity(result.scalar_one())
+        return MessageDataMapper.to_entity(result.scalar_one())

@@ -16,7 +16,7 @@ from src.modules.servers.application.queries.get_server_where_user_member import
 from src.modules.servers.application.queries.get_servers_where_user_member import (
     GetServersWhereUserMemberQuery,
 )
-from src.modules.servers.domain.entities.server import (
+from src.modules.servers.domain.entities.dtos import (
     ServerCreateData,
     ServerUpdateData,
     ServerUserSummary,

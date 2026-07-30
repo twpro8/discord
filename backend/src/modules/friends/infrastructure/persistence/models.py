@@ -1,15 +1,10 @@
-"""SQLAlchemy models for friend relationships."""
-
-# Python modules
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-# Third-party modules
 from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-# Project modules
 from src.core.database import UUIDBase, timestamp
 from src.modules.friends.domain.enums import FriendStatus
 
@@ -18,8 +13,6 @@ if TYPE_CHECKING:
 
 
 class FriendOrm(UUIDBase):
-    """A directed friend request or relationship between two users."""
-
     __tablename__ = "friends"
     __table_args__ = (
         CheckConstraint("user_id <> target_user_id", name="ck_friends_distinct_users"),

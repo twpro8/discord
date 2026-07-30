@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from src.modules.auth.application.token_helper import issue_tokens
 from src.modules.auth.domain.entities.dtos import TokenPair
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
-    AbstractAuthUnitOfWork,
+    AuthUnitOfWork,
 )
 from src.modules.users.public.facade import UsersFacade
 from src.shared.application.command import Command
@@ -18,7 +18,7 @@ class LoginCommand(Command):
 
 
 class LoginCommandHandler:
-    def __init__(self, uow: AbstractAuthUnitOfWork, users_facade: UsersFacade) -> None:
+    def __init__(self, uow: AuthUnitOfWork, users_facade: UsersFacade) -> None:
         self._uow = uow
         self._users_facade = users_facade
 

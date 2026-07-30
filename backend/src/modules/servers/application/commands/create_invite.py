@@ -4,11 +4,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server_invite import (
-    ServerInvite,
+from src.modules.servers.domain.entities.dtos import (
     ServerInviteCreate,
     ServerInviteCreateData,
 )
+from src.modules.servers.domain.entities.server_invite import ServerInvite
 from src.modules.servers.domain.exceptions import (
     ServerInviteGenerationFailedError,
     ServerInvitePermissionDeniedError,

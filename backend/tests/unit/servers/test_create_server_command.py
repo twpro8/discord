@@ -4,7 +4,7 @@ from src.modules.servers.application.commands.create_server import (
     CreateServerCommand,
     CreateServerCommandHandler,
 )
-from src.modules.servers.domain.entities.server import ServerCreateData
+from src.modules.servers.domain.entities.dtos import ServerCreateData
 from src.modules.servers.domain.enums import ServerMemberRole
 from tests.unit.servers.fakes import (
     FakeChannelsFacade,

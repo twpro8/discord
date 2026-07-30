@@ -7,10 +7,8 @@ from sqlalchemy import CursorResult, delete, insert, or_, select, update
 from sqlalchemy import true as sa_true
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.servers.domain.entities.server_invite import (
-    ServerInvite,
-    ServerInviteCreate,
-)
+from src.modules.servers.domain.entities.dtos import ServerInviteCreate
+from src.modules.servers.domain.entities.server_invite import ServerInvite
 from src.modules.servers.infrastructure.persistence.mappers import (
     ServerInviteDataMapper,
 )

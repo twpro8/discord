@@ -1,16 +1,10 @@
-"""Integration tests for sending friend requests."""
-
-# Python modules
 from uuid import UUID
 
-# Third-party modules
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.friends.domain.enums import FriendStatus
-
-# Project modules
 from src.modules.friends.infrastructure.persistence.models import FriendOrm
 from src.modules.users.domain.entities.user import User
 
@@ -21,7 +15,6 @@ async def test_send_friend_request_creates_pending_relationship(
     get_all_users: list[User],
     session: AsyncSession,
 ) -> None:
-    """An authenticated user can send one pending request to another user."""
     target_user = next(user for user in get_all_users if user.id != current_user.id)
 
     response = await authed_client.post(
@@ -47,7 +40,6 @@ async def test_send_friend_request_rejects_duplicate_relationship(
     authed_client: AsyncClient,
     get_all_users: list[User],
 ) -> None:
-    """The same users cannot create multiple requests in either direction."""
     target_user = get_all_users[2]
     payload = {"username": str(target_user.username)}
 
@@ -62,7 +54,6 @@ async def test_send_friend_request_rejects_self_request(
     authed_client: AsyncClient,
     current_user: User,
 ) -> None:
-    """A user cannot send a friend request to their own username."""
     response = await authed_client.post(
         "/api/v1/friends/requests",
         json={"username": str(current_user.username)},
@@ -74,7 +65,6 @@ async def test_send_friend_request_rejects_self_request(
 async def test_send_friend_request_rejects_unknown_username(
     authed_client: AsyncClient,
 ) -> None:
-    """A request target must be an existing active user."""
     response = await authed_client.post(
         "/api/v1/friends/requests",
         json={"username": "unknown_user"},

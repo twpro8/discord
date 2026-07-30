@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from src.modules.auth.application.token_helper import get_valid_refresh_token
 from src.modules.auth.domain.exceptions import InvalidRefreshTokenError
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
-    AbstractAuthUnitOfWork,
+    AuthUnitOfWork,
 )
 from src.shared.application.command import Command
 from src.shared.errors import LumiereError
@@ -16,7 +16,7 @@ class LogoutCommand(Command):
 
 
 class LogoutCommandHandler:
-    def __init__(self, uow: AbstractAuthUnitOfWork) -> None:
+    def __init__(self, uow: AuthUnitOfWork) -> None:
         self._uow = uow
 
     async def handle(self, command: LogoutCommand) -> Result[None, LumiereError]:

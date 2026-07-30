@@ -11,8 +11,6 @@ MAX_USERNAME_LENGTH = 32
 
 
 class SendFriendRequest(BaseSchema):
-    """Payload used to send a friend request by username."""
-
     username: str = Field(
         min_length=MIN_USERNAME_LENGTH,
         max_length=MAX_USERNAME_LENGTH,
@@ -20,8 +18,6 @@ class SendFriendRequest(BaseSchema):
 
 
 class FriendRequestResponse(BaseSchema):
-    """API response shape for a friend request."""
-
     id: UUID
     user_id: UUID
     target_user_id: UUID

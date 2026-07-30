@@ -5,11 +5,11 @@ from uuid import UUID
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.servers.domain.entities.server_member import (
-    ServerMember,
+from src.modules.servers.domain.entities.dtos import (
     ServerMemberCreate,
     ServerMemberUpdate,
 )
+from src.modules.servers.domain.entities.server_member import ServerMember
 from src.modules.servers.infrastructure.persistence.mappers import (
     ServerMemberDataMapper,
 )

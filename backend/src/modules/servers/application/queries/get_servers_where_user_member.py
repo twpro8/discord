@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server import ServerUserSummary
+from src.modules.servers.domain.entities.dtos import ServerUserSummary
 from src.modules.servers.domain.repositories.server_repository import ServerRepository
 from src.shared.application.query import Query
 from src.shared.errors import LumiereError

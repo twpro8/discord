@@ -7,7 +7,7 @@ from src.modules.auth.domain.entities.dtos import RefreshTokenCreate, TokenPair
 from src.modules.auth.domain.entities.refresh_token import RefreshToken
 from src.modules.auth.domain.exceptions import InvalidRefreshTokenError
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
-    AbstractAuthUnitOfWork,
+    AuthUnitOfWork,
 )
 from src.modules.auth.infrastructure.security import (
     create_refresh_token,
@@ -15,7 +15,7 @@ from src.modules.auth.infrastructure.security import (
 )
 
 
-async def issue_tokens(uow: AbstractAuthUnitOfWork, user_id: UUID) -> TokenPair:
+async def issue_tokens(uow: AuthUnitOfWork, user_id: UUID) -> TokenPair:
     access_token = create_access_token(user_id)
     refresh_token, refresh_token_hash = create_refresh_token()
     expires_at = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
@@ -30,7 +30,7 @@ async def issue_tokens(uow: AbstractAuthUnitOfWork, user_id: UUID) -> TokenPair:
 
 
 async def get_valid_refresh_token(
-    uow: AbstractAuthUnitOfWork, refresh_token: str
+    uow: AuthUnitOfWork, refresh_token: str
 ) -> RefreshToken:
     token_hash = hash_refresh_token(refresh_token)
     stored = await uow.refresh_tokens.find_by_hash(token_hash=token_hash)
