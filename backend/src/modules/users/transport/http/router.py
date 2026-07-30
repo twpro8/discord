@@ -2,13 +2,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from src.modules.users.transport.http.dependencies import (
-    CurrentUserDep,
-    DeleteUserCommandDep,
-    GetUserByIDQueryDep,
-    UpdateUserCommandDep,
-    UserIdDep,
-)
+from src.api.v1.dependencies import MediatorDep
+from src.modules.users.application.commands.delete_user import DeleteUserCommand
+from src.modules.users.application.commands.update_user import UpdateUserCommand
+from src.modules.users.application.queries.get_user_by_id import GetUserByIDQuery
+from src.modules.users.transport.http.dependencies import UserIdDep
 from src.modules.users.transport.http.schemas import UserResponse, UserUpdateRequest
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -21,9 +19,9 @@ router = APIRouter(prefix="/users", tags=["Users"])
 )
 async def get_current_user(
     user_id: UserIdDep,
-    get_user_use_case: GetUserByIDQueryDep,
+    mediator: MediatorDep,
 ) -> UserResponse:
-    result = await get_user_use_case(user_id=user_id)
+    result = await mediator.query(GetUserByIDQuery(user_id=user_id))
     if result.is_err:
         raise result.error
     return UserResponse.model_validate(result.value)
@@ -37,9 +35,9 @@ async def get_current_user(
 async def get_user_by_id(
     _: UserIdDep,
     user_id: UUID,
-    get_user_use_case: GetUserByIDQueryDep,
+    mediator: MediatorDep,
 ) -> UserResponse:
-    result = await get_user_use_case(user_id=user_id)
+    result = await mediator.query(GetUserByIDQuery(user_id=user_id))
     if result.is_err:
         raise result.error
     return UserResponse.model_validate(result.value)
@@ -53,9 +51,9 @@ async def get_user_by_id(
 async def update_user(
     user_id: UserIdDep,
     data: UserUpdateRequest,
-    update_user_command: UpdateUserCommandDep,
+    mediator: MediatorDep,
 ) -> UserResponse:
-    result = await update_user_command(user_id, data)
+    result = await mediator.send(UpdateUserCommand(user_id=user_id, data=data))
     if result.is_err:
         raise result.error
     return UserResponse.model_validate(result.value)
@@ -63,9 +61,9 @@ async def update_user(
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
-    user: CurrentUserDep,
-    delete_user_command: DeleteUserCommandDep,
+    user_id: UserIdDep,
+    mediator: MediatorDep,
 ) -> None:
-    result = await delete_user_command(user)
+    result = await mediator.send(DeleteUserCommand(user_id=user_id))
     if result.is_err:
         raise result.error

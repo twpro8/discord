@@ -1,17 +1,30 @@
+from dataclasses import dataclass
+from uuid import UUID
+
 from src.modules.users.domain.entities.schemas import UserDeactivate
-from src.modules.users.domain.entities.user import User
+from src.modules.users.domain.exceptions import UserNotFoundError
 from src.modules.users.domain.repositories.user_unit_of_work import (
     AbstractUserUnitOfWork,
 )
+from src.shared.application.command import Command
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 
 
-class DeleteUserCommand:
+@dataclass(frozen=True, kw_only=True)
+class DeleteUserCommand(Command):
+    user_id: UUID
+
+
+class DeleteUserCommandHandler:
     def __init__(self, uow: AbstractUserUnitOfWork) -> None:
         self._uow = uow
 
-    async def __call__(self, user: User) -> Result[None, LumiereError]:
+    async def handle(self, command: DeleteUserCommand) -> Result[None, LumiereError]:
+        user = await self._uow.users.get_by_id(command.user_id)
+        if user is None or not user.is_active:
+            return Result.err(UserNotFoundError())
+
         user.mark_as_inactive()
         await self._uow.users.update(user.id, UserDeactivate())
         await self._uow.commit()
