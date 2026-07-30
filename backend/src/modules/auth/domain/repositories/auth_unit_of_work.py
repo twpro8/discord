@@ -5,7 +5,7 @@ from src.modules.auth.domain.repositories.refresh_token_repository import (
 )
 
 
-class AbstractAuthUnitOfWork(ABC):
+class AuthUnitOfWork(ABC):
     refresh_tokens: RefreshTokenRepository
 
     @abstractmethod

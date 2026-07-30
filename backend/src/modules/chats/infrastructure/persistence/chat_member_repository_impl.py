@@ -6,9 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.chats.domain.entities.chat import ChatMember
 from src.modules.chats.domain.entities.dtos import MemberCreate
-from src.modules.chats.infrastructure.persistence.mappers import (
-    chat_member_model_to_entity,
-)
+from src.modules.chats.infrastructure.persistence.mappers import ChatMemberDataMapper
 from src.modules.chats.infrastructure.persistence.models import ChatMemberOrm
 
 
@@ -28,4 +26,4 @@ class ChatMemberRepositoryImpl:
         )
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()
-        return chat_member_model_to_entity(model) if model else None
+        return ChatMemberDataMapper.to_entity(model) if model else None

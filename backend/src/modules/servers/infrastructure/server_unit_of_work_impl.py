@@ -8,7 +8,7 @@ from src.modules.servers.domain.repositories.server_member_repository import (
 )
 from src.modules.servers.domain.repositories.server_repository import ServerRepository
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
-from src.shared.data.unit_of_work.base_unit_of_work import BaseUnitOfWork
+from src.shared.data.unit_of_work import BaseUnitOfWork
 
 
 class ServerUnitOfWorkImpl(BaseUnitOfWork, ServerUnitOfWork):

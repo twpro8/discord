@@ -12,7 +12,9 @@ from src.modules.friends.domain.entities.dtos import (
 )
 from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.domain.enums import FriendStatus
-from src.modules.friends.infrastructure.persistence.mappers import model_to_entity
+from src.modules.friends.infrastructure.persistence.mappers import (
+    FriendRequestDataMapper,
+)
 from src.modules.friends.infrastructure.persistence.models import FriendOrm
 from src.shared.domain.unset import set_fields
 
@@ -24,7 +26,7 @@ class FriendRepositoryImpl:
     async def create(self, data: FriendRequestCreate) -> FriendRequest:
         stmt = insert(FriendOrm).values(**asdict(data)).returning(FriendOrm)
         result = await self._session.execute(stmt)
-        return model_to_entity(result.scalar_one())
+        return FriendRequestDataMapper.to_entity(result.scalar_one())
 
     async def update(
         self,
@@ -38,7 +40,7 @@ class FriendRepositoryImpl:
             .returning(FriendOrm)
         )
         result = await self._session.execute(stmt)
-        return model_to_entity(result.scalar_one())
+        return FriendRequestDataMapper.to_entity(result.scalar_one())
 
     async def delete(self, request_id: UUID) -> None:
         stmt = delete(FriendOrm).where(FriendOrm.id == request_id)
@@ -60,13 +62,13 @@ class FriendRepositoryImpl:
         )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        return model_to_entity(model) if model else None
+        return FriendRequestDataMapper.to_entity(model) if model else None
 
     async def get_by_id(self, request_id: UUID) -> FriendRequest | None:
         query = select(FriendOrm).filter_by(id=request_id)
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()
-        return model_to_entity(model) if model else None
+        return FriendRequestDataMapper.to_entity(model) if model else None
 
     async def get_for_user(
         self,

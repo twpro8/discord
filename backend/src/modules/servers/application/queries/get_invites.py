@@ -3,10 +3,8 @@ from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server_invite import (
-    ServerInvite,
-    ServerInviteWithStatus,
-)
+from src.modules.servers.domain.entities.dtos import ServerInviteWithStatus
+from src.modules.servers.domain.entities.server_invite import ServerInvite
 from src.modules.servers.domain.repositories.server_invite_repository import (
     ServerInviteRepository,
 )

@@ -6,12 +6,12 @@ from uuid import UUID
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.servers.domain.entities.server import (
-    Server,
+from src.modules.servers.domain.entities.dtos import (
     ServerCreate,
     ServerUpdate,
     ServerUserSummary,
 )
+from src.modules.servers.domain.entities.server import Server
 from src.modules.servers.infrastructure.persistence.mappers import (
     ServerDataMapper,
     ServerUserSummaryDataMapper,

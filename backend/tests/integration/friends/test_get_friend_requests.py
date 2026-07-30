@@ -1,5 +1,3 @@
-"""Integration tests for listing friend requests."""
-
 from httpx import AsyncClient
 
 from src.modules.friends.domain.enums import FriendStatus
@@ -9,7 +7,6 @@ from src.modules.users.domain.entities.user import User
 async def test_get_friends_list_returns_empty_for_new_user(
     authed_client: AsyncClient,
 ) -> None:
-    """A user with no accepted friends gets an empty, well-formed list."""
     response = await authed_client.get("/api/v1/friends")
 
     assert response.status_code == 200
@@ -21,7 +18,6 @@ async def test_get_sent_friend_requests_shape(
     current_user: User,
     get_all_users: list[User],
 ) -> None:
-    """A sent pending request appears with the recipient's username/avatar fields."""
     target = next(user for user in get_all_users if user.id != current_user.id)
 
     await authed_client.post(

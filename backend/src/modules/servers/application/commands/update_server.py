@@ -1,11 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.servers.domain.entities.server import (
-    Server,
-    ServerUpdate,
-    ServerUpdateData,
-)
+from src.modules.servers.domain.entities.dtos import ServerUpdate, ServerUpdateData
+from src.modules.servers.domain.entities.server import Server
 from src.modules.servers.domain.exceptions import ServerNotFoundError
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 from src.shared.application.command import Command

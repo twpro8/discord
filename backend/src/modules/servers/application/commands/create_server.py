@@ -2,14 +2,12 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.channels.public.facade import ChannelsFacade
-from src.modules.servers.domain.entities.server import (
-    Server,
+from src.modules.servers.domain.entities.dtos import (
     ServerCreate,
     ServerCreateData,
-)
-from src.modules.servers.domain.entities.server_member import (
     ServerMemberCreate,
 )
+from src.modules.servers.domain.entities.server import Server
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 from src.shared.application.command import Command
