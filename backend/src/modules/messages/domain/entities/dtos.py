@@ -88,3 +88,24 @@ def chat_message_from_message(message: Message) -> ChatMessage:
         updated_at=message.updated_at,
         chat_id=message.chat_id,
     )
+
+
+@dataclass(frozen=True, kw_only=True)
+class MessageEditData:
+    """Mirrors the transport-layer edit request; used as a Command field."""
+
+    body: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChatMessagePage:
+    items: list[ChatMessage]
+    next_cursor: str | None
+    has_more: bool
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChannelMessagePage:
+    items: list[ChannelMessage]
+    next_cursor: str | None
+    has_more: bool

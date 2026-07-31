@@ -1,4 +1,6 @@
-from src.shared.errors import LumiereError, NotFoundError
+from fastapi import status
+
+from src.shared.errors import LumiereError, NotFoundError, ValidationError
 
 
 class MessageError(LumiereError): ...
@@ -14,3 +16,17 @@ class ChannelNotFoundError(MessageError, NotFoundError):
     since that would mean importing channels' domain layer directly."""
 
     detail = "Channel not found"
+
+
+class NotMessageSenderError(MessageError):
+    detail = "User is not the sender of this message"
+    status_code = status.HTTP_403_FORBIDDEN
+
+
+class MessageEditWindowExpiredError(MessageError, ValidationError):
+    detail = "Messages can only be edited within 24 hours of sending"
+
+
+class MessageDeletePermissionError(MessageError):
+    detail = "User is neither the sender nor the owner of this conversation"
+    status_code = status.HTTP_403_FORBIDDEN

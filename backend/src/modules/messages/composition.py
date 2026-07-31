@@ -9,6 +9,14 @@ from src.modules.chats.infrastructure.persistence.chat_repository_impl import (
     ChatRepositoryImpl,
 )
 from src.modules.chats.public.facade import build_chats_facade
+from src.modules.messages.application.commands.delete_message import (
+    DeleteMessageCommand,
+    DeleteMessageCommandHandler,
+)
+from src.modules.messages.application.commands.edit_message import (
+    EditMessageCommand,
+    EditMessageCommandHandler,
+)
 from src.modules.messages.application.commands.send_channel_message import (
     SendChannelMessageCommand,
     SendChannelMessageCommandHandler,
@@ -16,6 +24,14 @@ from src.modules.messages.application.commands.send_channel_message import (
 from src.modules.messages.application.commands.send_chat_message import (
     SendChatMessageCommand,
     SendChatMessageCommandHandler,
+)
+from src.modules.messages.application.queries.list_channel_messages import (
+    ListChannelMessagesQuery,
+    ListChannelMessagesQueryHandler,
+)
+from src.modules.messages.application.queries.list_chat_messages import (
+    ListChatMessagesQuery,
+    ListChatMessagesQueryHandler,
 )
 from src.modules.messages.infrastructure.message_unit_of_work_impl import (
     MessageUnitOfWorkImpl,
@@ -53,4 +69,18 @@ async def register_message_handlers(
     )
     mediator.register_command(
         SendChatMessageCommand, SendChatMessageCommandHandler(uow, chats_facade)
+    )
+    mediator.register_command(EditMessageCommand, EditMessageCommandHandler(uow))
+    mediator.register_command(
+        DeleteMessageCommand,
+        DeleteMessageCommandHandler(uow, chats_facade, servers_facade),
+    )
+
+    mediator.register_query(
+        ListChatMessagesQuery,
+        ListChatMessagesQueryHandler(message_repository, chats_facade),
+    )
+    mediator.register_query(
+        ListChannelMessagesQuery,
+        ListChannelMessagesQueryHandler(uow, servers_facade),
     )
