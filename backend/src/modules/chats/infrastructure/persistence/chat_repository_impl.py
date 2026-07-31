@@ -8,7 +8,12 @@ from sqlalchemy.orm import aliased
 
 from src.modules.chats.domain.cursor import decode_cursor, encode_cursor
 from src.modules.chats.domain.entities.chat import Chat
-from src.modules.chats.domain.entities.dtos import ChatCreate, ChatSummaryPage
+from src.modules.chats.domain.entities.dtos import (
+    ChatCreate,
+    ChatSummary,
+    ChatSummaryPage,
+    ChatUpdate,
+)
 from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.infrastructure.persistence.mappers import (
     ChatDataMapper,
@@ -17,6 +22,7 @@ from src.modules.chats.infrastructure.persistence.mappers import (
 from src.modules.chats.infrastructure.persistence.models import ChatMemberOrm, ChatOrm
 from src.modules.messages.infrastructure.persistence.models import MessageOrm
 from src.modules.users.infrastructure.persistence.models import UserOrm
+from src.shared.domain.unset import set_fields
 
 SNIPPET_LEN = 120
 
@@ -90,6 +96,7 @@ class ChatRepositoryImpl:
         user_id: UUID,
         limit: int,
         cursor: tuple[datetime, UUID] | None,
+        chat_id: UUID | None = None,
     ) -> Executable:
         my_membership = aliased(ChatMemberOrm)
 
@@ -163,6 +170,9 @@ class ChatRepositoryImpl:
             .limit(limit + 1)
         )
 
+        if chat_id is not None:
+            query = query.where(ChatOrm.id == chat_id)
+
         if cursor is not None:
             cursor_ts, cursor_id = cursor
             query = query.where(tuple_(sort_key, ChatOrm.id) < (cursor_ts, cursor_id))
@@ -184,3 +194,22 @@ class ChatRepositoryImpl:
         )
         result = await self._session.execute(stmt)
         return result.scalar_one()
+
+    async def update(self, chat_id: UUID, data: ChatUpdate) -> Chat:
+        stmt = (
+            update(ChatOrm)
+            .where(ChatOrm.id == chat_id)
+            .values(**set_fields(data))
+            .returning(ChatOrm)
+        )
+        result = await self._session.execute(stmt)
+        return ChatDataMapper.to_entity(result.scalar_one())
+
+    async def get_summary_for_user(
+        self, chat_id: UUID, user_id: UUID
+    ) -> ChatSummary | None:
+        query = self._build_chat_list_query(
+            user_id, limit=1, cursor=None, chat_id=chat_id
+        )
+        row = (await self._session.execute(query)).first()
+        return ChatSummaryDataMapper.to_entity(row) if row else None

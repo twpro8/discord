@@ -26,3 +26,23 @@ class NotChatMemberError(ChatPermissionError):
 
 class NotChatOwnerError(ChatPermissionError):
     detail = "User is not the owner of this chat"
+
+
+class MemberNotFoundError(ChatError, NotFoundError):
+    detail = "Member not found in this chat"
+
+
+class TargetUserNotFoundError(ChatError, NotFoundError):
+    detail = "One or more target users do not exist"
+
+
+class CannotModifyPrivateChatError(ChatPermissionError):
+    detail = "Private chats cannot be modified"
+
+
+class CannotRemoveSelfError(ChatPermissionError):
+    detail = "Owner cannot remove themselves; use leave instead"
+
+
+class CannotLeavePrivateChatError(ChatPermissionError):
+    detail = "Leaving a private chat is not supported"

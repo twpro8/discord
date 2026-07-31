@@ -21,10 +21,10 @@ async def test_create_private_chat_valid(
     response_json = response.json()
 
     assert response_json["type"] == data["type"]
-    assert response_json["target_user_id"] == data["target_user_id"]
-    assert response_json["name"] is None
-    assert response_json["description"] is None
-    assert response_json["member_ids"] is None
+    assert response_json["peer_id"] == data["target_user_id"]
+    assert "id" in response_json
+    assert response_json["unread_count"] == 0
+    assert response_json["last_message"] is None
 
 
 async def test_create_chat_unauthorized(

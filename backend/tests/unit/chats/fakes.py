@@ -7,12 +7,16 @@ from src.modules.chats.domain import services as chat_permission_services
 from src.modules.chats.domain.entities.chat import Chat, ChatMember
 from src.modules.chats.domain.entities.dtos import (
     ChatCreate,
+    ChatMemberSummary,
+    ChatSummary,
     ChatSummaryPage,
+    ChatUpdate,
     MemberCreate,
 )
 from src.modules.chats.domain.enums import ChatMemberRole
 from src.modules.chats.domain.repositories.chat_unit_of_work import ChatUnitOfWork
 from src.shared.domain.domain_event import DomainEvent
+from src.shared.domain.unset import set_fields
 
 
 class FakeChatRepository:
@@ -60,6 +64,18 @@ class FakeChatRepository:
     ) -> ChatSummaryPage:
         return self.summary_page
 
+    async def update(self, chat_id: UUID, data: ChatUpdate) -> Chat:
+        chat = self.chats[chat_id]
+        for key, value in set_fields(data).items():
+            setattr(chat, key, value)
+        chat.updated_at = datetime.now(UTC)
+        return chat
+
+    async def get_summary_for_user(
+        self, chat_id: UUID, user_id: UUID
+    ) -> ChatSummary | None:
+        return next((s for s in self.summary_page.items if s.id == chat_id), None)
+
 
 class FakeChatMemberRepository:
     def __init__(self) -> None:
@@ -89,6 +105,59 @@ class FakeChatMemberRepository:
             ):
                 return member
         return None
+
+    def _active_in_chat(self, chat_id: UUID) -> list[ChatMember]:
+        return [m for m in self.members if m.chat_id == chat_id and m.left_at is None]
+
+    async def list_active_with_user(self, chat_id: UUID) -> list[ChatMemberSummary]:
+        return [
+            ChatMemberSummary(
+                user_id=m.user_id,
+                username=str(m.user_id),
+                display_name=str(m.user_id),
+                avatar_url=None,
+                role=m.role,
+                joined_at=m.joined_at,
+            )
+            for m in sorted(self._active_in_chat(chat_id), key=lambda m: m.joined_at)
+        ]
+
+    async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]:
+        return {m.user_id for m in self._active_in_chat(chat_id)}
+
+    async def remove(self, chat_id: UUID, user_id: UUID) -> None:
+        self.members = [
+            m
+            for m in self.members
+            if not (m.chat_id == chat_id and m.user_id == user_id)
+        ]
+
+    async def count_active(self, chat_id: UUID) -> int:
+        return len(self._active_in_chat(chat_id))
+
+    async def find_oldest_active_excluding(
+        self, chat_id: UUID, exclude_user_id: UUID
+    ) -> ChatMember | None:
+        candidates = [
+            m for m in self._active_in_chat(chat_id) if m.user_id != exclude_user_id
+        ]
+        if not candidates:
+            return None
+        return min(candidates, key=lambda m: m.joined_at)
+
+    async def update_role(self, member_id: UUID, role: ChatMemberRole) -> None:
+        for member in self.members:
+            if member.id == member_id:
+                member.role = role
+                return
+
+    async def update_last_read_seq(
+        self, chat_id: UUID, user_id: UUID, up_to_seq: int
+    ) -> None:
+        for member in self.members:
+            if member.chat_id == chat_id and member.user_id == user_id:
+                member.last_read_seq = max(member.last_read_seq, up_to_seq)
+                return
 
 
 class FakeChatUnitOfWork(ChatUnitOfWork):
