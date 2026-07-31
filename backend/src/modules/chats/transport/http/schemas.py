@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import Field, model_validator
+from pydantic import Field, TypeAdapter, model_validator
 
-from src.modules.chats.domain.enums import ChatType
+from src.modules.chats.domain.enums import ChatMemberRole, ChatType
 from src.shared.schemas import BaseSchema
 
 
@@ -65,9 +65,40 @@ ChatSummaryResponse = Annotated[
     GroupChatSummaryResponse | PrivateChatSummaryResponse,
     Field(discriminator="type"),
 ]
+ChatSummaryAdapter: TypeAdapter[
+    GroupChatSummaryResponse | PrivateChatSummaryResponse
+] = TypeAdapter(ChatSummaryResponse)
 
 
 class ChatSummaryPageResponse(BaseSchema):
     items: list[ChatSummaryResponse]
     next_cursor: str | None
     total: int
+
+
+class ChatUpdateRequest(BaseSchema):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    description: str | None = Field(default=None, min_length=1, max_length=300)
+    image_url: str | None = Field(default=None, max_length=512)
+
+
+class ChatMemberResponse(BaseSchema):
+    user_id: UUID
+    username: str
+    display_name: str
+    avatar_url: str | None
+    role: ChatMemberRole
+    joined_at: datetime
+
+
+class AddMemberRequest(BaseSchema):
+    user_ids: list[UUID] = Field(min_length=1)
+
+
+class AddMemberResponse(BaseSchema):
+    added: list[UUID]
+    skipped: list[UUID]
+
+
+class MarkAsReadRequest(BaseSchema):
+    up_to_sequence: int | None = None

@@ -202,3 +202,29 @@ class TestSendChatMessage:
             json={"body": "hello"},
         )
         assert response.status_code == 403
+
+    async def test_sequence_increments_monotonically(
+        self,
+        authed_client: AsyncClient,
+    ) -> None:
+        # A group chat, not a private chat: private-chat creation is
+        # find-or-create (design doc §3.2), so reusing the same
+        # current_user + peer pair across tests in this session-scoped
+        # database would share message history with other tests.
+        chat_resp = await authed_client.post(
+            "/api/v1/chats",
+            json={"type": "group", "name": "Sequence Test"},
+        )
+        assert chat_resp.status_code == 201
+        chat_id = chat_resp.json()["id"]
+
+        sequences = []
+        for body in ("one", "two", "three"):
+            response = await authed_client.post(
+                f"/api/v1/chats/{chat_id}/messages",
+                json={"body": body},
+            )
+            assert response.status_code == 200
+            sequences.append(response.json()["sequence"])
+
+        assert sequences == [1, 2, 3]

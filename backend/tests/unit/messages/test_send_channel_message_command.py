@@ -12,7 +12,11 @@ from src.modules.servers.domain.exceptions import NotServerMemberError
 from tests.unit.channels.fakes import FakeChannelRepository
 from tests.unit.chats.fakes import FakeChatRepository
 from tests.unit.messages.fakes import FakeMessageRepository, FakeMessageUnitOfWork
-from tests.unit.servers.fakes import FakeServerMemberRepository, FakeServersFacade
+from tests.unit.servers.fakes import (
+    FakeServerMemberRepository,
+    FakeServerRepository,
+    FakeServersFacade,
+)
 
 
 def _handler() -> tuple[
@@ -25,7 +29,7 @@ def _handler() -> tuple[
         FakeChatRepository(),
         channels,
     )
-    servers_facade = FakeServersFacade(server_members)
+    servers_facade = FakeServersFacade(server_members, FakeServerRepository())
     return (
         SendChannelMessageCommandHandler(uow, servers_facade),
         channels,

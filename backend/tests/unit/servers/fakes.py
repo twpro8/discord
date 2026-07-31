@@ -130,12 +130,22 @@ class FakeServerMemberRepository:
 
 
 class FakeServersFacade:
-    def __init__(self, server_members: FakeServerMemberRepository) -> None:
+    def __init__(
+        self,
+        server_members: FakeServerMemberRepository,
+        servers: FakeServerRepository,
+    ) -> None:
         self._server_members = server_members
+        self._servers = servers
 
     async def assert_is_server_member(self, user_id: UUID, server_id: UUID) -> None:
         await server_permission_services.assert_is_server_member(
             self._server_members, user_id, server_id
+        )
+
+    async def assert_is_server_owner(self, user_id: UUID, server_id: UUID) -> None:
+        await server_permission_services.assert_is_server_owner(
+            self._server_members, self._servers, user_id, server_id
         )
 
 

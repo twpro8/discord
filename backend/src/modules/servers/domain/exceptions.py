@@ -38,6 +38,10 @@ class NotServerMemberError(ServerPermissionError):
     detail = "User is not a member of this server"
 
 
+class NotServerOwnerError(ServerPermissionError):
+    detail = "User is not the owner of this server"
+
+
 class ServerInviteError(LumiereError):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     detail = "Server Invite Error"

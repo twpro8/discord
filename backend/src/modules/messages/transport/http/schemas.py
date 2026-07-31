@@ -13,6 +13,10 @@ class MessageCreateRequest(BaseSchema):
     parent_id: UUID | None = None
 
 
+class MessageEditRequest(BaseSchema):
+    body: str = Field(min_length=1, max_length=2000)
+
+
 class MessageBaseResponse(BaseSchema):
     id: UUID
     sender_id: UUID
@@ -39,3 +43,15 @@ MessageResponse = Annotated[
     | Annotated[ChatMessageResponse, Tag("chat")],
     Discriminator(get_discriminator_value),
 ]
+
+
+class ChatMessagePageResponse(BaseSchema):
+    items: list[ChatMessageResponse]
+    next_cursor: str | None
+    has_more: bool
+
+
+class ChannelMessagePageResponse(BaseSchema):
+    items: list[ChannelMessageResponse]
+    next_cursor: str | None
+    has_more: bool
