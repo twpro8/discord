@@ -1,4 +1,3 @@
-from contextlib import AsyncExitStack
 from typing import Protocol
 from uuid import UUID
 
@@ -52,11 +51,7 @@ class HandlerBackedChannelsFacade:
         return Result.ok(channel_to_dto(result.value))
 
 
-async def build_channels_facade(
-    session: AsyncSession, stack: AsyncExitStack
-) -> ChannelsFacade:
+def build_channels_facade(session: AsyncSession) -> ChannelsFacade:
     channel_repository = ChannelRepositoryImpl(session)
-    uow = await stack.enter_async_context(
-        ChannelUnitOfWorkImpl(session=session, channel_repository=channel_repository)
-    )
+    uow = ChannelUnitOfWorkImpl(session=session, channel_repository=channel_repository)
     return HandlerBackedChannelsFacade(CreateChannelCommandHandler(uow))

@@ -1,5 +1,3 @@
-from contextlib import AsyncExitStack
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.friends.application.commands.accept_request import (
@@ -40,16 +38,13 @@ from src.modules.users.public.facade import UsersFacade
 from src.shared.application.in_process_mediator import InProcessMediator
 
 
-async def register_friend_handlers(
+def register_friend_handlers(
     mediator: InProcessMediator,
     session: AsyncSession,
-    stack: AsyncExitStack,
     users_facade: UsersFacade,
 ) -> None:
     friend_repository = FriendRepositoryImpl(session)
-    uow = await stack.enter_async_context(
-        FriendUnitOfWorkImpl(session, friend_repository)
-    )
+    uow = FriendUnitOfWorkImpl(session, friend_repository)
 
     mediator.register_command(
         SendFriendRequestCommand,

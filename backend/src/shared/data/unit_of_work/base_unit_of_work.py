@@ -1,6 +1,3 @@
-from types import TracebackType
-from typing import Self
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -8,9 +5,15 @@ class BaseUnitOfWork:
     """
     Base class for implementing the Unit of Work pattern.
 
-    This class manages the lifecycle of a SQLAlchemy async session and provides
-    transactional control methods such as commit and rollback. It is designed
-    to be used as an asynchronous context manager.
+    This class provides transactional control methods such as commit and
+    rollback over a SQLAlchemy async session. It does NOT own the session's
+    lifecycle: a single request's `AsyncSession` is shared across several
+    per-module UnitOfWork instances (one per composition.py that needs it),
+    so closing or rolling back the session here would step on the other
+    instances sharing it. Session close and exception-triggered rollback are
+    owned solely by the request-scoped `get_session` dependency
+    (`core/database/session.py`), which is the only code that knows when the
+    session's owning request has actually ended.
 
     The class is intentionally abstract and must not be instantiated directly.
     Concrete Unit of Work implementations should inherit from this class and
@@ -27,20 +30,13 @@ class BaseUnitOfWork:
                 super().__init__(session)
                 self.users = user_repository
 
-        async with UserUnitOfWork(session) as uow:
-            await uow.users.create(user_data)
-            await uow.commit()
+        uow = UserUnitOfWork(session)
+        await uow.users.create(user_data)
+        await uow.commit()
 
     Attributes:
         _session:
             Active SQLAlchemy asynchronous session used by repositories.
-
-    Notes:
-        - On successful execution, the session is simply closed.
-        - If an exception occurs inside the context manager block,
-          the transaction is rolled back automatically.
-        - Repositories should reuse the same session instance provided
-          by the Unit of Work.
     """
 
     _session: AsyncSession
@@ -54,39 +50,6 @@ class BaseUnitOfWork:
                 SQLAlchemy asynchronous session instance.
         """
         self._session = session
-
-    async def __aenter__(self) -> Self:
-        """
-        Enter the asynchronous context manager.
-
-        Returns:
-            Current Unit of Work instance.
-        """
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        """
-        Exit the asynchronous context manager.
-
-        Rolls back the current transaction if an exception occurred and
-        closes the database session afterward.
-
-        Args:
-            exc_type:
-                Exception type if raised inside the context manager.
-            exc_val:
-                Exception instance.
-            exc_tb:
-                Exception traceback.
-        """
-        if exc_type:
-            await self._session.rollback()
-        await self._session.close()
 
     async def commit(self) -> None:
         """

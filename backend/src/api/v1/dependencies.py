@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-from contextlib import AsyncExitStack
 from typing import Annotated, cast
 from uuid import UUID
 
@@ -72,22 +71,21 @@ async def get_mediator(
     cache: CacheDep,
     pubsub: PubSubDep,
 ) -> AsyncGenerator[Mediator]:
-    async with AsyncExitStack() as stack:
-        mediator = InProcessMediator()
-        # Facades only close over `mediator`, not any handler yet registered
-        # on it — safe to build before the modules they wrap are registered
-        # below, since dispatch never happens before this generator yields.
-        users_facade = MediatorUsersFacade(mediator)
-        realtime_notifier = RedisRealtimeNotifier(pubsub)
+    mediator = InProcessMediator()
+    # Facades only close over `mediator`, not any handler yet registered
+    # on it — safe to build before the modules they wrap are registered
+    # below, since dispatch never happens before this generator yields.
+    users_facade = MediatorUsersFacade(mediator)
+    realtime_notifier = RedisRealtimeNotifier(pubsub)
 
-        await register_auth_handlers(mediator, session, stack, users_facade)
-        await register_channel_handlers(mediator, session, stack)
-        await register_chat_handlers(mediator, session, stack, event_bus, users_facade)
-        await register_friend_handlers(mediator, session, stack, users_facade)
-        await register_message_handlers(mediator, session, stack, realtime_notifier)
-        await register_server_handlers(mediator, session, stack)
-        await register_user_handlers(mediator, session, stack, event_bus, cache)
-        yield mediator
+    register_auth_handlers(mediator, session, users_facade)
+    register_channel_handlers(mediator, session)
+    register_chat_handlers(mediator, session, event_bus, users_facade)
+    register_friend_handlers(mediator, session, users_facade)
+    register_message_handlers(mediator, session, realtime_notifier)
+    register_server_handlers(mediator, session)
+    register_user_handlers(mediator, session, event_bus, cache)
+    yield mediator
 
 
 MediatorDep = Annotated[Mediator, Depends(get_mediator)]

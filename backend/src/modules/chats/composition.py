@@ -1,5 +1,3 @@
-from contextlib import AsyncExitStack
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.event_bus import EventBus
@@ -50,21 +48,18 @@ from src.modules.users.public.facade import UsersFacade
 from src.shared.application.in_process_mediator import InProcessMediator
 
 
-async def register_chat_handlers(
+def register_chat_handlers(
     mediator: InProcessMediator,
     session: AsyncSession,
-    stack: AsyncExitStack,
     event_bus: EventBus,
     users_facade: UsersFacade,
 ) -> None:
     chat_repository = ChatRepositoryImpl(session)
     chat_member_repository = ChatMemberRepositoryImpl(session)
-    uow = await stack.enter_async_context(
-        ChatUnitOfWorkImpl(
-            session=session,
-            chat_repository=chat_repository,
-            chat_member_repository=chat_member_repository,
-        )
+    uow = ChatUnitOfWorkImpl(
+        session=session,
+        chat_repository=chat_repository,
+        chat_member_repository=chat_member_repository,
     )
 
     mediator.register_command(

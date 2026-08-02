@@ -1,5 +1,3 @@
-from contextlib import AsyncExitStack
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.cache import Cache
@@ -37,15 +35,14 @@ from src.modules.users.infrastructure.user_unit_of_work_impl import (
 from src.shared.application.in_process_mediator import InProcessMediator
 
 
-async def register_user_handlers(
+def register_user_handlers(
     mediator: InProcessMediator,
     session: AsyncSession,
-    stack: AsyncExitStack,
     event_bus: EventBus,
     cache: Cache,
 ) -> None:
     user_repository = UserRepositoryImpl(session)
-    uow = await stack.enter_async_context(UserUnitOfWorkImpl(session, user_repository))
+    uow = UserUnitOfWorkImpl(session, user_repository)
 
     mediator.register_command(UpdateUserCommand, UpdateUserCommandHandler(uow, cache))
     mediator.register_command(DeleteUserCommand, DeleteUserCommandHandler(uow, cache))

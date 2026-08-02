@@ -1,5 +1,3 @@
-from contextlib import AsyncExitStack
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.commands.login import (
@@ -26,16 +24,13 @@ from src.modules.users.public.facade import UsersFacade
 from src.shared.application.in_process_mediator import InProcessMediator
 
 
-async def register_auth_handlers(
+def register_auth_handlers(
     mediator: InProcessMediator,
     session: AsyncSession,
-    stack: AsyncExitStack,
     users_facade: UsersFacade,
 ) -> None:
     refresh_token_repository = RefreshTokenRepositoryImpl(session)
-    uow = await stack.enter_async_context(
-        AuthUnitOfWorkImpl(session, refresh_token_repository)
-    )
+    uow = AuthUnitOfWorkImpl(session, refresh_token_repository)
 
     mediator.register_command(LoginCommand, LoginCommandHandler(uow, users_facade))
     mediator.register_command(RegisterCommand, RegisterCommandHandler(users_facade))

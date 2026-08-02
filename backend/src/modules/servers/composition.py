@@ -1,5 +1,3 @@
-from contextlib import AsyncExitStack
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.channels.public.facade import build_channels_facade
@@ -58,27 +56,24 @@ from src.modules.servers.infrastructure.server_unit_of_work_impl import (
 from src.shared.application.in_process_mediator import InProcessMediator
 
 
-async def register_server_handlers(
+def register_server_handlers(
     mediator: InProcessMediator,
     session: AsyncSession,
-    stack: AsyncExitStack,
 ) -> None:
     server_repository = ServerRepositoryImpl(session=session)
     server_member_repository = ServerMemberRepositoryImpl(session=session)
     server_invite_repository = ServerInviteRepositoryImpl(session=session)
-    uow = await stack.enter_async_context(
-        ServerUnitOfWorkImpl(
-            session,
-            server_repository,
-            server_member_repository,
-            server_invite_repository,
-        )
+    uow = ServerUnitOfWorkImpl(
+        session,
+        server_repository,
+        server_member_repository,
+        server_invite_repository,
     )
 
     # CreateServerCommandHandler delegates default-channel creation to
     # channels as part of its own atomic operation (not via mediator.send()),
     # so it needs a same-session facade rather than a mediator registration.
-    channels_facade = await build_channels_facade(session, stack)
+    channels_facade = build_channels_facade(session)
 
     mediator.register_command(
         CreateServerCommand,
