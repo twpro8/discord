@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as HomeIndexRouteImport } from './routes/home/index'
+import { Route as HomeDmsChatIdRouteImport } from './routes/home/dms.$chatId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,37 +36,60 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HomeIndexRoute = HomeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => HomeRoute,
+} as any)
+const HomeDmsChatIdRoute = HomeDmsChatIdRouteImport.update({
+  id: '/dms/$chatId',
+  path: '/dms/$chatId',
+  getParentRoute: () => HomeRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/home': typeof HomeRoute
+  '/home': typeof HomeRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/home/': typeof HomeIndexRoute
+  '/home/dms/$chatId': typeof HomeDmsChatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/home': typeof HomeIndexRoute
+  '/home/dms/$chatId': typeof HomeDmsChatIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/home': typeof HomeRoute
+  '/home': typeof HomeRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/home/': typeof HomeIndexRoute
+  '/home/dms/$chatId': typeof HomeDmsChatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/home' | '/login' | '/register'
+  fullPaths:
+    '/' | '/home' | '/login' | '/register' | '/home/' | '/home/dms/$chatId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home' | '/login' | '/register'
-  id: '__root__' | '/' | '/home' | '/login' | '/register'
+  to: '/' | '/login' | '/register' | '/home' | '/home/dms/$chatId'
+  id:
+    | '__root__'
+    | '/'
+    | '/home'
+    | '/login'
+    | '/register'
+    | '/home/'
+    | '/home/dms/$chatId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  HomeRoute: typeof HomeRoute
+  HomeRoute: typeof HomeRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
 }
@@ -99,12 +124,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/home/': {
+      id: '/home/'
+      path: '/'
+      fullPath: '/home/'
+      preLoaderRoute: typeof HomeIndexRouteImport
+      parentRoute: typeof HomeRoute
+    }
+    '/home/dms/$chatId': {
+      id: '/home/dms/$chatId'
+      path: '/dms/$chatId'
+      fullPath: '/home/dms/$chatId'
+      preLoaderRoute: typeof HomeDmsChatIdRouteImport
+      parentRoute: typeof HomeRoute
+    }
   }
 }
 
+interface HomeRouteChildren {
+  HomeIndexRoute: typeof HomeIndexRoute
+  HomeDmsChatIdRoute: typeof HomeDmsChatIdRoute
+}
+
+const HomeRouteChildren: HomeRouteChildren = {
+  HomeIndexRoute: HomeIndexRoute,
+  HomeDmsChatIdRoute: HomeDmsChatIdRoute,
+}
+
+const HomeRouteWithChildren = HomeRoute._addFileChildren(HomeRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  HomeRoute: HomeRoute,
+  HomeRoute: HomeRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
 }

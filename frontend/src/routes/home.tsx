@@ -2,9 +2,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 // features
-import HomePage from "@/pages/home/HomePage";
+import HomeLayout from "@/pages/home/HomeLayout";
 
-/** Home route rendering the main application page. */
+/** Home layout rendering the authenticated application shell. */
 export const Route = createFileRoute("/home")({
-  component: HomePage,
+  component: HomeLayout,
 });
