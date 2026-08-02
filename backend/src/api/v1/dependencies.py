@@ -22,6 +22,7 @@ from src.modules.messages.composition import register_message_handlers
 from src.modules.servers.composition import register_server_handlers
 from src.modules.users.composition import register_user_handlers
 from src.modules.users.public.facade import MediatorUsersFacade
+from src.shared.application.handler_registry import HandlerRegistry, RequestServices
 from src.shared.application.in_process_mediator import InProcessMediator
 from src.shared.application.mediator import Mediator
 
@@ -77,17 +78,29 @@ UserIdDep = Annotated[UUID, Depends(get_current_user_id)]
 
 
 async def get_mediator(
+    request: Request,
     session: SessionDep,
     event_bus: EventBusDep,
     cache: CacheDep,
     pubsub: PubSubDep,
 ) -> AsyncGenerator[Mediator]:
-    mediator = InProcessMediator()
+    realtime_notifier = RedisRealtimeNotifier(pubsub)
+    # Handed to the static HandlerRegistry (app.state.handler_registry,
+    # built once at startup) so a lazily-resolved factory can build the one
+    # handler a dispatch needs, scoped to this request's own resources —
+    # see shared/application/handler_registry.py and in_process_mediator.py.
+    services = RequestServices(
+        session=session,
+        event_bus=event_bus,
+        cache=cache,
+        realtime_notifier=realtime_notifier,
+    )
+    registry = cast(HandlerRegistry, request.app.state.handler_registry)
+    mediator = InProcessMediator(registry=registry, services=services)
     # Facades only close over `mediator`, not any handler yet registered
     # on it — safe to build before the modules they wrap are registered
     # below, since dispatch never happens before this generator yields.
     users_facade = MediatorUsersFacade(mediator)
-    realtime_notifier = RedisRealtimeNotifier(pubsub)
 
     register_auth_handlers(mediator, session, users_facade)
     register_channel_handlers(mediator, session)
