@@ -6,10 +6,9 @@ from fastapi import Depends
 from fastapi.requests import Request
 from fastapi.security import APIKeyCookie
 from redis.asyncio import Redis
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.core.cache import Cache
-from src.core.database import get_session
 from src.core.event_bus import EventBus
 from src.core.realtime.notifier import RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import PubSubTransport, RedisPubSubTransport
@@ -46,6 +45,18 @@ def get_cache(request: Request) -> Cache:
 
 def get_pubsub(redis: RedisDep) -> PubSubTransport:
     return RedisPubSubTransport(redis)
+
+
+async def get_session(request: Request) -> AsyncGenerator[AsyncSession]:
+    session_factory = cast(
+        async_sessionmaker[AsyncSession], request.app.state.session_factory
+    )
+    async with session_factory() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]

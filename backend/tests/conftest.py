@@ -5,7 +5,6 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from src.core.config import settings
-from src.core.database import get_session
 from src.main import app
 from src.modules.users.domain.entities.user import User
 from src.shared.data.models import *  # noqa
@@ -26,7 +25,7 @@ def override_dependencies(
     check_test_mode: None,  # noqa
 ) -> None:
     """Override dependencies once for all tests"""
-    from src.api.v1.dependencies import get_cache, get_event_bus, get_redis
+    from src.api.v1.dependencies import get_cache, get_event_bus, get_redis, get_session
 
     app.dependency_overrides[get_session] = get_null_pool_session
     app.dependency_overrides[get_redis] = get_fake_redis_client

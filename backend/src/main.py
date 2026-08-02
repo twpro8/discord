@@ -9,6 +9,7 @@ from src.api.v1.router import build_api_v1_router
 from src.composition.container import build_container
 from src.core.cache import RedisCache
 from src.core.config import settings
+from src.core.database.session import get_engine, get_session_factory
 from src.core.event_bus import InMemoryEventBus, RedisStreamsEventBus
 from src.core.logging import configure_logging, get_logger
 from src.core.redis import close_redis, init_redis
@@ -33,12 +34,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if settings.ENVIRONMENT == "testing"
         else RedisStreamsEventBus(app.state.redis)
     )
+    # Database engine/sessionmaker: built once per process, mirroring the
+    # Redis pool above, and disposed of on shutdown.
+    app.state.db_engine = get_engine()
+    app.state.session_factory = get_session_factory(app.state.db_engine)
 
     yield
 
     logger.info("app.shutdown")
     # Close Redis connection
     await close_redis(app.state.redis)
+    # Dispose the database engine's connection pool
+    await app.state.db_engine.dispose()
 
 
 def create_app() -> FastAPI:
