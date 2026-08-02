@@ -2,9 +2,16 @@
 import { useState } from "react";
 
 // third party
+import { useNavigate } from "@tanstack/react-router";
 import { UserPlus } from "lucide-react";
 
+// features
+import { useCreatePrivateChat } from "@/features/chats/model/use-create-private-chat";
+import { useCurrentUser } from "@/features/profile/model/use-current-user";
+
 // relative
+import { getFriendPeerId } from "../model/get-friend-peer-id";
+import type { FriendRequestWithUser } from "../model/types";
 import {
   useAcceptFriendRequest,
   useDeleteFriendRequest,
@@ -30,12 +37,31 @@ export function FriendPanel() {
   const [isAddFriendOpen, setIsAddFriendOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("pending");
 
+  const navigate = useNavigate();
+  const { data: user } = useCurrentUser();
   const { incoming, sent, isLoading: isLoadingRequests } = useFriendRequests();
   const { data: friends = [], isLoading: isLoadingFriends } = useFriends();
 
   const acceptMutation = useAcceptFriendRequest();
   const deleteMutation = useDeleteFriendRequest();
   const removeMutation = useRemoveFriend();
+  const createChatMutation = useCreatePrivateChat();
+
+  const handleOpenChat = (friend: FriendRequestWithUser) => {
+    if (!user) return;
+    const peerId = getFriendPeerId(friend, user.id);
+    createChatMutation.mutate(peerId, {
+      onSuccess: (chat) => {
+        navigate({
+          to: "/home/dms/$chatId",
+          params: { chatId: chat.id },
+          search: {
+            peerName: friend.username,
+          },
+        });
+      },
+    });
+  };
 
   return (
     <aside className="flex h-screen w-80 flex-col border-l border-border bg-background/95 p-4">
@@ -95,6 +121,7 @@ export function FriendPanel() {
             friends={friends}
             isLoading={isLoadingFriends}
             disabled={removeMutation.isPending}
+            onOpenChat={handleOpenChat}
             onRemove={(id) => removeMutation.mutate(id)}
           />
         )}
