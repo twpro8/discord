@@ -1,5 +1,3 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.modules.friends.application.commands.accept_request import (
     AcceptFriendRequestCommand,
     AcceptFriendRequestCommandHandler,
@@ -34,35 +32,76 @@ from src.modules.friends.infrastructure.friend_unit_of_work_impl import (
 from src.modules.friends.infrastructure.persistence.friend_repository_impl import (
     FriendRepositoryImpl,
 )
-from src.modules.users.public.facade import UsersFacade
-from src.shared.application.in_process_mediator import InProcessMediator
+from src.modules.users.public.facade import MediatorUsersFacade
+from src.shared.application.handler_registry import HandlerRegistry, RequestServices
+from src.shared.application.mediator import Mediator
 
 
-def register_friend_handlers(
-    mediator: InProcessMediator,
-    session: AsyncSession,
-    users_facade: UsersFacade,
-) -> None:
-    friend_repository = FriendRepositoryImpl(session)
-    uow = FriendUnitOfWorkImpl(session, friend_repository)
+def _build_uow(services: RequestServices) -> FriendUnitOfWorkImpl:
+    return FriendUnitOfWorkImpl(
+        services.session, FriendRepositoryImpl(services.session)
+    )
 
-    mediator.register_command(
-        SendFriendRequestCommand,
-        SendFriendRequestCommandHandler(uow, users_facade),
-    )
-    mediator.register_command(
-        AcceptFriendRequestCommand, AcceptFriendRequestCommandHandler(uow)
-    )
-    mediator.register_command(
-        DeleteFriendRequestCommand, DeleteFriendRequestCommandHandler(uow)
-    )
-    mediator.register_command(RemoveFriendCommand, RemoveFriendCommandHandler(uow))
 
-    mediator.register_query(GetFriendsQuery, GetFriendsQueryHandler(friend_repository))
-    mediator.register_query(
-        GetFriendRequestsQuery, GetFriendRequestsQueryHandler(friend_repository)
+def _build_send_request_handler(
+    services: RequestServices, mediator: Mediator
+) -> SendFriendRequestCommandHandler:
+    return SendFriendRequestCommandHandler(
+        _build_uow(services), MediatorUsersFacade(mediator)
     )
-    mediator.register_query(
-        GetSentFriendRequestsQuery,
-        GetSentFriendRequestsQueryHandler(friend_repository),
+
+
+def _build_accept_request_handler(
+    services: RequestServices, _mediator: Mediator
+) -> AcceptFriendRequestCommandHandler:
+    return AcceptFriendRequestCommandHandler(_build_uow(services))
+
+
+def _build_delete_request_handler(
+    services: RequestServices, _mediator: Mediator
+) -> DeleteFriendRequestCommandHandler:
+    return DeleteFriendRequestCommandHandler(_build_uow(services))
+
+
+def _build_remove_friend_handler(
+    services: RequestServices, _mediator: Mediator
+) -> RemoveFriendCommandHandler:
+    return RemoveFriendCommandHandler(_build_uow(services))
+
+
+def _build_get_friends_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetFriendsQueryHandler:
+    return GetFriendsQueryHandler(FriendRepositoryImpl(services.session))
+
+
+def _build_get_friend_requests_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetFriendRequestsQueryHandler:
+    return GetFriendRequestsQueryHandler(FriendRepositoryImpl(services.session))
+
+
+def _build_get_sent_friend_requests_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetSentFriendRequestsQueryHandler:
+    return GetSentFriendRequestsQueryHandler(FriendRepositoryImpl(services.session))
+
+
+def register_friend_handlers(registry: HandlerRegistry) -> None:
+    registry.register_command_factory(
+        SendFriendRequestCommand, _build_send_request_handler
+    )
+    registry.register_command_factory(
+        AcceptFriendRequestCommand, _build_accept_request_handler
+    )
+    registry.register_command_factory(
+        DeleteFriendRequestCommand, _build_delete_request_handler
+    )
+    registry.register_command_factory(RemoveFriendCommand, _build_remove_friend_handler)
+    registry.register_query_factory(GetFriendsQuery, _build_get_friends_handler)
+    registry.register_query_factory(
+        GetFriendRequestsQuery, _build_get_friend_requests_handler
+    )
+    registry.register_query_factory(
+        GetSentFriendRequestsQuery, _build_get_sent_friend_requests_handler
     )

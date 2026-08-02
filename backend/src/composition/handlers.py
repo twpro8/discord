@@ -1,4 +1,5 @@
 from src.modules.channels.composition import register_channel_handlers
+from src.modules.friends.composition import register_friend_handlers
 from src.modules.users.composition import register_user_handlers
 from src.shared.application.handler_registry import HandlerRegistry
 
@@ -18,4 +19,5 @@ def build_handler_registry() -> HandlerRegistry:
     registry = HandlerRegistry()
     register_channel_handlers(registry)
     register_user_handlers(registry)
+    register_friend_handlers(registry)
     return registry
