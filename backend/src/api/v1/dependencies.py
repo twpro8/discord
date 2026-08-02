@@ -19,7 +19,6 @@ from src.modules.chats.composition import register_chat_handlers
 from src.modules.friends.composition import register_friend_handlers
 from src.modules.messages.composition import register_message_handlers
 from src.modules.servers.composition import register_server_handlers
-from src.modules.users.composition import register_user_handlers
 from src.modules.users.public.facade import MediatorUsersFacade
 from src.shared.application.handler_registry import HandlerRegistry, RequestServices
 from src.shared.application.in_process_mediator import InProcessMediator
@@ -108,7 +107,8 @@ async def get_mediator(
     register_friend_handlers(mediator, session, users_facade)
     register_message_handlers(mediator, session, realtime_notifier)
     register_server_handlers(mediator, session)
-    register_user_handlers(mediator, session, event_bus, cache)
+    # users is registry-driven (see composition/handlers.py) -- no eager
+    # call here.
     yield mediator
 
 

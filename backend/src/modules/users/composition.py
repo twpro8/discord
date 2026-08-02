@@ -1,7 +1,3 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.core.cache import Cache
-from src.core.event_bus import EventBus
 from src.modules.users.application.commands.create_user import (
     CreateUserCommand,
     CreateUserCommandHandler,
@@ -32,29 +28,58 @@ from src.modules.users.infrastructure.persistence.user_repository_impl import (
 from src.modules.users.infrastructure.user_unit_of_work_impl import (
     UserUnitOfWorkImpl,
 )
-from src.shared.application.in_process_mediator import InProcessMediator
+from src.shared.application.handler_registry import HandlerRegistry, RequestServices
+from src.shared.application.mediator import Mediator
 
 
-def register_user_handlers(
-    mediator: InProcessMediator,
-    session: AsyncSession,
-    event_bus: EventBus,
-    cache: Cache,
-) -> None:
-    user_repository = UserRepositoryImpl(session)
-    uow = UserUnitOfWorkImpl(session, user_repository)
+def _build_uow(services: RequestServices) -> UserUnitOfWorkImpl:
+    return UserUnitOfWorkImpl(services.session, UserRepositoryImpl(services.session))
 
-    mediator.register_command(UpdateUserCommand, UpdateUserCommandHandler(uow, cache))
-    mediator.register_command(DeleteUserCommand, DeleteUserCommandHandler(uow, cache))
-    mediator.register_command(
-        CreateUserCommand, CreateUserCommandHandler(uow, event_bus)
+
+def _build_create_user_handler(
+    services: RequestServices, _mediator: Mediator
+) -> CreateUserCommandHandler:
+    return CreateUserCommandHandler(_build_uow(services), services.event_bus)
+
+
+def _build_update_user_handler(
+    services: RequestServices, _mediator: Mediator
+) -> UpdateUserCommandHandler:
+    return UpdateUserCommandHandler(_build_uow(services), services.cache)
+
+
+def _build_delete_user_handler(
+    services: RequestServices, _mediator: Mediator
+) -> DeleteUserCommandHandler:
+    return DeleteUserCommandHandler(_build_uow(services), services.cache)
+
+
+def _build_get_user_by_id_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetUserByIDQueryHandler:
+    return GetUserByIDQueryHandler(UserRepositoryImpl(services.session), services.cache)
+
+
+def _build_get_user_by_username_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetUserByUsernameQueryHandler:
+    return GetUserByUsernameQueryHandler(UserRepositoryImpl(services.session))
+
+
+def _build_verify_credentials_handler(
+    services: RequestServices, _mediator: Mediator
+) -> VerifyCredentialsQueryHandler:
+    return VerifyCredentialsQueryHandler(UserRepositoryImpl(services.session))
+
+
+def register_user_handlers(registry: HandlerRegistry) -> None:
+    registry.register_command_factory(CreateUserCommand, _build_create_user_handler)
+    registry.register_command_factory(UpdateUserCommand, _build_update_user_handler)
+    registry.register_command_factory(DeleteUserCommand, _build_delete_user_handler)
+    registry.register_query_factory(GetUserByIDQuery, _build_get_user_by_id_handler)
+    registry.register_query_factory(
+        GetUserByUsernameQuery, _build_get_user_by_username_handler
     )
-    mediator.register_query(
-        GetUserByIDQuery, GetUserByIDQueryHandler(user_repository, cache)
-    )
-    mediator.register_query(
-        GetUserByUsernameQuery, GetUserByUsernameQueryHandler(user_repository)
-    )
-    mediator.register_query(
-        VerifyCredentialsQuery, VerifyCredentialsQueryHandler(user_repository)
+    registry.register_query_factory(
+        VerifyCredentialsQuery, _build_verify_credentials_handler
     )
