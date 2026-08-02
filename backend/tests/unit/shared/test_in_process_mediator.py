@@ -29,38 +29,6 @@ class CountLettersQueryHandler:
         return len(query.word)
 
 
-async def test_send_dispatches_command_to_its_registered_handler() -> None:
-    mediator = InProcessMediator()
-    mediator.register_command(GreetCommand, GreetCommandHandler())
-
-    result = await mediator.send(GreetCommand(name="chats"))
-
-    assert result == "hello, chats"
-
-
-async def test_query_dispatches_query_to_its_registered_handler() -> None:
-    mediator = InProcessMediator()
-    mediator.register_query(CountLettersQuery, CountLettersQueryHandler())
-
-    result = await mediator.query(CountLettersQuery(word="lumiere"))
-
-    assert result == 7
-
-
-async def test_send_raises_on_unregistered_command_type() -> None:
-    mediator = InProcessMediator()
-
-    with pytest.raises(KeyError):
-        await mediator.send(GreetCommand(name="chats"))
-
-
-async def test_query_raises_on_unregistered_query_type() -> None:
-    mediator = InProcessMediator()
-
-    with pytest.raises(KeyError):
-        await mediator.query(CountLettersQuery(word="lumiere"))
-
-
 def _fake_services() -> RequestServices:
     # RequestServices' fields aren't Protocols (AsyncSession/EventBus/Cache/
     # RealtimeNotifier are concrete third-party or app types) and these
@@ -74,7 +42,7 @@ def _fake_services() -> RequestServices:
     )
 
 
-async def test_send_resolves_command_handler_lazily_via_registry() -> None:
+async def test_send_resolves_command_handler_via_registry() -> None:
     registry = HandlerRegistry()
     services = _fake_services()
     seen: dict[str, object] = {}
@@ -99,7 +67,7 @@ async def test_send_resolves_command_handler_lazily_via_registry() -> None:
     assert seen["mediator"] is mediator
 
 
-async def test_query_resolves_query_handler_lazily_via_registry() -> None:
+async def test_query_resolves_query_handler_via_registry() -> None:
     registry = HandlerRegistry()
     registry.register_query_factory(
         CountLettersQuery, lambda services, mediator: CountLettersQueryHandler()
@@ -111,37 +79,14 @@ async def test_query_resolves_query_handler_lazily_via_registry() -> None:
     assert result == 7
 
 
-async def test_eager_registration_takes_precedence_over_registry_factory() -> None:
-    """Eager registration always wins over a registry factory for the same
-    type -- relevant during the module-by-module migration, where a module
-    still on the eager path must not accidentally be shadowed by a stale
-    or duplicate registry entry.
-    """
-    registry = HandlerRegistry()
-    registry.register_command_factory(
-        GreetCommand, lambda services, mediator: GreetCommandHandler()
-    )
-    mediator = InProcessMediator(registry=registry, services=_fake_services())
-
-    class LoudGreetCommandHandler:
-        async def handle(self, command: GreetCommand) -> str:
-            return f"HELLO, {command.name}"
-
-    mediator.register_command(GreetCommand, LoudGreetCommandHandler())
-
-    result = await mediator.send(GreetCommand(name="chats"))
-
-    assert result == "HELLO, chats"
-
-
-async def test_send_raises_on_unregistered_command_type_even_with_registry() -> None:
+async def test_send_raises_on_unregistered_command_type() -> None:
     mediator = InProcessMediator(registry=HandlerRegistry(), services=_fake_services())
 
     with pytest.raises(KeyError):
         await mediator.send(GreetCommand(name="chats"))
 
 
-async def test_query_raises_on_unregistered_query_type_even_with_registry() -> None:
+async def test_query_raises_on_unregistered_query_type() -> None:
     mediator = InProcessMediator(registry=HandlerRegistry(), services=_fake_services())
 
     with pytest.raises(KeyError):
