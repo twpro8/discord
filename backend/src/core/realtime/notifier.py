@@ -23,14 +23,16 @@ class RealtimeNotifier(Protocol):
     delivery to open sockets, not module-to-module domain events.
     """
 
-    async def publish_user_event(self, user_id: UUID, payload: dict) -> None: ...
+    async def publish_user_event(
+        self, user_id: UUID, payload: dict[str, Any]
+    ) -> None: ...
 
 
 class RedisRealtimeNotifier:
     def __init__(self, transport: PubSubTransport) -> None:
         self._transport = transport
 
-    async def publish_user_event(self, user_id: UUID, payload: dict) -> None:
+    async def publish_user_event(self, user_id: UUID, payload: dict[str, Any]) -> None:
         await self._transport.publish(
             user_topic(user_id),
             json.dumps(payload, default=_json_default),

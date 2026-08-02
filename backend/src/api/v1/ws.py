@@ -24,7 +24,7 @@ async def realtime_socket(websocket: WebSocket) -> None:
 
     try:
         user_id = UUID(decode_access_token(token)["sub"])
-    except (InvalidAccessTokenError, ValueError):
+    except InvalidAccessTokenError, ValueError:
         await websocket.close(code=4401)
         return
 
