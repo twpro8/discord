@@ -1,11 +1,12 @@
 """Integration tests for the realtime WebSocket fan-out."""
 
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 from uuid import UUID
 
 import pytest
 from fakeredis.aioredis import FakeRedis
-from starlette.testclient import TestClient, WebSocketDisconnect
+from starlette.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 from src.api.v1.dependencies import get_pubsub, get_redis
 from src.core.realtime.notifier import RedisRealtimeNotifier, user_topic
@@ -79,6 +80,10 @@ class RecordingTransport:
 
     async def publish(self, topic: str, payload: str) -> None:
         self.published.append((topic, payload))
+
+    async def subscribe(self, topic: str) -> AsyncIterator[str]:
+        if False:  # pragma: no cover - never used by the notifier
+            yield topic
 
 
 async def test_notifier_publishes_to_user_topic() -> None:

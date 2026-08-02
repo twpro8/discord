@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from src.modules.messages.domain.entities.dtos import (
@@ -111,9 +112,9 @@ class FakeMessageRepository:
 
 class FakeRealtimeNotifier:
     def __init__(self) -> None:
-        self.published: list[tuple[UUID, dict]] = []
+        self.published: list[tuple[UUID, dict[str, Any]]] = []
 
-    async def publish_user_event(self, user_id: UUID, payload: dict) -> None:
+    async def publish_user_event(self, user_id: UUID, payload: dict[str, Any]) -> None:
         self.published.append((user_id, payload))
 
 
