@@ -197,6 +197,9 @@ class FakeChatsFacade:
             self._chats, self._chat_members, user_id, chat_id
         )
 
+    async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]:
+        return await self._chat_members.list_active_user_ids(chat_id)
+
 
 class RecordingEventBus:
     def __init__(self) -> None:

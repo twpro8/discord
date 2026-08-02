@@ -1,6 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from uuid import UUID
 
+from src.core.logging import get_logger
+from src.core.realtime.notifier import RealtimeNotifier
 from src.modules.chats.public.facade import ChatsFacade
 from src.modules.messages.domain.entities.dtos import (
     ChatMessage,
@@ -15,6 +17,8 @@ from src.shared.application.command import Command
 from src.shared.errors import LumiereError
 from src.shared.result import Result
 
+logger = get_logger(__name__)
+
 
 @dataclass(frozen=True, kw_only=True)
 class SendChatMessageCommand(Command):
@@ -24,9 +28,15 @@ class SendChatMessageCommand(Command):
 
 
 class SendChatMessageCommandHandler:
-    def __init__(self, uow: MessageUnitOfWork, chats_facade: ChatsFacade) -> None:
+    def __init__(
+        self,
+        uow: MessageUnitOfWork,
+        chats_facade: ChatsFacade,
+        realtime_notifier: RealtimeNotifier,
+    ) -> None:
         self._uow = uow
         self._chats_facade = chats_facade
+        self._realtime = realtime_notifier
 
     async def handle(
         self, command: SendChatMessageCommand
@@ -48,4 +58,32 @@ class SendChatMessageCommandHandler:
             return Result.err(error)
 
         await self._uow.commit()
-        return Result.ok(chat_message_from_message(message))
+        chat_message = chat_message_from_message(message)
+        await self._notify(chat_id, chat_message)
+        return Result.ok(chat_message)
+
+    async def _notify(self, chat_id: UUID, message: ChatMessage) -> None:
+        """Fan the new message out to each member's WebSocket connection.
+
+        Best effort: a realtime delivery failure must not fail the send the
+        caller asked for (matches the codebase's mark-as-read precedent).
+        """
+        try:
+            member_ids = await self._chats_facade.list_active_user_ids(chat_id)
+        except Exception:
+            logger.exception(
+                "realtime.member_lookup_failed",
+                chat_id=str(chat_id),
+            )
+            return
+
+        event = {"type": "message.created", "payload": asdict(message)}
+        for member_id in member_ids:
+            try:
+                await self._realtime.publish_user_event(member_id, event)
+            except Exception:
+                logger.exception(
+                    "realtime.publish_failed",
+                    user_id=str(member_id),
+                    chat_id=str(chat_id),
+                )

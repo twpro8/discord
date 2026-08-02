@@ -2,6 +2,7 @@ from contextlib import AsyncExitStack
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.realtime.notifier import RealtimeNotifier
 from src.modules.channels.infrastructure.persistence.channel_repository_impl import (
     ChannelRepositoryImpl,
 )
@@ -47,6 +48,7 @@ async def register_message_handlers(
     mediator: InProcessMediator,
     session: AsyncSession,
     stack: AsyncExitStack,
+    realtime_notifier: RealtimeNotifier,
 ) -> None:
     message_repository = MessageRepositoryImpl(session)
     chat_repository = ChatRepositoryImpl(session)
@@ -68,7 +70,8 @@ async def register_message_handlers(
         SendChannelMessageCommandHandler(uow, servers_facade),
     )
     mediator.register_command(
-        SendChatMessageCommand, SendChatMessageCommandHandler(uow, chats_facade)
+        SendChatMessageCommand,
+        SendChatMessageCommandHandler(uow, chats_facade, realtime_notifier),
     )
     mediator.register_command(EditMessageCommand, EditMessageCommandHandler(uow))
     mediator.register_command(

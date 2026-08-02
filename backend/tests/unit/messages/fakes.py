@@ -109,6 +109,14 @@ class FakeMessageRepository:
         return message
 
 
+class FakeRealtimeNotifier:
+    def __init__(self) -> None:
+        self.published: list[tuple[UUID, dict]] = []
+
+    async def publish_user_event(self, user_id: UUID, payload: dict) -> None:
+        self.published.append((user_id, payload))
+
+
 class FakeMessageUnitOfWork(MessageUnitOfWork):
     def __init__(
         self,

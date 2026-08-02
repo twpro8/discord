@@ -27,6 +27,8 @@ class ChatsFacade(Protocol):
 
     async def assert_is_chat_owner(self, user_id: UUID, chat_id: UUID) -> None: ...
 
+    async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]: ...
+
 
 class RepositoryBackedChatsFacade:
     def __init__(
@@ -46,6 +48,9 @@ class RepositoryBackedChatsFacade:
         await services.assert_is_chat_owner(
             self._chats, self._chat_members, user_id, chat_id
         )
+
+    async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]:
+        return await self._chat_members.list_active_user_ids(chat_id)
 
 
 def build_chats_facade(session: AsyncSession) -> ChatsFacade:
