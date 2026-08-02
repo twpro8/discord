@@ -1,8 +1,0 @@
-from src.core.repositories.base_data_mapper import BaseMapper
-from src.server.models import ServerMemberOrm
-from src.server.server_member.schemas import ServerMemberSchema
-
-
-class ServerMemberMapper(BaseMapper[ServerMemberOrm, ServerMemberSchema]):
-    orm_class = ServerMemberOrm
-    schema_class = ServerMemberSchema

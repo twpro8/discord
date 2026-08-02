@@ -1,0 +1,60 @@
+name: Compose Test
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "compose.yml"
+      - "compose.override.yml"
+      - ".github/workflows/compose-test.yml"
+
+permissions: {}
+
+jobs:
+  compose-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - run: docker compose build
+
+      - run: docker compose down -v --remove-orphans
+
+      - run: docker compose up -d --wait --wait-timeout 180
+
+      - name: Show service status
+        if: always()
+        run: docker compose ps -a
+
+      - name: Test backend is up
+        run: curl --fail --retry 10 --retry-delay 1 --retry-connrefused http://localhost:8000/api/v1/health | grep -q '"status":"ok"'
+
+      - name: Test frontend is up
+        run: curl --fail --retry 10 --retry-delay 1 --retry-connrefused http://localhost:5173
+
+      - name: Test adminer is up
+        run: curl --fail --retry 10 --retry-delay 1 --retry-connrefused http://localhost:8080
+
+      - name: Test mailcatcher is up
+        run: curl --fail --retry 10 --retry-delay 1 --retry-connrefused http://localhost:1080
+
+      - name: Test traefik is up
+        run: curl --fail --retry 10 --retry-delay 1 --retry-connrefused http://localhost:8090/api/version
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - if: always()
+        run: docker compose down -v --remove-orphans

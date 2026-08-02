@@ -1,0 +1,30 @@
+from typing import Protocol
+from uuid import UUID
+
+from src.modules.chats.domain.entities.chat import ChatMember
+from src.modules.chats.domain.entities.dtos import ChatMemberSummary, MemberCreate
+from src.modules.chats.domain.enums import ChatMemberRole
+
+
+class ChatMemberRepository(Protocol):
+    async def add_members(self, members: list[MemberCreate]) -> None: ...
+
+    async def find_active(self, chat_id: UUID, user_id: UUID) -> ChatMember | None: ...
+
+    async def list_active_with_user(self, chat_id: UUID) -> list[ChatMemberSummary]: ...
+
+    async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]: ...
+
+    async def remove(self, chat_id: UUID, user_id: UUID) -> None: ...
+
+    async def count_active(self, chat_id: UUID) -> int: ...
+
+    async def find_oldest_active_excluding(
+        self, chat_id: UUID, exclude_user_id: UUID
+    ) -> ChatMember | None: ...
+
+    async def update_role(self, member_id: UUID, role: ChatMemberRole) -> None: ...
+
+    async def update_last_read_seq(
+        self, chat_id: UUID, user_id: UUID, up_to_seq: int
+    ) -> None: ...

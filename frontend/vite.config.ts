@@ -1,22 +1,32 @@
-import path from "path"
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from '@tailwindcss/vite'
-import tanstackRouter from "@tanstack/router-plugin/vite";
+import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-      tanstackRouter({
-          target: 'react',
-          autoCodeSplitting: true,
-      }),
-      react(),
-      tailwindcss(),
-  ],
-    resolve: {
-        alias: {
-            "@": path.resolve(__dirname, "./src"),
-        },
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+  },
+  plugins: [
+    react(),
+    tanstackRouter(),
+    tailwindcss(),
+  ],
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: "./src/testing/setup.ts",
+  },
 })

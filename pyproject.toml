@@ -3,5 +3,20 @@ members = ["backend"]
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.5.1",
+    "prek>=0.4.10,<1.0.0",
+    "zizmor>=1.28.0",
+]
+
+[tool.typos.files]
+extend-exclude = [
+    "uv.lock",
+    "pnpm-lock.yaml",
+    "backend/coverage/",
+    "backend/htmlcov/",
+    "frontend/dist/",
+]
+
+[tool.typos.default]
+extend-ignore-re = [
+    "selectin",
 ]

@@ -1,17 +1,34 @@
+from datetime import datetime
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.postgres import Base
-from src.core.schemas import BaseSchema
-from src.user.models import UserOrm
-from src.user.schemas import UserSchema
+from src.core.database import Base
+from src.modules.users.infrastructure.persistence.models import UserOrm
+from src.shared.schemas import BaseSchema
 from tests.data import users
 
 
+class _UserSeedRow(BaseSchema):
+    """Coerces raw JSON seed data (string UUIDs/timestamps) into the typed
+    values SQLAlchemy's Core insert() needs. Deliberately independent of the
+    User domain entity, which is a plain object with no such coercion."""
+
+    id: UUID
+    name: str
+    username: str
+    email: str
+    password_hash: str
+    avatar_url: str | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
 async def populate_database(session: AsyncSession) -> None:
-    await seed(session, UserOrm, UserSchema, users)
+    await seed(session, UserOrm, _UserSeedRow, users)
     # await seed(session, GuildOrm, GuildSchema, guilds)
     # await seed(session, ChannelOrm, ChannelSchema, channels)
 
