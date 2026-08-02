@@ -3,10 +3,10 @@ import { Check, X } from "lucide-react";
 
 // shared
 import { timeAgo } from "@/shared/helpers/utils";
+import { AvatarInitial } from "@/shared/ui/avatar-initial";
 
 // relative
 import type { FriendRequestWithUser } from "../model/types";
-import { AvatarInitial } from "./avatar-initial";
 
 function PendingItem({
   request,
