@@ -1,5 +1,5 @@
 // third party
-import { Trash2 } from "lucide-react";
+import { MessageCircle, Trash2 } from "lucide-react";
 
 // shared
 import { AvatarInitial } from "@/shared/ui/avatar-initial";
@@ -10,10 +10,12 @@ import type { FriendRequestWithUser } from "../model/types";
 function FriendItem({
   request,
   disabled,
+  onOpenChat,
   onRemove,
 }: {
   request: FriendRequestWithUser;
   disabled: boolean;
+  onOpenChat: (friend: FriendRequestWithUser) => void;
   onRemove: (id: string) => void;
 }) {
   return (
@@ -27,6 +29,14 @@ function FriendItem({
           Friend since {new Date(request.updated_at).toLocaleDateString()}
         </p>
       </div>
+      <button
+        type="button"
+        onClick={() => onOpenChat(request)}
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+        aria-label={`Open chat with ${request.username}`}
+      >
+        <MessageCircle className="h-4 w-4" />
+      </button>
       <button
         type="button"
         disabled={disabled}
@@ -64,16 +74,18 @@ function EmptyState() {
   );
 }
 
-/** Lists friends with remove actions. */
+/** Lists friends with chat and remove actions. */
 export function FriendList({
   friends,
   isLoading,
   disabled,
+  onOpenChat,
   onRemove,
 }: {
   friends: FriendRequestWithUser[];
   isLoading: boolean;
   disabled: boolean;
+  onOpenChat: (friend: FriendRequestWithUser) => void;
   onRemove: (id: string) => void;
 }) {
   if (isLoading) return <Skeleton />;
@@ -86,6 +98,7 @@ export function FriendList({
           key={friend.id}
           request={friend}
           disabled={disabled}
+          onOpenChat={onOpenChat}
           onRemove={onRemove}
         />
       ))}
