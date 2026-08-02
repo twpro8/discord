@@ -1,9 +1,11 @@
 // third party
 import { Trash2 } from "lucide-react";
 
+// shared
+import { AvatarInitial } from "@/shared/ui/avatar-initial";
+
 // relative
 import type { FriendRequestWithUser } from "../model/types";
-import { AvatarInitial } from "./avatar-initial";
 
 function FriendItem({
   request,
