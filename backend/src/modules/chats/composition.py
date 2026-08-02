@@ -1,6 +1,3 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.core.event_bus import EventBus
 from src.modules.chats.application.commands.add_member import (
     AddMemberCommand,
     AddMemberCommandHandler,
@@ -44,41 +41,89 @@ from src.modules.chats.infrastructure.persistence.chat_member_repository_impl im
 from src.modules.chats.infrastructure.persistence.chat_repository_impl import (
     ChatRepositoryImpl,
 )
-from src.modules.users.public.facade import UsersFacade
-from src.shared.application.in_process_mediator import InProcessMediator
+from src.modules.users.public.facade import MediatorUsersFacade
+from src.shared.application.handler_registry import HandlerRegistry, RequestServices
+from src.shared.application.mediator import Mediator
 
 
-def register_chat_handlers(
-    mediator: InProcessMediator,
-    session: AsyncSession,
-    event_bus: EventBus,
-    users_facade: UsersFacade,
-) -> None:
-    chat_repository = ChatRepositoryImpl(session)
-    chat_member_repository = ChatMemberRepositoryImpl(session)
-    uow = ChatUnitOfWorkImpl(
-        session=session,
-        chat_repository=chat_repository,
-        chat_member_repository=chat_member_repository,
+def _build_uow(services: RequestServices) -> ChatUnitOfWorkImpl:
+    return ChatUnitOfWorkImpl(
+        session=services.session,
+        chat_repository=ChatRepositoryImpl(services.session),
+        chat_member_repository=ChatMemberRepositoryImpl(services.session),
     )
 
-    mediator.register_command(
-        CreateChatCommand, CreateChatCommandHandler(uow, event_bus)
-    )
-    mediator.register_command(UpdateChatCommand, UpdateChatCommandHandler(uow))
-    mediator.register_command(
-        AddMemberCommand, AddMemberCommandHandler(uow, users_facade)
-    )
-    mediator.register_command(RemoveMemberCommand, RemoveMemberCommandHandler(uow))
-    mediator.register_command(LeaveChatCommand, LeaveChatCommandHandler(uow))
-    mediator.register_command(MarkChatAsReadCommand, MarkChatAsReadCommandHandler(uow))
 
-    mediator.register_query(GetChatsQuery, GetChatsQueryHandler(chat_repository))
-    mediator.register_query(
-        GetChatDetailsQuery,
-        GetChatDetailsQueryHandler(chat_repository, chat_member_repository),
+def _build_create_chat_handler(
+    services: RequestServices, _mediator: Mediator
+) -> CreateChatCommandHandler:
+    return CreateChatCommandHandler(_build_uow(services), services.event_bus)
+
+
+def _build_update_chat_handler(
+    services: RequestServices, _mediator: Mediator
+) -> UpdateChatCommandHandler:
+    return UpdateChatCommandHandler(_build_uow(services))
+
+
+def _build_add_member_handler(
+    services: RequestServices, mediator: Mediator
+) -> AddMemberCommandHandler:
+    return AddMemberCommandHandler(_build_uow(services), MediatorUsersFacade(mediator))
+
+
+def _build_remove_member_handler(
+    services: RequestServices, _mediator: Mediator
+) -> RemoveMemberCommandHandler:
+    return RemoveMemberCommandHandler(_build_uow(services))
+
+
+def _build_leave_chat_handler(
+    services: RequestServices, _mediator: Mediator
+) -> LeaveChatCommandHandler:
+    return LeaveChatCommandHandler(_build_uow(services))
+
+
+def _build_mark_chat_as_read_handler(
+    services: RequestServices, _mediator: Mediator
+) -> MarkChatAsReadCommandHandler:
+    return MarkChatAsReadCommandHandler(_build_uow(services))
+
+
+def _build_get_chats_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetChatsQueryHandler:
+    return GetChatsQueryHandler(ChatRepositoryImpl(services.session))
+
+
+def _build_get_chat_details_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetChatDetailsQueryHandler:
+    return GetChatDetailsQueryHandler(
+        ChatRepositoryImpl(services.session), ChatMemberRepositoryImpl(services.session)
     )
-    mediator.register_query(
-        ListMembersQuery,
-        ListMembersQueryHandler(chat_repository, chat_member_repository),
+
+
+def _build_list_members_handler(
+    services: RequestServices, _mediator: Mediator
+) -> ListMembersQueryHandler:
+    return ListMembersQueryHandler(
+        ChatRepositoryImpl(services.session), ChatMemberRepositoryImpl(services.session)
     )
+
+
+def register_chat_handlers(registry: HandlerRegistry) -> None:
+    registry.register_command_factory(CreateChatCommand, _build_create_chat_handler)
+    registry.register_command_factory(UpdateChatCommand, _build_update_chat_handler)
+    registry.register_command_factory(AddMemberCommand, _build_add_member_handler)
+    registry.register_command_factory(RemoveMemberCommand, _build_remove_member_handler)
+    registry.register_command_factory(LeaveChatCommand, _build_leave_chat_handler)
+    registry.register_command_factory(
+        MarkChatAsReadCommand, _build_mark_chat_as_read_handler
+    )
+
+    registry.register_query_factory(GetChatsQuery, _build_get_chats_handler)
+    registry.register_query_factory(
+        GetChatDetailsQuery, _build_get_chat_details_handler
+    )
+    registry.register_query_factory(ListMembersQuery, _build_list_members_handler)
