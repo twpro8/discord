@@ -12,9 +12,9 @@ class Mediator(Protocol):
     shared.application.in_process_mediator.InProcessMediator, built fresh
     per request by api/v1/dependencies.py::get_mediator. Handlers are
     resolved lazily, per dispatch, from a process-lifetime HandlerRegistry
-    (shared/application/handler_registry.py, built once by
-    composition/handlers.py::build_handler_registry) against this
-    request's own RequestServices -- so a fresh Mediator instance per
+    (shared/application/handler_registry.py, built once as part of the
+    composition root, composition/container.py::build_container()) against
+    this request's own RequestServices -- so a fresh Mediator instance per
     request is still required for session isolation, even though the
     registry mapping itself is shared across requests.
     """

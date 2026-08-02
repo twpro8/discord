@@ -77,20 +77,22 @@ async def get_mediator(
     pubsub: PubSubDep,
 ) -> AsyncGenerator[Mediator]:
     realtime_notifier = RedisRealtimeNotifier(pubsub)
-    # Handed to the static HandlerRegistry (app.state.handler_registry,
-    # built once at startup) so a lazily-resolved factory can build the one
-    # handler a dispatch needs, scoped to this request's own resources —
-    # see shared/application/handler_registry.py and in_process_mediator.py.
+    # Handed to the composition root's static HandlerRegistry
+    # (app.state.container.handler_registry, built once at startup) so a
+    # lazily-resolved factory can build the one handler a dispatch needs,
+    # scoped to this request's own resources — see composition/container.py,
+    # shared/application/handler_registry.py, and in_process_mediator.py.
+    # (Not importing Container's type here to read it off app.state.container
+    # — composition/container.py transitively imports every module's router,
+    # which imports this file, so that import would be circular.)
     services = RequestServices(
         session=session,
         event_bus=event_bus,
         cache=cache,
         realtime_notifier=realtime_notifier,
     )
-    registry = cast(HandlerRegistry, request.app.state.handler_registry)
+    registry = cast(HandlerRegistry, request.app.state.container.handler_registry)
     mediator = InProcessMediator(registry=registry, services=services)
-    # All 7 modules are registry-driven now (see composition/handlers.py) --
-    # nothing left to register eagerly here.
     yield mediator
 
 

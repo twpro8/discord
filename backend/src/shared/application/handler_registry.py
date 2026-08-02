@@ -37,9 +37,10 @@ class HandlerRegistry:
     """Static, process-lifetime map of command/query type -> handler
     factory.
 
-    Built once at app startup (composition/handlers.py::build_handler_registry,
-    called from main.py's create_app(), stored on app.state.handler_registry)
-    by every module's register_<name>_handlers(registry). Each factory is a
+    Built once at app startup as part of the composition root
+    (composition/container.py::build_container(), stored on
+    app.state.container.handler_registry) by every module's
+    register_<name>_handlers(registry). Each factory is a
     small closure that, given a request's RequestServices and the live
     per-request Mediator instance, constructs ONLY the one handler (and its
     UoW/repositories) a dispatch actually needs -- nothing is built for

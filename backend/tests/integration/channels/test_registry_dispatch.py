@@ -1,7 +1,7 @@
 """Integration test for channels' registry-driven dispatch.
 
 channels is the pilot module migrated off eager per-request handler
-registration (see composition/handlers.py and
+registration (see composition/container.py and
 shared/application/in_process_mediator.py's docstring): its composition.py
 now registers a factory on the process-lifetime HandlerRegistry instead of
 an eager instance on the mediator directly.
@@ -21,7 +21,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.composition.handlers import build_handler_registry
+from src.composition.container import build_container
 from src.modules.channels.application.commands.create_channel import (
     CreateChannelCommand,
 )
@@ -50,7 +50,7 @@ async def test_create_channel_command_dispatches_via_the_registry(
         )
     )
 
-    registry = build_handler_registry()
+    registry = build_container().handler_registry
     services = RequestServices(
         session=session,
         event_bus=cast(Any, object()),

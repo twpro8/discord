@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.errors import register_exception_handlers
 from src.api.v1.router import build_api_v1_router
 from src.composition.container import build_container
-from src.composition.handlers import build_handler_registry
 from src.core.cache import RedisCache
 from src.core.config import settings
 from src.core.database.session import get_engine, get_session_factory
@@ -66,12 +65,10 @@ def create_app() -> FastAPI:
 
     register_exception_handlers(app)
 
+    # Composition root: builds both HTTP routers and the command/query
+    # handler factory map (see composition/container.py).
     container = build_container()
     app.state.container = container
-    # Process-lifetime map of command/query type -> handler factory (see
-    # composition/handlers.py and shared/application/handler_registry.py).
-    # Unrelated to `container` above, which only holds HTTP routers.
-    app.state.handler_registry = build_handler_registry()
     app.include_router(build_api_v1_router(container))
 
     return app

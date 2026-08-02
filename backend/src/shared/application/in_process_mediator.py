@@ -10,9 +10,10 @@ class InProcessMediator:
     from a static HandlerRegistry (see shared/application/handler_registry.py).
 
     The registry -- a `type[Command]`/`type[Query]` -> factory map -- is
-    built ONCE at app startup (composition/handlers.py::build_handler_registry,
-    called from main.py's create_app(), stored on app.state.handler_registry)
-    and shared across every request. RequestServices bundles this request's
+    built ONCE at app startup as part of the composition root
+    (composition/container.py::build_container(), stored on
+    app.state.container.handler_registry) and shared across every request.
+    RequestServices bundles this request's
     own resources (session, event_bus, cache, realtime_notifier). A
     dispatch resolves its factory from the registry and calls it with
     (services, self) to construct just the one handler needed -- so
