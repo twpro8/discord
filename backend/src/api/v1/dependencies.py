@@ -15,7 +15,6 @@ from src.core.realtime.redis_pubsub import PubSubTransport, RedisPubSubTransport
 from src.core.security.jwt import decode_access_token
 from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
-from src.modules.channels.composition import register_channel_handlers
 from src.modules.chats.composition import register_chat_handlers
 from src.modules.friends.composition import register_friend_handlers
 from src.modules.messages.composition import register_message_handlers
@@ -103,7 +102,8 @@ async def get_mediator(
     users_facade = MediatorUsersFacade(mediator)
 
     register_auth_handlers(mediator, session, users_facade)
-    register_channel_handlers(mediator, session)
+    # channels is registry-driven (see composition/handlers.py) -- no
+    # eager call here.
     register_chat_handlers(mediator, session, event_bus, users_facade)
     register_friend_handlers(mediator, session, users_facade)
     register_message_handlers(mediator, session, realtime_notifier)
