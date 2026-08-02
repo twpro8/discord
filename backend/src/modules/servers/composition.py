@@ -1,5 +1,3 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.modules.channels.public.facade import build_channels_facade
 from src.modules.servers.application.commands.create_invite import (
     CreateInviteCommand,
@@ -53,50 +51,105 @@ from src.modules.servers.infrastructure.persistence.server_repository_impl impor
 from src.modules.servers.infrastructure.server_unit_of_work_impl import (
     ServerUnitOfWorkImpl,
 )
-from src.shared.application.in_process_mediator import InProcessMediator
+from src.shared.application.handler_registry import HandlerRegistry, RequestServices
+from src.shared.application.mediator import Mediator
 
 
-def register_server_handlers(
-    mediator: InProcessMediator,
-    session: AsyncSession,
-) -> None:
-    server_repository = ServerRepositoryImpl(session=session)
-    server_member_repository = ServerMemberRepositoryImpl(session=session)
-    server_invite_repository = ServerInviteRepositoryImpl(session=session)
-    uow = ServerUnitOfWorkImpl(
-        session,
-        server_repository,
-        server_member_repository,
-        server_invite_repository,
+def _build_uow(services: RequestServices) -> ServerUnitOfWorkImpl:
+    return ServerUnitOfWorkImpl(
+        services.session,
+        ServerRepositoryImpl(session=services.session),
+        ServerMemberRepositoryImpl(session=services.session),
+        ServerInviteRepositoryImpl(session=services.session),
     )
 
+
+def _build_create_server_handler(
+    services: RequestServices, _mediator: Mediator
+) -> CreateServerCommandHandler:
     # CreateServerCommandHandler delegates default-channel creation to
     # channels as part of its own atomic operation (not via mediator.send()),
-    # so it needs a same-session facade rather than a mediator registration.
-    channels_facade = build_channels_facade(session)
+    # so it needs a same-session facade rather than a mediator dispatch.
+    channels_facade = build_channels_facade(services.session)
+    return CreateServerCommandHandler(_build_uow(services), channels_facade)
 
-    mediator.register_command(
-        CreateServerCommand,
-        CreateServerCommandHandler(uow, channels_facade),
-    )
-    mediator.register_command(UpdateServerCommand, UpdateServerCommandHandler(uow))
-    mediator.register_command(DeleteServerCommand, DeleteServerCommandHandler(uow))
-    mediator.register_command(
-        TransferServerOwnershipCommand, TransferServerOwnershipCommandHandler(uow)
-    )
-    mediator.register_command(JoinServerCommand, JoinServerCommandHandler(uow))
-    mediator.register_command(CreateInviteCommand, CreateInviteCommandHandler(uow))
-    mediator.register_command(DeleteInviteCommand, DeleteInviteCommandHandler(uow))
 
-    mediator.register_query(
-        GetServersWhereUserMemberQuery,
-        GetServersWhereUserMemberQueryHandler(server_repository),
+def _build_update_server_handler(
+    services: RequestServices, _mediator: Mediator
+) -> UpdateServerCommandHandler:
+    return UpdateServerCommandHandler(_build_uow(services))
+
+
+def _build_delete_server_handler(
+    services: RequestServices, _mediator: Mediator
+) -> DeleteServerCommandHandler:
+    return DeleteServerCommandHandler(_build_uow(services))
+
+
+def _build_transfer_ownership_handler(
+    services: RequestServices, _mediator: Mediator
+) -> TransferServerOwnershipCommandHandler:
+    return TransferServerOwnershipCommandHandler(_build_uow(services))
+
+
+def _build_join_server_handler(
+    services: RequestServices, _mediator: Mediator
+) -> JoinServerCommandHandler:
+    return JoinServerCommandHandler(_build_uow(services))
+
+
+def _build_create_invite_handler(
+    services: RequestServices, _mediator: Mediator
+) -> CreateInviteCommandHandler:
+    return CreateInviteCommandHandler(_build_uow(services))
+
+
+def _build_delete_invite_handler(
+    services: RequestServices, _mediator: Mediator
+) -> DeleteInviteCommandHandler:
+    return DeleteInviteCommandHandler(_build_uow(services))
+
+
+def _build_get_servers_where_member_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetServersWhereUserMemberQueryHandler:
+    return GetServersWhereUserMemberQueryHandler(
+        ServerRepositoryImpl(session=services.session)
     )
-    mediator.register_query(
-        GetServerWhereUserMemberQuery,
-        GetServerWhereUserMemberQueryHandler(server_repository),
+
+
+def _build_get_server_where_member_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetServerWhereUserMemberQueryHandler:
+    return GetServerWhereUserMemberQueryHandler(
+        ServerRepositoryImpl(session=services.session)
     )
-    mediator.register_query(
-        GetInvitesQuery,
-        GetInvitesQueryHandler(server_repository, server_invite_repository),
+
+
+def _build_get_invites_handler(
+    services: RequestServices, _mediator: Mediator
+) -> GetInvitesQueryHandler:
+    return GetInvitesQueryHandler(
+        ServerRepositoryImpl(session=services.session),
+        ServerInviteRepositoryImpl(session=services.session),
     )
+
+
+def register_server_handlers(registry: HandlerRegistry) -> None:
+    registry.register_command_factory(CreateServerCommand, _build_create_server_handler)
+    registry.register_command_factory(UpdateServerCommand, _build_update_server_handler)
+    registry.register_command_factory(DeleteServerCommand, _build_delete_server_handler)
+    registry.register_command_factory(
+        TransferServerOwnershipCommand, _build_transfer_ownership_handler
+    )
+    registry.register_command_factory(JoinServerCommand, _build_join_server_handler)
+    registry.register_command_factory(CreateInviteCommand, _build_create_invite_handler)
+    registry.register_command_factory(DeleteInviteCommand, _build_delete_invite_handler)
+
+    registry.register_query_factory(
+        GetServersWhereUserMemberQuery, _build_get_servers_where_member_handler
+    )
+    registry.register_query_factory(
+        GetServerWhereUserMemberQuery, _build_get_server_where_member_handler
+    )
+    registry.register_query_factory(GetInvitesQuery, _build_get_invites_handler)

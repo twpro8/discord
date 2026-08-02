@@ -16,7 +16,6 @@ from src.core.security.jwt import decode_access_token
 from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.modules.messages.composition import register_message_handlers
-from src.modules.servers.composition import register_server_handlers
 from src.modules.users.public.facade import MediatorUsersFacade
 from src.shared.application.handler_registry import HandlerRegistry, RequestServices
 from src.shared.application.in_process_mediator import InProcessMediator
@@ -100,8 +99,7 @@ async def get_mediator(
 
     register_auth_handlers(mediator, session, users_facade)
     register_message_handlers(mediator, session, realtime_notifier)
-    register_server_handlers(mediator, session)
-    # channels, users, friends, and chats are registry-driven (see
+    # channels, users, friends, chats, and servers are registry-driven (see
     # composition/handlers.py) -- no eager calls needed for them here.
     yield mediator
 
