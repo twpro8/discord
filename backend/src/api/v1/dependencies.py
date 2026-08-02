@@ -13,9 +13,7 @@ from src.core.event_bus import EventBus
 from src.core.realtime.notifier import RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import PubSubTransport, RedisPubSubTransport
 from src.core.security.jwt import decode_access_token
-from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
-from src.modules.users.public.facade import MediatorUsersFacade
 from src.shared.application.handler_registry import HandlerRegistry, RequestServices
 from src.shared.application.in_process_mediator import InProcessMediator
 from src.shared.application.mediator import Mediator
@@ -91,15 +89,8 @@ async def get_mediator(
     )
     registry = cast(HandlerRegistry, request.app.state.handler_registry)
     mediator = InProcessMediator(registry=registry, services=services)
-    # Facades only close over `mediator`, not any handler yet registered
-    # on it — safe to build before the modules they wrap are registered
-    # below, since dispatch never happens before this generator yields.
-    users_facade = MediatorUsersFacade(mediator)
-
-    register_auth_handlers(mediator, session, users_facade)
-    # channels, users, friends, chats, servers, and messages are
-    # registry-driven (see composition/handlers.py) -- no eager calls
-    # needed for them here.
+    # All 7 modules are registry-driven now (see composition/handlers.py) --
+    # nothing left to register eagerly here.
     yield mediator
 
 
