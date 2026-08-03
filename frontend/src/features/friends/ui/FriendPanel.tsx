@@ -5,6 +5,10 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { UserPlus } from "lucide-react";
 
+// shared
+import { cn } from "@/shared/helpers/utils";
+import { useShellDrawer } from "@/shared/ui/shell-drawer";
+
 // features
 import { useCreatePrivateChat } from "@/features/chats/model/use-create-private-chat";
 import { useCurrentUser } from "@/features/profile/model/use-current-user";
@@ -33,11 +37,12 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 /** Sidebar panel with tabs for pending, sent, and friends lists. */
-export function FriendPanel() {
+export function FriendPanel({ className }: { className?: string }) {
   const [isAddFriendOpen, setIsAddFriendOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("pending");
 
   const navigate = useNavigate();
+  const closeFriends = useShellDrawer((state) => state.closeFriends);
   const { data: user } = useCurrentUser();
   const { incoming, sent, isLoading: isLoadingRequests } = useFriendRequests();
   const { data: friends = [], isLoading: isLoadingFriends } = useFriends();
@@ -52,6 +57,7 @@ export function FriendPanel() {
     const peerId = getFriendPeerId(friend, user.id);
     createChatMutation.mutate(peerId, {
       onSuccess: (chat) => {
+        closeFriends();
         navigate({
           to: "/home/dms/$chatId",
           params: { chatId: chat.id },
@@ -64,7 +70,12 @@ export function FriendPanel() {
   };
 
   return (
-    <aside className="flex h-screen w-80 flex-col border-l border-border bg-background/95 p-4">
+    <aside
+      className={cn(
+        "flex h-full w-80 flex-col border-l border-border bg-background/95 p-4",
+        className,
+      )}
+    >
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
           Friends
