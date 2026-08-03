@@ -51,7 +51,7 @@ export function MessageList({
   if (messages.length === 0) return <EmptyState />;
 
   return (
-    <div className="py-4">
+    <div className="mx-auto w-full max-w-220 py-4">
       {messages.map((message) => (
         <MessageRow
           key={message.id}

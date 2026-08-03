@@ -1,6 +1,9 @@
 // third party
 import { Compass, Plus } from "lucide-react";
 
+// shared
+import { cn } from "@/shared/helpers/utils";
+
 // features
 import { useCurrentUser } from "@/features/profile/model/use-current-user";
 
@@ -9,15 +12,24 @@ import { useServers } from "../model/use-servers";
 
 type ServerSidebarProps = {
   onCreateServerClick: () => void;
+  className?: string;
 };
 
 /** Server rail sidebar showing user initial and server icons. */
-export function ServerSidebar({ onCreateServerClick }: ServerSidebarProps) {
+export function ServerSidebar({
+  onCreateServerClick,
+  className,
+}: ServerSidebarProps) {
   const { data: user } = useCurrentUser();
   const { data: servers = [], isLoading } = useServers();
 
   return (
-    <aside className="flex h-screen w-24 flex-col items-center border-r border-border bg-background/95 px-3 py-4">
+    <aside
+      className={cn(
+        "flex h-full w-24 flex-col items-center border-r border-border bg-background/95 px-3 py-4",
+        className,
+      )}
+    >
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-lg font-semibold text-primary-foreground">
         {user?.name?.charAt(0).toUpperCase() ?? "U"}
       </div>
