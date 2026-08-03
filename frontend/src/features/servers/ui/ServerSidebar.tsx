@@ -22,7 +22,7 @@ export function ServerSidebar({ onCreateServerClick }: ServerSidebarProps) {
         {user?.name?.charAt(0).toUpperCase() ?? "U"}
       </div>
 
-      <div className="mt-5 flex w-full flex-col gap-2">
+      <div className="mt-5 flex w-full items-center flex-col gap-2">
         {isLoading ? (
           <div className="h-12 w-12 animate-pulse rounded-2xl bg-muted" />
         ) : (
