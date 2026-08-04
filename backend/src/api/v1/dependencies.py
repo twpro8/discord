@@ -12,8 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.cache import Cache
 from src.core.database import get_session
 from src.core.event_bus import EventBus
+from src.core.realtime.membership import DistributedRoomMembershipUpdater
 from src.core.realtime.notifier import RedisRealtimeNotifier
-from src.core.realtime.redis_pubsub import PubSubTransport, RedisPubSubTransport
+from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.security.jwt import decode_access_token
 from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
@@ -45,15 +46,17 @@ def get_cache(request: Request) -> Cache:
     return cast(Cache, request.app.state.cache)
 
 
-def get_pubsub(redis: RedisDep) -> PubSubTransport:
-    return RedisPubSubTransport(redis)
+def get_redis_subscription_manager(request: Request) -> RedisSubscriptionManager:
+    return cast(RedisSubscriptionManager, request.app.state.redis_subscription_manager)
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 EventBusDep = Annotated[EventBus, Depends(get_event_bus)]
 CacheDep = Annotated[Cache, Depends(get_cache)]
 AccessTokenDep = Annotated[str, Depends(access_cookie_scheme)]
-PubSubDep = Annotated[PubSubTransport, Depends(get_pubsub)]
+RedisSubscriptionManagerDep = Annotated[
+    RedisSubscriptionManager, Depends(get_redis_subscription_manager)
+]
 
 
 def get_current_user_id(access_token: AccessTokenDep) -> UUID:
@@ -70,7 +73,7 @@ async def get_mediator(
     session: SessionDep,
     event_bus: EventBusDep,
     cache: CacheDep,
-    pubsub: PubSubDep,
+    redis_subscription_manager: RedisSubscriptionManagerDep,
 ) -> AsyncGenerator[Mediator]:
     async with AsyncExitStack() as stack:
         mediator = InProcessMediator()
@@ -78,11 +81,24 @@ async def get_mediator(
         # on it — safe to build before the modules they wrap are registered
         # below, since dispatch never happens before this generator yields.
         users_facade = MediatorUsersFacade(mediator)
-        realtime_notifier = RedisRealtimeNotifier(pubsub)
+        # Redis-backed: reaches every instance's local connections, not
+        # just this process's — every connection already auto-joins its
+        # own user:{user_id} room on connect (see api/v1/ws.py), and
+        # RedisSubscriptionManager is already subscribed wherever this
+        # instance has a local subscriber (see main.py's lifespan).
+        realtime_notifier = RedisRealtimeNotifier(redis_subscription_manager)
+        # Cross-instance too: a user's connection open on a different
+        # instance than this request is handled on still needs to learn
+        # about a new/revoked chat room (see DistributedRoomMembershipUpdater).
+        room_membership_updater = DistributedRoomMembershipUpdater(
+            redis_subscription_manager
+        )
 
         await register_auth_handlers(mediator, session, stack, users_facade)
         await register_channel_handlers(mediator, session, stack)
-        await register_chat_handlers(mediator, session, stack, event_bus, users_facade)
+        await register_chat_handlers(
+            mediator, session, stack, event_bus, users_facade, room_membership_updater
+        )
         await register_friend_handlers(mediator, session, stack, users_facade)
         await register_message_handlers(mediator, session, stack, realtime_notifier)
         await register_server_handlers(mediator, session, stack)

@@ -11,7 +11,9 @@ from src.core.cache import RedisCache
 from src.core.config import settings
 from src.core.event_bus import InMemoryEventBus, RedisStreamsEventBus
 from src.core.logging import configure_logging, get_logger
+from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.redis import close_redis, init_redis
+from src.core.websocket.manager import ConnectionManager
 from src.utils import custom_generate_unique_id
 
 logger = get_logger(__name__)
@@ -33,10 +35,33 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if settings.ENVIRONMENT == "testing"
         else RedisStreamsEventBus(app.state.redis)
     )
+    # Owns all locally-open WebSocket connections for this process (see
+    # core.websocket.manager). Cross-instance fan-out is a separate layer:
+    # RedisSubscriptionManager subscribes to whatever rooms this instance
+    # has local subscribers for, and delivers inbound Redis messages back
+    # through the same ConnectionManager — construction order needs the
+    # two-phase wiring below since each references the other.
+    connection_manager = ConnectionManager(queue_maxsize=settings.WS_SEND_QUEUE_MAXSIZE)
+    redis_subscription_manager = RedisSubscriptionManager(
+        app.state.redis,
+        connection_manager,
+        backoff_base_seconds=settings.WS_REDIS_BACKOFF_BASE_SECONDS,
+        backoff_max_seconds=settings.WS_REDIS_BACKOFF_MAX_SECONDS,
+        backoff_jitter=settings.WS_REDIS_BACKOFF_JITTER,
+    )
+    connection_manager.set_room_transition_callbacks(
+        on_room_activated=redis_subscription_manager.on_room_activated,
+        on_room_deactivated=redis_subscription_manager.on_room_deactivated,
+    )
+    redis_subscription_manager.start()
+    app.state.connection_manager = connection_manager
+    app.state.redis_subscription_manager = redis_subscription_manager
 
     yield
 
     logger.info("app.shutdown")
+    await app.state.connection_manager.shutdown()
+    await app.state.redis_subscription_manager.stop()
     # Close Redis connection
     await close_redis(app.state.redis)
 
