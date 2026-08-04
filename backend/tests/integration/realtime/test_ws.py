@@ -19,7 +19,6 @@ from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from src.api.v1.dependencies import get_redis_subscription_manager
-from src.core.realtime.rooms import chat_room
 from src.main import app
 
 ALICE_USERNAME = "alice"
@@ -123,9 +122,14 @@ def test_message_fans_out_to_members(client: TestClient) -> None:
                 assert payload["sender_id"] == str(ALICE_ID)
 
 
-def test_connect_auto_joins_rooms_for_existing_chat_memberships(
+def test_reconnect_without_reviewing_the_chat_does_not_rejoin_its_room(
     client: TestClient,
 ) -> None:
+    # Documents the accepted tradeoff of lazy join-on-view (see
+    # messages.application.queries.list_chat_messages): connect-time no
+    # longer bulk-joins every chat the user is already a member of, so a
+    # membership that predates this connection isn't in the room index
+    # until the user actually lists that chat's messages.
     alice_token = _login(client, ALICE_USERNAME)
     bob_token = _login(client, BOB_USERNAME)
 
@@ -145,9 +149,4 @@ def test_connect_auto_joins_rooms_for_existing_chat_memberships(
     with client.websocket_connect("/api/v1/ws"):
         rooms_snapshot = set(app.state.connection_manager._rooms)
 
-    # Bob was already an active member when he connected, so his
-    # connection should have been in the chat's room index from
-    # connect-time auto-join (see api/v1/ws.py) — distinct from the
-    # dynamic join path (core.realtime.membership), which only fires on
-    # a chat/membership *write*, not on every connect.
-    assert chat_room(chat_id) in rooms_snapshot
+    assert f"chat:{chat_id}" not in rooms_snapshot

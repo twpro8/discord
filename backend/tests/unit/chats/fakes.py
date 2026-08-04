@@ -137,13 +137,6 @@ class FakeChatMemberRepository:
     async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]:
         return {m.user_id for m in self._active_in_chat(chat_id)}
 
-    async def list_active_chat_ids(self, user_id: UUID) -> set[UUID]:
-        return {
-            m.chat_id
-            for m in self.members
-            if m.user_id == user_id and m.left_at is None
-        }
-
     async def remove(self, chat_id: UUID, user_id: UUID) -> None:
         self.members = [
             m
@@ -218,9 +211,6 @@ class FakeChatsFacade:
 
     async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]:
         return await self._chat_members.list_active_user_ids(chat_id)
-
-    async def list_active_chat_ids(self, user_id: UUID) -> set[UUID]:
-        return await self._chat_members.list_active_chat_ids(user_id)
 
 
 class RecordingEventBus:

@@ -6,7 +6,6 @@ from httpx import ASGITransport, AsyncClient
 
 from src.core.config import settings
 from src.core.database import get_session
-from src.core.database.session import get_null_pool_session_factory
 from src.main import app
 from src.modules.users.domain.entities.user import User
 from src.shared.data.models import *  # noqa
@@ -36,7 +35,6 @@ def override_dependencies(
         get_redis,
         get_redis_subscription_manager,
     )
-    from src.api.v1.ws import get_session_factory_ws
 
     app.dependency_overrides[get_session] = get_null_pool_session
     app.dependency_overrides[get_redis] = get_fake_redis_client
@@ -45,7 +43,6 @@ def override_dependencies(
     app.dependency_overrides[get_redis_subscription_manager] = (
         get_test_redis_subscription_manager
     )
-    app.dependency_overrides[get_session_factory_ws] = get_null_pool_session_factory
 
 
 @pytest.fixture(name="ac")

@@ -3,6 +3,7 @@ from contextlib import AsyncExitStack
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.realtime.notifier import RealtimeNotifier
+from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.channels.infrastructure.persistence.channel_repository_impl import (
     ChannelRepositoryImpl,
 )
@@ -49,6 +50,7 @@ async def register_message_handlers(
     session: AsyncSession,
     stack: AsyncExitStack,
     realtime_notifier: RealtimeNotifier,
+    room_membership_updater: RoomMembershipUpdater,
 ) -> None:
     message_repository = MessageRepositoryImpl(session)
     chat_repository = ChatRepositoryImpl(session)
@@ -81,7 +83,9 @@ async def register_message_handlers(
 
     mediator.register_query(
         ListChatMessagesQuery,
-        ListChatMessagesQueryHandler(message_repository, chats_facade),
+        ListChatMessagesQueryHandler(
+            message_repository, chats_facade, room_membership_updater
+        ),
     )
     mediator.register_query(
         ListChannelMessagesQuery,

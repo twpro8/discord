@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from src.core.realtime.rooms import chat_room
 from src.modules.chats.domain.entities.dtos import ChatCreate, MemberCreate
 from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.domain.exceptions import NotChatMemberError
@@ -12,6 +13,7 @@ from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
     FakeChatsFacade,
+    FakeRoomMembershipUpdater,
 )
 from tests.unit.messages.fakes import FakeMessageRepository
 
@@ -20,7 +22,10 @@ async def test_returns_messages_in_ascending_order() -> None:
     chats, chat_members = FakeChatRepository(), FakeChatMemberRepository()
     messages = FakeMessageRepository()
     chats_facade = FakeChatsFacade(chats, chat_members)
-    handler = ListChatMessagesQueryHandler(messages, chats_facade)
+    room_membership_updater = FakeRoomMembershipUpdater()
+    handler = ListChatMessagesQueryHandler(
+        messages, chats_facade, room_membership_updater
+    )
 
     user_id = uuid4()
     chat = await chats.create(ChatCreate(type=ChatType.private))
@@ -42,13 +47,17 @@ async def test_returns_messages_in_ascending_order() -> None:
 
     assert result.is_ok
     assert [m.sequence for m in result.value.items] == [1, 2, 3]
+    assert room_membership_updater.joined == [(user_id, chat_room(chat.id))]
 
 
 async def test_rejects_non_member() -> None:
     chats, chat_members = FakeChatRepository(), FakeChatMemberRepository()
     messages = FakeMessageRepository()
     chats_facade = FakeChatsFacade(chats, chat_members)
-    handler = ListChatMessagesQueryHandler(messages, chats_facade)
+    room_membership_updater = FakeRoomMembershipUpdater()
+    handler = ListChatMessagesQueryHandler(
+        messages, chats_facade, room_membership_updater
+    )
 
     owner_id = uuid4()
     chat = await chats.create(ChatCreate(type=ChatType.private))
@@ -60,3 +69,5 @@ async def test_rejects_non_member() -> None:
 
     assert result.is_err
     assert isinstance(result.error, NotChatMemberError)
+    # Non-members are rejected before the join-side-effect runs.
+    assert room_membership_updater.joined == []
