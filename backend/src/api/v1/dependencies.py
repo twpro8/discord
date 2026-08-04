@@ -100,7 +100,9 @@ async def get_mediator(
             mediator, session, stack, event_bus, users_facade, room_membership_updater
         )
         await register_friend_handlers(mediator, session, stack, users_facade)
-        await register_message_handlers(mediator, session, stack, realtime_notifier)
+        await register_message_handlers(
+            mediator, session, stack, realtime_notifier, room_membership_updater
+        )
         await register_server_handlers(mediator, session, stack)
         await register_user_handlers(mediator, session, stack, event_bus, cache)
         yield mediator

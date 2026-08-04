@@ -64,13 +64,6 @@ class ChatMemberRepositoryImpl:
         result = await self._session.execute(query)
         return set(result.scalars().all())
 
-    async def list_active_chat_ids(self, user_id: UUID) -> set[UUID]:
-        query = select(ChatMemberOrm.chat_id).where(
-            ChatMemberOrm.user_id == user_id, ChatMemberOrm.left_at.is_(None)
-        )
-        result = await self._session.execute(query)
-        return set(result.scalars().all())
-
     async def remove(self, chat_id: UUID, user_id: UUID) -> None:
         stmt = delete(ChatMemberOrm).where(
             ChatMemberOrm.chat_id == chat_id, ChatMemberOrm.user_id == user_id

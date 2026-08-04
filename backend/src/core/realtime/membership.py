@@ -23,9 +23,9 @@ class DistributedRoomMembershipUpdater:
     grants/revokes room access now learns about it too.
 
     If the user has no connection open anywhere, the publish reaches zero
-    subscribers and is a correct no-op — connect-time auto-join
-    (`api/v1/ws.py::_resolve_active_chat_rooms`) picks up the membership
-    from the DB whenever they do eventually connect.
+    subscribers and is a correct no-op — whenever they do connect and
+    open that chat, they're joined lazily instead (see
+    messages.application.queries.list_chat_messages).
     """
 
     def __init__(self, subscription_manager: RedisSubscriptionManager) -> None:
