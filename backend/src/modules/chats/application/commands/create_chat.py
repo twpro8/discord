@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from src.core.event_bus import EventBus
+from src.core.websocket.manager import RoomMembershipUpdater
+from src.modules.chats.application.realtime import join_members_to_chat_room
 from src.modules.chats.domain.entities.chat import Chat
 from src.modules.chats.domain.entities.dtos import (
     ChatCreate,
@@ -25,9 +27,15 @@ class CreateChatCommand(Command):
 
 
 class CreateChatCommandHandler:
-    def __init__(self, uow: ChatUnitOfWork, event_bus: EventBus) -> None:
+    def __init__(
+        self,
+        uow: ChatUnitOfWork,
+        event_bus: EventBus,
+        room_membership_updater: RoomMembershipUpdater,
+    ) -> None:
         self._uow = uow
         self._event_bus = event_bus
+        self._room_membership_updater = room_membership_updater
 
     async def _publish_events(self, chat: Chat) -> None:
         await self._event_bus.publish_many(chat.pull_events())
@@ -60,14 +68,17 @@ class CreateChatCommandHandler:
         chat = await self._uow.chats.create(ChatCreate(type=ChatType.private))
         chat.record_event(ChatCreatedEvent(chat_id=chat.id))
 
+        member_ids = [creator_id, data.target_user_id]
         members = [
-            MemberCreate(user_id=creator_id, chat_id=chat.id),
-            MemberCreate(user_id=data.target_user_id, chat_id=chat.id),
+            MemberCreate(user_id=user_id, chat_id=chat.id) for user_id in member_ids
         ]
 
         await self._uow.members.add_members(members)
         await self._uow.commit()
         await self._publish_events(chat)
+        await join_members_to_chat_room(
+            self._room_membership_updater, chat.id, member_ids
+        )
 
         return Result.ok(chat)
 
@@ -86,17 +97,16 @@ class CreateChatCommandHandler:
         )
         chat.record_event(ChatCreatedEvent(chat_id=chat.id))
 
-        members = []
-
-        if data.member_ids:
-            members = [
-                MemberCreate(
-                    user_id=user_id,
-                    chat_id=chat.id,
-                    role=ChatMemberRole.member,
-                )
-                for user_id in data.member_ids
-            ]
+        member_ids = list(data.member_ids) if data.member_ids else []
+        members = [
+            MemberCreate(
+                user_id=user_id,
+                chat_id=chat.id,
+                role=ChatMemberRole.member,
+            )
+            for user_id in member_ids
+        ]
+        member_ids.append(creator_id)
 
         members.append(
             MemberCreate(
@@ -109,5 +119,8 @@ class CreateChatCommandHandler:
         await self._uow.members.add_members(members)
         await self._uow.commit()
         await self._publish_events(chat)
+        await join_members_to_chat_room(
+            self._room_membership_updater, chat.id, member_ids
+        )
 
         return Result.ok(chat)

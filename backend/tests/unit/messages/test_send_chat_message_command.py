@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+from src.core.realtime.envelope import EventType
+from src.core.realtime.rooms import chat_room
 from src.modules.chats.domain.entities.dtos import ChatCreate, MemberCreate
 from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.domain.exceptions import ChatNotFoundError, NotChatMemberError
@@ -95,24 +97,22 @@ async def test_success() -> None:
     assert message.chat_id == chat.id
     assert message.sequence == 1
 
-    assert realtime.published == [
+    assert realtime.room_published == [
         (
-            sender_id,
+            chat_room(chat.id),
+            EventType.MESSAGE_CREATED,
             {
-                "type": "message.created",
-                "payload": {
-                    "id": message.id,
-                    "sender_id": message.sender_id,
-                    "body": message.body,
-                    "sequence": message.sequence,
-                    "parent_id": message.parent_id,
-                    "is_edited": message.is_edited,
-                    "is_deleted": message.is_deleted,
-                    "deleted_at": message.deleted_at,
-                    "created_at": message.created_at,
-                    "updated_at": message.updated_at,
-                    "chat_id": message.chat_id,
-                },
+                "id": message.id,
+                "sender_id": message.sender_id,
+                "body": message.body,
+                "sequence": message.sequence,
+                "parent_id": message.parent_id,
+                "is_edited": message.is_edited,
+                "is_deleted": message.is_deleted,
+                "deleted_at": message.deleted_at,
+                "created_at": message.created_at,
+                "updated_at": message.updated_at,
+                "chat_id": message.chat_id,
             },
         )
     ]

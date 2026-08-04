@@ -39,6 +39,17 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     REFRESH_TOKEN_EXPIRE_SECONDS: int = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
 
+    # Bounded per-connection send queue: a WebSocket write slower than the
+    # produce rate fails fast (disconnect) past this depth rather than
+    # blocking the event loop or silently dropping messages.
+    WS_SEND_QUEUE_MAXSIZE: int = 256
+
+    # Reconnect backoff for the realtime Redis subscription listener:
+    # delay = min(BASE * 2**attempt, MAX) * uniform(JITTER, 1.0)
+    WS_REDIS_BACKOFF_BASE_SECONDS: float = 0.5
+    WS_REDIS_BACKOFF_MAX_SECONDS: float = 30.0
+    WS_REDIS_BACKOFF_JITTER: float = 0.5
+
     FRONTEND_HOST: str
     CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = []
 

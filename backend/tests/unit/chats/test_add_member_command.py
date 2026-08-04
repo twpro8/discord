@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from src.core.realtime.rooms import chat_room
 from src.modules.chats.application.commands.add_member import (
     AddMemberCommand,
     AddMemberCommandHandler,
@@ -15,6 +16,7 @@ from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
     FakeChatUnitOfWork,
+    FakeRoomMembershipUpdater,
 )
 from tests.unit.friends.fakes import FakeUsersFacade
 from tests.unit.users.fakes import make_user
@@ -35,7 +37,8 @@ async def test_owner_can_add_existing_and_skip_already_members() -> None:
 
     new_user = make_user()
     users_facade = FakeUsersFacade([new_user, existing_user])
-    handler = AddMemberCommandHandler(uow, users_facade)
+    room_updater = FakeRoomMembershipUpdater()
+    handler = AddMemberCommandHandler(uow, users_facade, room_updater)
 
     result = await handler.handle(
         AddMemberCommand(
@@ -49,6 +52,10 @@ async def test_owner_can_add_existing_and_skip_already_members() -> None:
     assert result.value.added == [new_user.id]
     assert result.value.skipped == [existing_user.id]
     assert uow.committed
+    # Only the newly-added member is joined — the already-active one is
+    # skipped, so its (presumably already-joined) room membership is left
+    # untouched.
+    assert room_updater.joined == [(new_user.id, chat_room(chat.id))]
 
 
 async def test_rejects_nonexistent_target_user() -> None:
@@ -62,7 +69,7 @@ async def test_rejects_nonexistent_target_user() -> None:
         [MemberCreate(user_id=owner_id, chat_id=chat.id, role=ChatMemberRole.owner)]
     )
     users_facade = FakeUsersFacade([])
-    handler = AddMemberCommandHandler(uow, users_facade)
+    handler = AddMemberCommandHandler(uow, users_facade, FakeRoomMembershipUpdater())
 
     result = await handler.handle(
         AddMemberCommand(chat_id=chat.id, user_id=owner_id, user_ids=[uuid4()])
@@ -86,7 +93,7 @@ async def test_non_owner_cannot_add_member() -> None:
         ]
     )
     users_facade = FakeUsersFacade([])
-    handler = AddMemberCommandHandler(uow, users_facade)
+    handler = AddMemberCommandHandler(uow, users_facade, FakeRoomMembershipUpdater())
 
     result = await handler.handle(
         AddMemberCommand(chat_id=chat.id, user_id=other_id, user_ids=[uuid4()])
@@ -108,7 +115,7 @@ async def test_cannot_add_member_to_private_chat() -> None:
         ]
     )
     users_facade = FakeUsersFacade([])
-    handler = AddMemberCommandHandler(uow, users_facade)
+    handler = AddMemberCommandHandler(uow, users_facade, FakeRoomMembershipUpdater())
 
     result = await handler.handle(
         AddMemberCommand(chat_id=chat.id, user_id=user_a, user_ids=[uuid4()])

@@ -29,6 +29,8 @@ class ChatsFacade(Protocol):
 
     async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]: ...
 
+    async def list_active_chat_ids(self, user_id: UUID) -> set[UUID]: ...
+
 
 class RepositoryBackedChatsFacade:
     def __init__(
@@ -51,6 +53,9 @@ class RepositoryBackedChatsFacade:
 
     async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]:
         return await self._chat_members.list_active_user_ids(chat_id)
+
+    async def list_active_chat_ids(self, user_id: UUID) -> set[UUID]:
+        return await self._chat_members.list_active_chat_ids(user_id)
 
 
 def build_chats_facade(session: AsyncSession) -> ChatsFacade:

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from src.core.websocket.manager import RoomMembershipUpdater
+from src.modules.chats.application.realtime import leave_members_from_chat_room
 from src.modules.chats.domain import services
 from src.modules.chats.domain.entities.dtos import ChatUpdate
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
@@ -18,8 +20,11 @@ class LeaveChatCommand(Command):
 
 
 class LeaveChatCommandHandler:
-    def __init__(self, uow: ChatUnitOfWork) -> None:
+    def __init__(
+        self, uow: ChatUnitOfWork, room_membership_updater: RoomMembershipUpdater
+    ) -> None:
         self._uow = uow
+        self._room_membership_updater = room_membership_updater
 
     async def handle(self, command: LeaveChatCommand) -> Result[None, LumiereError]:
         try:
@@ -49,4 +54,7 @@ class LeaveChatCommandHandler:
                 )
 
         await self._uow.commit()
+        await leave_members_from_chat_room(
+            self._room_membership_updater, command.chat_id, [command.user_id]
+        )
         return Result.ok(None)

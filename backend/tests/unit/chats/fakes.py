@@ -19,6 +19,18 @@ from src.shared.domain.domain_event import DomainEvent
 from src.shared.domain.unset import set_fields
 
 
+class FakeRoomMembershipUpdater:
+    def __init__(self) -> None:
+        self.joined: list[tuple[UUID, str]] = []
+        self.left: list[tuple[UUID, str]] = []
+
+    async def join_user_to_room(self, user_id: UUID, room: str) -> None:
+        self.joined.append((user_id, room))
+
+    async def leave_user_from_room(self, user_id: UUID, room: str) -> None:
+        self.left.append((user_id, room))
+
+
 class FakeChatRepository:
     def __init__(self) -> None:
         self.chats: dict[UUID, Chat] = {}
@@ -125,6 +137,13 @@ class FakeChatMemberRepository:
     async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]:
         return {m.user_id for m in self._active_in_chat(chat_id)}
 
+    async def list_active_chat_ids(self, user_id: UUID) -> set[UUID]:
+        return {
+            m.chat_id
+            for m in self.members
+            if m.user_id == user_id and m.left_at is None
+        }
+
     async def remove(self, chat_id: UUID, user_id: UUID) -> None:
         self.members = [
             m
@@ -199,6 +218,9 @@ class FakeChatsFacade:
 
     async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]:
         return await self._chat_members.list_active_user_ids(chat_id)
+
+    async def list_active_chat_ids(self, user_id: UUID) -> set[UUID]:
+        return await self._chat_members.list_active_chat_ids(user_id)
 
 
 class RecordingEventBus:

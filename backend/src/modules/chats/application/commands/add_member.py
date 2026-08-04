@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from src.core.websocket.manager import RoomMembershipUpdater
+from src.modules.chats.application.realtime import join_members_to_chat_room
 from src.modules.chats.domain import services
 from src.modules.chats.domain.entities.dtos import AddMemberResult, MemberCreate
 from src.modules.chats.domain.enums import ChatMemberRole
@@ -20,9 +22,15 @@ class AddMemberCommand(Command):
 
 
 class AddMemberCommandHandler:
-    def __init__(self, uow: ChatUnitOfWork, users_facade: UsersFacade) -> None:
+    def __init__(
+        self,
+        uow: ChatUnitOfWork,
+        users_facade: UsersFacade,
+        room_membership_updater: RoomMembershipUpdater,
+    ) -> None:
         self._uow = uow
         self._users_facade = users_facade
+        self._room_membership_updater = room_membership_updater
 
     async def handle(
         self, command: AddMemberCommand
@@ -56,4 +64,7 @@ class AddMemberCommandHandler:
             )
 
         await self._uow.commit()
+        await join_members_to_chat_room(
+            self._room_membership_updater, command.chat_id, to_add
+        )
         return Result.ok(AddMemberResult(added=to_add, skipped=skipped))

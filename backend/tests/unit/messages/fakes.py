@@ -1,7 +1,9 @@
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
+from src.core.realtime.envelope import EventType
 from src.modules.messages.domain.entities.dtos import (
     ChannelMessagePage,
     ChatMessagePage,
@@ -112,10 +114,12 @@ class FakeMessageRepository:
 
 class FakeRealtimeNotifier:
     def __init__(self) -> None:
-        self.published: list[tuple[UUID, dict[str, Any]]] = []
+        self.room_published: list[tuple[str, EventType, dict[str, Any]]] = []
 
-    async def publish_user_event(self, user_id: UUID, payload: dict[str, Any]) -> None:
-        self.published.append((user_id, payload))
+    async def publish_to_room(
+        self, room: str, event_type: EventType, payload: Mapping[str, Any]
+    ) -> None:
+        self.room_published.append((room, event_type, dict(payload)))
 
 
 class FakeMessageUnitOfWork(MessageUnitOfWork):
