@@ -8,6 +8,7 @@ import DmChatPage from "@/pages/dm/DmChatPage";
 export const Route = createFileRoute("/home/dms/$chatId")({
   validateSearch: (search: Record<string, unknown>) => ({
     peerName: typeof search.peerName === "string" ? search.peerName : undefined,
+    peerId: typeof search.peerId === "string" ? search.peerId : undefined,
   }),
   component: DmChatPage,
 });
