@@ -22,6 +22,14 @@ class ManagedWebSocket(SendableWebSocket, Protocol):
     async def receive_text(self) -> str: ...
 
 
+ActivityCallback = Callable[[UUID, UUID, str], Awaitable[None]]
+"""Invoked on every inbound frame from `serve()`'s reader loop, with
+(user_id, connection_id, raw_text) — the raw frame text so a listener
+(presence's heartbeat handling) can parse it without this layer knowing
+anything about that format. Kept optional/pluggable rather than a fixed
+dependency so `core/websocket` stays free of any module-specific import,
+same rationale as RoomTransitionCallback below."""
+
 RoomTransitionCallback = Callable[[str], Awaitable[None]]
 """Invoked when a room's local subscriber count transitions 0->1
 (`on_room_activated`) or 1->0 (`on_room_deactivated`). Unused by this
@@ -66,10 +74,12 @@ class ConnectionManager:
         queue_maxsize: int = 256,
         on_room_activated: RoomTransitionCallback | None = None,
         on_room_deactivated: RoomTransitionCallback | None = None,
+        on_activity: ActivityCallback | None = None,
     ) -> None:
         self._queue_maxsize = queue_maxsize
         self._on_room_activated = on_room_activated
         self._on_room_deactivated = on_room_deactivated
+        self._on_activity = on_activity
         self._connections: dict[UUID, Connection] = {}
         self._rooms: dict[str, set[UUID]] = {}
         self._user_connections: dict[UUID, set[UUID]] = {}
@@ -90,6 +100,12 @@ class ConnectionManager:
         """
         self._on_room_activated = on_room_activated
         self._on_room_deactivated = on_room_deactivated
+
+    def set_activity_callback(self, on_activity: ActivityCallback | None) -> None:
+        """Mirror of `set_room_transition_callbacks` — same construction-order
+        rationale (the callback owner needs this ConnectionManager instance
+        to already exist)."""
+        self._on_activity = on_activity
 
     async def connect(
         self,
@@ -238,8 +254,12 @@ class ConnectionManager:
         client_disconnected = False
         try:
             while True:
-                await websocket.receive_text()
+                raw_text = await websocket.receive_text()
                 connection.touch()
+                if self._on_activity is not None:
+                    await self._on_activity(
+                        connection.user_id, connection.connection_id, raw_text
+                    )
         except WebSocketDisconnect:
             client_disconnected = True
             logger.info(

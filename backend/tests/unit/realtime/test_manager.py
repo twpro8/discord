@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 import json
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from starlette.websockets import WebSocketDisconnect
 
@@ -277,6 +277,61 @@ async def test_shutdown_disconnects_every_connection() -> None:
 
     assert manager._connections == {}
     assert manager._user_connections == {}
+
+
+async def test_activity_callback_fires_on_every_inbound_frame_including_malformed() -> (
+    None
+):
+    # Deliberately no JSON parsing here — the on_activity callback receives
+    # the raw text as-is, exactly like touch()'s existing "any frame means
+    # alive" semantic. Parsing (and defaulting malformed input to a
+    # liveness-only signal) is the listener's job (presence's
+    # PresenceService), not ConnectionManager's.
+    received: list[tuple[UUID, UUID, str]] = []
+
+    async def on_activity(user_id: UUID, connection_id: UUID, raw_text: str) -> None:
+        received.append((user_id, connection_id, raw_text))
+
+    manager = ConnectionManager(on_activity=on_activity)
+    ws = FakeManagedWebSocket(to_send=["hello", "not json {{{"])
+    user_id = uuid4()
+    connection = await manager.connect(ws, user_id)
+    serve_task = asyncio.create_task(manager.serve(connection))
+
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+
+    assert received == [
+        (user_id, connection.connection_id, "hello"),
+        (user_id, connection.connection_id, "not json {{{"),
+    ]
+
+    await manager.disconnect(connection)
+    with contextlib.suppress(asyncio.CancelledError):
+        await serve_task
+
+
+async def test_set_activity_callback_binds_after_construction() -> None:
+    received: list[str] = []
+
+    async def on_activity(_user_id: UUID, _connection_id: UUID, raw_text: str) -> None:
+        received.append(raw_text)
+
+    manager = ConnectionManager()
+    manager.set_activity_callback(on_activity)
+    ws = FakeManagedWebSocket(to_send=["ping"])
+    connection = await manager.connect(ws, uuid4())
+    serve_task = asyncio.create_task(manager.serve(connection))
+
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+
+    assert received == ["ping"]
+
+    await manager.disconnect(connection)
+    with contextlib.suppress(asyncio.CancelledError):
+        await serve_task
 
 
 async def test_connect_ignores_unknown_connection_in_join_room() -> None:
