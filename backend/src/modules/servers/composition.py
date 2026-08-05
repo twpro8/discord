@@ -2,6 +2,7 @@ from contextlib import AsyncExitStack
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.channels.public.facade import build_channels_facade
 from src.modules.servers.application.commands.create_invite import (
     CreateInviteCommand,
@@ -35,6 +36,10 @@ from src.modules.servers.application.queries.get_invites import (
     GetInvitesQuery,
     GetInvitesQueryHandler,
 )
+from src.modules.servers.application.queries.get_server_members import (
+    GetServerMembersQuery,
+    GetServerMembersQueryHandler,
+)
 from src.modules.servers.application.queries.get_server_where_user_member import (
     GetServerWhereUserMemberQuery,
     GetServerWhereUserMemberQueryHandler,
@@ -62,6 +67,7 @@ async def register_server_handlers(
     mediator: InProcessMediator,
     session: AsyncSession,
     stack: AsyncExitStack,
+    room_membership_updater: RoomMembershipUpdater,
 ) -> None:
     server_repository = ServerRepositoryImpl(session=session)
     server_member_repository = ServerMemberRepositoryImpl(session=session)
@@ -82,14 +88,16 @@ async def register_server_handlers(
 
     mediator.register_command(
         CreateServerCommand,
-        CreateServerCommandHandler(uow, channels_facade),
+        CreateServerCommandHandler(uow, channels_facade, room_membership_updater),
     )
     mediator.register_command(UpdateServerCommand, UpdateServerCommandHandler(uow))
     mediator.register_command(DeleteServerCommand, DeleteServerCommandHandler(uow))
     mediator.register_command(
         TransferServerOwnershipCommand, TransferServerOwnershipCommandHandler(uow)
     )
-    mediator.register_command(JoinServerCommand, JoinServerCommandHandler(uow))
+    mediator.register_command(
+        JoinServerCommand, JoinServerCommandHandler(uow, room_membership_updater)
+    )
     mediator.register_command(CreateInviteCommand, CreateInviteCommandHandler(uow))
     mediator.register_command(DeleteInviteCommand, DeleteInviteCommandHandler(uow))
 
@@ -99,9 +107,15 @@ async def register_server_handlers(
     )
     mediator.register_query(
         GetServerWhereUserMemberQuery,
-        GetServerWhereUserMemberQueryHandler(server_repository),
+        GetServerWhereUserMemberQueryHandler(
+            server_repository, room_membership_updater
+        ),
     )
     mediator.register_query(
         GetInvitesQuery,
         GetInvitesQueryHandler(server_repository, server_invite_repository),
+    )
+    mediator.register_query(
+        GetServerMembersQuery,
+        GetServerMembersQueryHandler(server_member_repository),
     )

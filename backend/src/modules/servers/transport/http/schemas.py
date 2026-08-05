@@ -54,6 +54,14 @@ class ServerMemberResponse(BaseSchema):
     role: ServerMemberRole
 
 
+class ServerMemberWithUserResponse(BaseSchema):
+    id: UUID
+    user_id: UUID
+    username: str
+    avatar_url: str | None
+    role: ServerMemberRole
+
+
 class ServerInviteResponse(BaseSchema):
     id: UUID
     server_id: UUID

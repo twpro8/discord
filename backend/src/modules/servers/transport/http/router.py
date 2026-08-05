@@ -10,6 +10,9 @@ from src.modules.servers.application.commands.transfer_ownership import (
     TransferServerOwnershipCommand,
 )
 from src.modules.servers.application.commands.update_server import UpdateServerCommand
+from src.modules.servers.application.queries.get_server_members import (
+    GetServerMembersQuery,
+)
 from src.modules.servers.application.queries.get_server_where_user_member import (
     GetServerWhereUserMemberQuery,
 )
@@ -18,6 +21,7 @@ from src.modules.servers.application.queries.get_servers_where_user_member impor
 )
 from src.modules.servers.domain.entities.dtos import (
     ServerCreateData,
+    ServerMemberWithUser,
     ServerUpdateData,
     ServerUserSummary,
 )
@@ -26,6 +30,7 @@ from src.modules.servers.transport.http.schemas import (
     ServerCreateRequest,
     ServerInviteCode,
     ServerMemberResponse,
+    ServerMemberWithUserResponse,
     ServerResponse,
     ServerUpdateRequest,
     ServerUserSummaryResponse,
@@ -114,6 +119,20 @@ async def get_my_server(
     if result.is_err:
         raise result.error
     return ServerResponse.model_validate(result.value)
+
+
+@router.get("/{server_id}/members", response_model=list[ServerMemberWithUserResponse])
+async def get_server_members(
+    server_id: UUID,
+    current_user_id: UserIdDep,
+    mediator: MediatorDep,
+) -> list[ServerMemberWithUserResponse]:
+    result: Result[list[ServerMemberWithUser], LumiereError] = await mediator.query(
+        GetServerMembersQuery(server_id=server_id, requesting_user_id=current_user_id)
+    )
+    if result.is_err:
+        raise result.error
+    return [ServerMemberWithUserResponse.model_validate(m) for m in result.value]
 
 
 @router.patch("/{server_id}")

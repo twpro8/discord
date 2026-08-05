@@ -11,6 +11,7 @@ from src.modules.servers.domain.entities.dtos import (
     ServerInviteCreate,
     ServerMemberCreate,
     ServerMemberUpdate,
+    ServerMemberWithUser,
     ServerUpdate,
     ServerUserSummary,
 )
@@ -34,6 +35,20 @@ def _matches(entity: object, filter_by: dict[str, Any]) -> bool:
         for key, value in filter_by.items()
         if key not in _ENTITY_ONLY_FILTER_KEYS
     )
+
+
+class FakeRoomMembershipUpdater:
+    """Mirrors tests/unit/chats/fakes.py's fake of the same name."""
+
+    def __init__(self) -> None:
+        self.joined: list[tuple[UUID, str]] = []
+        self.left: list[tuple[UUID, str]] = []
+
+    async def join_user_to_room(self, user_id: UUID, room: str) -> None:
+        self.joined.append((user_id, room))
+
+    async def leave_user_from_room(self, user_id: UUID, room: str) -> None:
+        self.left.append((user_id, room))
 
 
 class FakeServerRepository:
@@ -128,6 +143,25 @@ class FakeServerMemberRepository:
             setattr(member, key, value)
         return member
 
+    async def list_with_users(self, server_id: UUID) -> list[ServerMemberWithUser]:
+        return [
+            ServerMemberWithUser(
+                id=m.id,
+                user_id=m.user_id,
+                username=f"user-{m.user_id}",
+                avatar_url=None,
+                role=m.role,
+            )
+            for m in self.members.values()
+            if m.server_id == server_id
+        ]
+
+    async def list_server_ids_for_user(self, user_id: UUID) -> set[UUID]:
+        return {m.server_id for m in self.members.values() if m.user_id == user_id}
+
+    async def list_user_ids(self, server_id: UUID) -> set[UUID]:
+        return {m.user_id for m in self.members.values() if m.server_id == server_id}
+
 
 class FakeServersFacade:
     def __init__(
@@ -147,6 +181,12 @@ class FakeServersFacade:
         await server_permission_services.assert_is_server_owner(
             self._server_members, self._servers, user_id, server_id
         )
+
+    async def list_member_server_ids(self, user_id: UUID) -> set[UUID]:
+        return await self._server_members.list_server_ids_for_user(user_id)
+
+    async def list_server_member_ids(self, server_id: UUID) -> set[UUID]:
+        return await self._server_members.list_user_ids(server_id)
 
 
 class FakeServerInviteRepository:
