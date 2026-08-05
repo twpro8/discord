@@ -93,7 +93,7 @@ modules/<name>/
                         building a real mediator/DB) plus a concrete impl and a
                         `build_<name>_facade(session[, stack])` factory. Present on modules that
                         at least one other module depends on (`users`, `channels`, `chats`,
-                        `servers`); modules nothing else depends on (`auth`, `friends`,
+                        `servers`, `friends`); modules nothing else depends on (`auth`,
                         `messages`) have no `public/` package. Other modules import ONLY from
                         here — never another module's `domain/`/`application/`/`infrastructure/`.
   transport/http/

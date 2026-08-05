@@ -169,3 +169,20 @@ class FriendRepositoryImpl:
             )
             for obj in orm_objects
         ]
+
+    async def list_friend_ids(self, user_id: UUID) -> set[UUID]:
+        """Lean id-only read for realtime fan-out (presence): avoids the
+        username/avatar_url join `get_friends` does, since this runs on
+        every presence transition."""
+        stmt = select(FriendOrm.user_id, FriendOrm.target_user_id).where(
+            or_(
+                FriendOrm.user_id == user_id,
+                FriendOrm.target_user_id == user_id,
+            ),
+            FriendOrm.status == FriendStatus.FRIENDS,
+        )
+        result = await self._session.execute(stmt)
+        friend_ids: set[UUID] = set()
+        for sent_by, sent_to in result.all():
+            friend_ids.add(sent_to if sent_by == user_id else sent_by)
+        return friend_ids
