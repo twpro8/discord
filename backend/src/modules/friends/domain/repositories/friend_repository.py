@@ -35,6 +35,8 @@ class FriendRepository(Protocol):
 
     async def get_friends(self, user_id: UUID) -> list[FriendRequestWithUser]: ...
 
+    async def list_friend_ids(self, user_id: UUID) -> set[UUID]: ...
+
     async def update(
         self,
         request_id: UUID,
