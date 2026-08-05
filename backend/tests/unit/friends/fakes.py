@@ -88,6 +88,14 @@ class FakeFriendRepository:
     async def get_friends(self, user_id: UUID) -> list[FriendRequestWithUser]:
         return self.friends_list
 
+    async def list_friend_ids(self, user_id: UUID) -> set[UUID]:
+        return {
+            (f.target_user_id if f.user_id == user_id else f.user_id)
+            for f in self.friends_list
+            if f.status == FriendStatus.FRIENDS
+            and user_id in (f.user_id, f.target_user_id)
+        }
+
     async def update(
         self,
         request_id: UUID,
@@ -129,6 +137,18 @@ class FakeUsersFacade:
         self, *, username: str, plain_password: str
     ) -> Result[UserDTO, LumiereError]:
         raise NotImplementedError
+
+
+class FakeFriendsFacade:
+    """Producer-owned fake for friends' public FriendsFacade — colocated
+    here per this codebase's "producer module owns its fake" convention,
+    imported by consumers (e.g. tests/unit/presence)."""
+
+    def __init__(self, friend_ids: dict[UUID, set[UUID]] | None = None) -> None:
+        self.friend_ids: dict[UUID, set[UUID]] = friend_ids or {}
+
+    async def list_friend_ids(self, user_id: UUID) -> set[UUID]:
+        return self.friend_ids.get(user_id, set())
 
 
 class FakeFriendUnitOfWork(FriendUnitOfWork):
