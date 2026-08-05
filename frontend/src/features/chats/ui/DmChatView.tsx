@@ -8,6 +8,7 @@ import { useMediaQuery } from "@/shared/helpers/use-media-query";
 import { AvatarInitial } from "@/shared/ui/avatar-initial";
 import { useShellDrawer } from "@/shared/ui/shell-drawer";
 
+import { useFriendsPresence } from "@/features/presence/model/use-friends-presence";
 // features
 import { useCurrentUser } from "@/features/profile/model/use-current-user";
 
@@ -24,9 +25,11 @@ const HEADER_BUTTON =
 export function DmChatView({
   chatId,
   peerName,
+  peerId,
 }: {
   chatId: string;
   peerName?: string;
+  peerId?: string;
 }) {
   const navigate = useNavigate();
   const isDesktop = useMediaQuery(breakpoints.desktop);
@@ -36,6 +39,12 @@ export function DmChatView({
   const { data: user } = useCurrentUser();
   const { data: messages = [] } = useChatMessages(chatId);
   const sendMutation = useSendChatMessage(chatId);
+  // Presence is scoped to friends only — a DM peer who isn't (or is no
+  // longer) a friend just shows no dot, which is the correct fallback.
+  const { data: presenceEntries = [] } = useFriendsPresence();
+  const peerStatus = presenceEntries.find(
+    (entry) => entry.user_id === peerId,
+  )?.status;
 
   const displayName = peerName || "Direct message";
 
@@ -72,7 +81,7 @@ export function DmChatView({
             <ArrowLeft className="h-4 w-4" />
           </button>
         )}
-        <AvatarInitial username={displayName} />
+        <AvatarInitial username={displayName} status={peerStatus} />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-foreground">
             {displayName}
