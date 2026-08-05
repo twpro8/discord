@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
+from src.core.websocket.manager import RoomMembershipUpdater
+from src.modules.servers.application.realtime import join_members_to_server_room
 from src.modules.servers.domain.entities.dtos import ServerMemberCreate
 from src.modules.servers.domain.entities.server_member import ServerMember
 from src.modules.servers.domain.enums import ServerMemberRole
@@ -18,8 +20,13 @@ class JoinServerCommand(Command):
 
 
 class JoinServerCommandHandler:
-    def __init__(self, uow: ServerUnitOfWork) -> None:
+    def __init__(
+        self,
+        uow: ServerUnitOfWork,
+        room_membership_updater: RoomMembershipUpdater,
+    ) -> None:
         self._uow = uow
+        self._room_membership_updater = room_membership_updater
 
     async def handle(
         self, command: JoinServerCommand
@@ -44,6 +51,11 @@ class JoinServerCommandHandler:
             server_id=invite.server_id, user_id=user_id, left_at=None
         )
         if member:
+            await join_members_to_server_room(
+                self._room_membership_updater,
+                invite.server_id,
+                [user_id],
+            )
             return Result.ok(member)
 
         affected_rows = await self._uow.invites.increment_use_count_atomic(
@@ -62,4 +74,9 @@ class JoinServerCommandHandler:
         )
         member = await self._uow.server_members.create(member_data)
         await self._uow.commit()
+        await join_members_to_server_room(
+            self._room_membership_updater,
+            invite.server_id,
+            [user_id],
+        )
         return Result.ok(member)

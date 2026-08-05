@@ -19,3 +19,13 @@ def chat_room(chat_id: UUID) -> str:
     chat's existence — on this instance or any other — still gets joined.
     """
     return f"chat:{chat_id}"
+
+
+def server_room(server_id: UUID) -> str:
+    """A server's room — the publish target for server-scoped events
+    (currently: presence fan-out to co-members). Joined at server
+    create/join time (see servers' Create/JoinServer command handlers)
+    and lazily on view (see servers.application.queries.
+    get_server_where_user_member), mirroring chat_room's join pattern.
+    """
+    return f"server:{server_id}"

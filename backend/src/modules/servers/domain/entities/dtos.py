@@ -94,3 +94,16 @@ class ServerMemberCreate:
 @dataclass(frozen=True, kw_only=True)
 class ServerMemberUpdate:
     role: Unsettable[ServerMemberRole] = UNSET
+
+
+@dataclass(frozen=True, kw_only=True)
+class ServerMemberWithUser:
+    """Read-model DTO for the member roster — joins in user info the way
+    `chats.ChatMemberSummary` does, since nothing needs this hydrated
+    outside `servers` itself."""
+
+    id: UUID
+    user_id: UUID
+    username: str
+    avatar_url: str | None
+    role: ServerMemberRole

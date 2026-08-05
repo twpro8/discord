@@ -27,6 +27,10 @@ class ServersFacade(Protocol):
 
     async def assert_is_server_owner(self, user_id: UUID, server_id: UUID) -> None: ...
 
+    async def list_member_server_ids(self, user_id: UUID) -> set[UUID]: ...
+
+    async def list_server_member_ids(self, server_id: UUID) -> set[UUID]: ...
+
 
 class RepositoryBackedServersFacade:
     def __init__(
@@ -44,6 +48,12 @@ class RepositoryBackedServersFacade:
         await services.assert_is_server_owner(
             self._server_members, self._servers, user_id, server_id
         )
+
+    async def list_member_server_ids(self, user_id: UUID) -> set[UUID]:
+        return await self._server_members.list_server_ids_for_user(user_id)
+
+    async def list_server_member_ids(self, server_id: UUID) -> set[UUID]:
+        return await self._server_members.list_user_ids(server_id)
 
 
 def build_servers_facade(session: AsyncSession) -> ServersFacade:

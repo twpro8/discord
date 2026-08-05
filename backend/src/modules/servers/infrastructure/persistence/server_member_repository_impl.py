@@ -8,12 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.servers.domain.entities.dtos import (
     ServerMemberCreate,
     ServerMemberUpdate,
+    ServerMemberWithUser,
 )
 from src.modules.servers.domain.entities.server_member import ServerMember
+from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.infrastructure.persistence.mappers import (
     ServerMemberDataMapper,
 )
 from src.modules.servers.infrastructure.persistence.models import ServerMemberOrm
+from src.modules.users.infrastructure.persistence.models import UserOrm
 from src.shared.domain.unset import set_fields
 from src.shared.errors import NotFoundError
 
@@ -49,3 +52,46 @@ class ServerMemberRepositoryImpl:
         if model is None:
             raise NotFoundError
         return ServerMemberDataMapper.to_entity(model)
+
+    async def list_with_users(self, server_id: UUID) -> list[ServerMemberWithUser]:
+        query = (
+            select(
+                ServerMemberOrm.id,
+                ServerMemberOrm.user_id,
+                UserOrm.username,
+                UserOrm.avatar_url,
+                ServerMemberOrm.role,
+            )
+            .join(UserOrm, UserOrm.id == ServerMemberOrm.user_id)
+            .where(
+                ServerMemberOrm.server_id == server_id,
+                ServerMemberOrm.left_at.is_(None),
+            )
+        )
+        rows = (await self._session.execute(query)).all()
+        return [
+            ServerMemberWithUser(
+                id=row.id,
+                user_id=row.user_id,
+                username=row.username,
+                avatar_url=row.avatar_url,
+                role=ServerMemberRole(row.role),
+            )
+            for row in rows
+        ]
+
+    async def list_server_ids_for_user(self, user_id: UUID) -> set[UUID]:
+        query = select(ServerMemberOrm.server_id).where(
+            ServerMemberOrm.user_id == user_id,
+            ServerMemberOrm.left_at.is_(None),
+        )
+        result = await self._session.execute(query)
+        return set(result.scalars().all())
+
+    async def list_user_ids(self, server_id: UUID) -> set[UUID]:
+        query = select(ServerMemberOrm.user_id).where(
+            ServerMemberOrm.server_id == server_id,
+            ServerMemberOrm.left_at.is_(None),
+        )
+        result = await self._session.execute(query)
+        return set(result.scalars().all())

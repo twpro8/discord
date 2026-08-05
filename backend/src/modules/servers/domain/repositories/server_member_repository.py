@@ -4,6 +4,7 @@ from uuid import UUID
 from src.modules.servers.domain.entities.dtos import (
     ServerMemberCreate,
     ServerMemberUpdate,
+    ServerMemberWithUser,
 )
 from src.modules.servers.domain.entities.server_member import ServerMember
 
@@ -16,3 +17,6 @@ class ServerMemberRepository(Protocol):
         id_: UUID,
         data: ServerMemberUpdate,
     ) -> ServerMember: ...
+    async def list_with_users(self, server_id: UUID) -> list[ServerMemberWithUser]: ...
+    async def list_server_ids_for_user(self, user_id: UUID) -> set[UUID]: ...
+    async def list_user_ids(self, server_id: UUID) -> set[UUID]: ...
