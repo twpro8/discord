@@ -93,7 +93,7 @@ export function FriendList({
   disabled: boolean;
   onOpenChat: (friend: FriendRequestWithUser) => void;
   onRemove: (id: string) => void;
-  currentUserId?: string;
+  currentUserId: string;
   statusByUserId?: Record<string, PresenceStatus>;
 }) {
   if (isLoading) return <Skeleton />;
@@ -102,9 +102,7 @@ export function FriendList({
   return (
     <div className="space-y-0.5">
       {friends.map((friend) => {
-        const peerId = currentUserId
-          ? getFriendPeerId(friend, currentUserId)
-          : undefined;
+        const peerId = getFriendPeerId(friend, currentUserId);
         return (
           <FriendItem
             key={friend.id}
@@ -112,7 +110,7 @@ export function FriendList({
             disabled={disabled}
             onOpenChat={onOpenChat}
             onRemove={onRemove}
-            status={peerId ? statusByUserId[peerId] : undefined}
+            status={statusByUserId[peerId]}
           />
         );
       })}

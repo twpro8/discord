@@ -1,4 +1,5 @@
 // third party
+import { useNavigate } from "@tanstack/react-router";
 import { Compass, Plus } from "lucide-react";
 
 // shared
@@ -20,6 +21,7 @@ export function ServerSidebar({
   onCreateServerClick,
   className,
 }: ServerSidebarProps) {
+  const navigate = useNavigate();
   const { data: user } = useCurrentUser();
   const { data: servers = [], isLoading } = useServers();
 
@@ -43,6 +45,13 @@ export function ServerSidebar({
               key={server.id}
               className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-muted/50 text-sm font-semibold text-foreground transition hover:bg-muted"
               type="button"
+              aria-label={`Open ${server.name}`}
+              onClick={() =>
+                navigate({
+                  to: "/home/servers/$serverId",
+                  params: { serverId: server.id },
+                })
+              }
             >
               {server.name.charAt(0).toUpperCase()}
             </button>

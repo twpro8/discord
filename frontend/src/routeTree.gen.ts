@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as HomeIndexRouteImport } from './routes/home/index'
 import { Route as HomeDmsChatIdRouteImport } from './routes/home/dms.$chatId'
+import { Route as HomeServersServerIdRouteImport } from './routes/home/servers.$serverId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const HomeDmsChatIdRoute = HomeDmsChatIdRouteImport.update({
   path: '/dms/$chatId',
   getParentRoute: () => HomeRoute,
 } as any)
+const HomeServersServerIdRoute = HomeServersServerIdRouteImport.update({
+  id: '/servers/$serverId',
+  path: '/servers/$serverId',
+  getParentRoute: () => HomeRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/home/': typeof HomeIndexRoute
   '/home/dms/$chatId': typeof HomeDmsChatIdRoute
+  '/home/servers/$serverId': typeof HomeServersServerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/home': typeof HomeIndexRoute
   '/home/dms/$chatId': typeof HomeDmsChatIdRoute
+  '/home/servers/$serverId': typeof HomeServersServerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,13 +78,26 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/home/': typeof HomeIndexRoute
   '/home/dms/$chatId': typeof HomeDmsChatIdRoute
+  '/home/servers/$serverId': typeof HomeServersServerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/home' | '/login' | '/register' | '/home/' | '/home/dms/$chatId'
+    | '/'
+    | '/home'
+    | '/login'
+    | '/register'
+    | '/home/'
+    | '/home/dms/$chatId'
+    | '/home/servers/$serverId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/register' | '/home' | '/home/dms/$chatId'
+  to:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/home'
+    | '/home/dms/$chatId'
+    | '/home/servers/$serverId'
   id:
     | '__root__'
     | '/'
@@ -85,6 +106,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/home/'
     | '/home/dms/$chatId'
+    | '/home/servers/$serverId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -138,17 +160,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HomeDmsChatIdRouteImport
       parentRoute: typeof HomeRoute
     }
+    '/home/servers/$serverId': {
+      id: '/home/servers/$serverId'
+      path: '/servers/$serverId'
+      fullPath: '/home/servers/$serverId'
+      preLoaderRoute: typeof HomeServersServerIdRouteImport
+      parentRoute: typeof HomeRoute
+    }
   }
 }
 
 interface HomeRouteChildren {
   HomeIndexRoute: typeof HomeIndexRoute
   HomeDmsChatIdRoute: typeof HomeDmsChatIdRoute
+  HomeServersServerIdRoute: typeof HomeServersServerIdRoute
 }
 
 const HomeRouteChildren: HomeRouteChildren = {
   HomeIndexRoute: HomeIndexRoute,
   HomeDmsChatIdRoute: HomeDmsChatIdRoute,
+  HomeServersServerIdRoute: HomeServersServerIdRoute,
 }
 
 const HomeRouteWithChildren = HomeRoute._addFileChildren(HomeRouteChildren)

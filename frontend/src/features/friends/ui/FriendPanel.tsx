@@ -45,7 +45,10 @@ export function FriendPanel({ className }: { className?: string }) {
 
   const navigate = useNavigate();
   const closeFriends = useShellDrawer((state) => state.closeFriends);
+
   const { data: user } = useCurrentUser();
+  if (!user) return null;
+
   const { incoming, sent, isLoading: isLoadingRequests } = useFriendRequests();
   const { data: friends = [], isLoading: isLoadingFriends } = useFriends();
   const { data: presenceEntries = [] } = useFriendsPresence();
@@ -61,7 +64,6 @@ export function FriendPanel({ className }: { className?: string }) {
   const createChatMutation = useCreatePrivateChat();
 
   const handleOpenChat = (friend: FriendRequestWithUser) => {
-    if (!user) return;
     const peerId = getFriendPeerId(friend, user.id);
     createChatMutation.mutate(peerId, {
       onSuccess: (chat) => {
@@ -143,7 +145,7 @@ export function FriendPanel({ className }: { className?: string }) {
             disabled={removeMutation.isPending}
             onOpenChat={handleOpenChat}
             onRemove={(id) => removeMutation.mutate(id)}
-            currentUserId={user?.id}
+            currentUserId={user.id}
             statusByUserId={statusByUserId}
           />
         )}
