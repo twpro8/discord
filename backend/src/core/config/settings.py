@@ -50,6 +50,14 @@ class Settings(BaseSettings):
     WS_REDIS_BACKOFF_MAX_SECONDS: float = 30.0
     WS_REDIS_BACKOFF_JITTER: float = 0.5
 
+    # Presence heartbeats: how often clients are expected to send one, how
+    # long a connection can go without one before the sweeper considers it
+    # dead (a crashed tab that never sent a close frame), and how often the
+    # sweeper runs.
+    WS_PRESENCE_HEARTBEAT_INTERVAL_SECONDS: float = 25.0
+    WS_PRESENCE_STALE_AFTER_SECONDS: float = 75.0
+    WS_PRESENCE_SWEEP_INTERVAL_SECONDS: float = 30.0
+
     FRONTEND_HOST: str
     CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = []
 
