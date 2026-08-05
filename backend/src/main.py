@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from uuid import UUID
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,11 +10,20 @@ from src.api.v1.router import build_api_v1_router
 from src.composition.container import build_container
 from src.core.cache import RedisCache
 from src.core.config import settings
+from src.core.database.session import get_session_factory
 from src.core.event_bus import InMemoryEventBus, RedisStreamsEventBus
 from src.core.logging import configure_logging, get_logger
+from src.core.realtime.notifier import RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.redis import close_redis, init_redis
 from src.core.websocket.manager import ConnectionManager
+from src.modules.friends.public.facade import build_friends_facade
+from src.modules.presence.application.presence_service import PresenceService
+from src.modules.presence.application.presence_sweeper import PresenceSweeper
+from src.modules.presence.infrastructure.persistence.redis_presence_repository import (
+    RedisPresenceRepository,
+)
+from src.modules.servers.public.facade import build_servers_facade
 from src.utils import custom_generate_unique_id
 
 logger = get_logger(__name__)
@@ -57,9 +67,45 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.connection_manager = connection_manager
     app.state.redis_subscription_manager = redis_subscription_manager
 
+    # Presence: built once here, not per-request — see PresenceService's
+    # own docstring for why connect/disconnect/heartbeat bypass the
+    # mediator entirely. `lookup_presence_fan_out_targets` gives it its own
+    # short-lived session for the friend/server lookups a transition needs,
+    # sharing the same process-wide pool as ordinary HTTP traffic
+    # (deliberate: this only runs on actual transitions, not every
+    # heartbeat, so it's infrequent enough not to warrant a dedicated
+    # NullPool factory).
+    async def lookup_presence_fan_out_targets(
+        user_id: UUID,
+    ) -> tuple[set[UUID], set[UUID]]:
+        async with get_session_factory()() as session:
+            friend_ids = await build_friends_facade(session).list_friend_ids(user_id)
+            server_ids = await build_servers_facade(session).list_member_server_ids(
+                user_id
+            )
+            return friend_ids, server_ids
+
+    presence_repository = RedisPresenceRepository(
+        app.state.redis, stale_after_seconds=settings.WS_PRESENCE_STALE_AFTER_SECONDS
+    )
+    presence_service = PresenceService(
+        presence_repository,
+        RedisRealtimeNotifier(redis_subscription_manager),
+        lookup_presence_fan_out_targets,
+    )
+    connection_manager.set_activity_callback(presence_service.on_activity)
+    presence_sweeper = PresenceSweeper(
+        presence_service,
+        interval_seconds=settings.WS_PRESENCE_SWEEP_INTERVAL_SECONDS,
+    )
+    presence_sweeper.start()
+    app.state.presence_service = presence_service
+    app.state.presence_sweeper = presence_sweeper
+
     yield
 
     logger.info("app.shutdown")
+    await app.state.presence_sweeper.stop()
     await app.state.connection_manager.shutdown()
     await app.state.redis_subscription_manager.stop()
     # Close Redis connection

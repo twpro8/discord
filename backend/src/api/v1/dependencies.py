@@ -21,8 +21,11 @@ from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.modules.channels.composition import register_channel_handlers
 from src.modules.chats.composition import register_chat_handlers
 from src.modules.friends.composition import register_friend_handlers
+from src.modules.friends.public.facade import build_friends_facade
 from src.modules.messages.composition import register_message_handlers
+from src.modules.presence.composition import register_presence_handlers
 from src.modules.servers.composition import register_server_handlers
+from src.modules.servers.public.facade import build_servers_facade
 from src.modules.users.composition import register_user_handlers
 from src.modules.users.public.facade import MediatorUsersFacade
 from src.shared.application.in_process_mediator import InProcessMediator
@@ -73,6 +76,7 @@ async def get_mediator(
     session: SessionDep,
     event_bus: EventBusDep,
     cache: CacheDep,
+    redis: RedisDep,
     redis_subscription_manager: RedisSubscriptionManagerDep,
 ) -> AsyncGenerator[Mediator]:
     async with AsyncExitStack() as stack:
@@ -81,6 +85,12 @@ async def get_mediator(
         # on it — safe to build before the modules they wrap are registered
         # below, since dispatch never happens before this generator yields.
         users_facade = MediatorUsersFacade(mediator)
+        # Session-backed, unlike users_facade above — friends/servers have
+        # no command handlers of their own for presence to dispatch
+        # through, so these read straight off the request's session
+        # instead (same shape as chats_facade/channels_facade elsewhere).
+        friends_facade = build_friends_facade(session)
+        servers_facade = build_servers_facade(session)
         # Redis-backed: reaches every instance's local connections, not
         # just this process's — every connection already auto-joins its
         # own user:{user_id} room on connect (see api/v1/ws.py), and
@@ -103,7 +113,12 @@ async def get_mediator(
         await register_message_handlers(
             mediator, session, stack, realtime_notifier, room_membership_updater
         )
-        await register_server_handlers(mediator, session, stack)
+        await register_presence_handlers(
+            mediator, redis, friends_facade, servers_facade
+        )
+        await register_server_handlers(
+            mediator, session, stack, room_membership_updater
+        )
         await register_user_handlers(mediator, session, stack, event_bus, cache)
         yield mediator
 
