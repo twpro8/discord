@@ -4,14 +4,14 @@
 
 **Own your communication**
 
-An open-source, self-hostable platform for messaging, communities, and — soon — voice, video, and screen sharing.
+An open-source, self-hostable platform for messaging and communities<br>— with voice, video, and screen sharing coming soon
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-MVP-orange.svg)]()
 [![Self--Hosted](https://img.shields.io/badge/self--hosted-yes-success.svg)]()
 [![Backend](https://img.shields.io/badge/backend-FastAPI-009688.svg)]()
 <br>
-[![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20Electron-61DAFB.svg)]()
+[![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20Tauri-61DAFB.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
 
 </div>
@@ -20,7 +20,7 @@ An open-source, self-hostable platform for messaging, communities, and — soon 
 
 Most chat platforms ask you to trust someone else with your community. Your servers, your history, your members, your uptime — all sitting on infrastructure you don't control and can't inspect, subject to rules you didn't write.
 
-Lumiere takes a different approach: **run it yourself.**
+Lumiere takes a different approach: **run it yoursel**
 
 It's built for people who would rather host their own infrastructure than rent access to someone else's — friend groups, gaming communities, teams, open-source projects, or organizations that want a communication platform that answers to them, not to a Terms of Service page. In that sense, Lumiere sits closer to projects like [Jellyfin](https://jellyfin.org/), [Forgejo](https://forgejo.org/), [Matrix](https://matrix.org/), and [Nextcloud](https://nextcloud.com/) than it does to any commercial chat SaaS: software you deploy, run, modify, and trust because you can see how it works.
 
