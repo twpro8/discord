@@ -39,6 +39,20 @@ class Settings(BaseSettings):
     CELERY_TASK_MAX_RETRIES: int = 3
     CELERY_TASK_DEFAULT_RETRY_DELAY: int = 10
 
+    # Cloudflare R2 object storage (S3-compatible API). Empty credentials
+    # mean storage is not configured: init_storage() skips startup wiring
+    # and the app runs without object storage.
+    R2_ACCOUNT_ID: str = ""
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_BUCKET_NAME: str = ""
+    # Base URL for public object URLs (R2 public bucket or custom domain),
+    # e.g. https://pub-<hash>.r2.dev or https://files.example.com
+    R2_PUBLIC_BASE_URL: str = ""
+    R2_CONNECT_TIMEOUT: float = 5.0
+    R2_READ_TIMEOUT: float = 30.0
+    R2_MAX_POOL_CONNECTIONS: int = 50
+
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
@@ -90,6 +104,18 @@ class Settings(BaseSettings):
         return (
             f"redis://{self.REDIS_USER}:{self.REDIS_PASSWORD}@"
             f"{self.REDIS_HOST}:{self.REDIS_PORT}/{self.CELERY_BROKER_DB}"
+        )
+
+    @computed_field  # type: ignore
+    @property
+    def R2_ENDPOINT_URL(self) -> str:
+        return f"https://{self.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+
+    @computed_field  # type: ignore
+    @property
+    def r2_configured(self) -> bool:
+        return bool(
+            self.R2_ACCOUNT_ID and self.R2_ACCESS_KEY_ID and self.R2_BUCKET_NAME
         )
 
     @computed_field  # type: ignore
