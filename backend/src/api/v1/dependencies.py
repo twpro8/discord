@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.cache import Cache
 from src.core.database import get_session
 from src.core.event_bus import EventBus
+from src.core.jobs import JobDispatcher
 from src.core.realtime.membership import DistributedRoomMembershipUpdater
 from src.core.realtime.notifier import RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
@@ -53,6 +54,10 @@ def get_redis_subscription_manager(request: Request) -> RedisSubscriptionManager
     return cast(RedisSubscriptionManager, request.app.state.redis_subscription_manager)
 
 
+def get_job_dispatcher(request: Request) -> JobDispatcher:
+    return cast(JobDispatcher, request.app.state.job_dispatcher)
+
+
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 EventBusDep = Annotated[EventBus, Depends(get_event_bus)]
 CacheDep = Annotated[Cache, Depends(get_cache)]
@@ -60,6 +65,7 @@ AccessTokenDep = Annotated[str, Depends(access_cookie_scheme)]
 RedisSubscriptionManagerDep = Annotated[
     RedisSubscriptionManager, Depends(get_redis_subscription_manager)
 ]
+JobDispatcherDep = Annotated[JobDispatcher, Depends(get_job_dispatcher)]
 
 
 def get_current_user_id(access_token: AccessTokenDep) -> UUID:

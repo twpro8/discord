@@ -32,3 +32,10 @@ class ConflictError(LumiereError):
 class ValidationError(LumiereError):
     detail = "Validation error"
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+class TransientError(LumiereError):
+    """A failure expected to succeed on retry (e.g. a flaky downstream call),
+    as opposed to a permanent business-rule failure like NotFoundError."""
+
+    detail = "Temporary failure, retry"
