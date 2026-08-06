@@ -8,9 +8,14 @@ from src.shared.domain.unset import UNSET, Unsettable
 
 @dataclass(frozen=True, kw_only=True)
 class UserUpdate:
+    """Persistence payload for a user. `avatar_url`/`password_hash` are set
+    by their dedicated commands, never through the transport `UserUpdateRequest`."""
+
     name: Unsettable[str] = UNSET
     username: Unsettable[str] = UNSET
     email: Unsettable[str] = UNSET
+    password_hash: Unsettable[str] = UNSET
+    avatar_url: Unsettable[str] = UNSET
     is_active: Unsettable[bool] = UNSET
 
 

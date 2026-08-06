@@ -90,6 +90,7 @@ async def get_mediator(
     cache: CacheDep,
     redis: RedisDep,
     redis_subscription_manager: RedisSubscriptionManagerDep,
+    storage: StorageDep,
 ) -> AsyncGenerator[Mediator]:
     async with AsyncExitStack() as stack:
         mediator = InProcessMediator()
@@ -131,7 +132,9 @@ async def get_mediator(
         await register_server_handlers(
             mediator, session, stack, room_membership_updater
         )
-        await register_user_handlers(mediator, session, stack, event_bus, cache)
+        await register_user_handlers(
+            mediator, session, stack, event_bus, cache, storage
+        )
         yield mediator
 
 

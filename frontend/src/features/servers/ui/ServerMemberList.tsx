@@ -1,5 +1,5 @@
 // shared
-import { AvatarInitial, type PresenceStatus } from "@/shared/ui/avatar-initial";
+import { Avatar, type AvatarStatus } from "@/shared/ui/avatar";
 
 // features
 import { useServerPresence } from "@/features/presence/model/use-server-presence";
@@ -36,7 +36,7 @@ export function ServerMemberList({ serverId }: { serverId: string }) {
     useServerMembers(serverId);
   const { data: presenceEntries = [] } = useServerPresence(serverId);
 
-  const statusByUserId: Record<string, PresenceStatus> = {};
+  const statusByUserId: Record<string, AvatarStatus> = {};
   for (const entry of presenceEntries)
     statusByUserId[entry.user_id] = entry.status;
 
@@ -52,7 +52,11 @@ export function ServerMemberList({ serverId }: { serverId: string }) {
             key={member.id}
             className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50"
           >
-            <AvatarInitial username={member.username} status={status} />
+            <Avatar
+              name={member.username}
+              src={member.avatar_url}
+              status={status}
+            />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">
                 {member.username}

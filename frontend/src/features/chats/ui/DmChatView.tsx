@@ -5,7 +5,7 @@ import { ArrowLeft, Menu, Users } from "lucide-react";
 // shared
 import { breakpoints } from "@/shared/helpers/breakpoints";
 import { useMediaQuery } from "@/shared/helpers/use-media-query";
-import { AvatarInitial } from "@/shared/ui/avatar-initial";
+import { Avatar } from "@/shared/ui/avatar";
 import { useShellDrawer } from "@/shared/ui/shell-drawer";
 
 import { useFriendsPresence } from "@/features/presence/model/use-friends-presence";
@@ -81,7 +81,7 @@ export function DmChatView({
             <ArrowLeft className="h-4 w-4" />
           </button>
         )}
-        <AvatarInitial username={displayName} status={peerStatus} />
+        <Avatar name={displayName} status={peerStatus} />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-foreground">
             {displayName}

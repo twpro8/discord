@@ -1,3 +1,6 @@
+// shared
+import { Avatar } from "@/shared/ui/avatar";
+
 // relative
 import { useCurrentUser } from "../model/use-current-user";
 
@@ -30,9 +33,11 @@ export function ProfileCard() {
   return (
     <div className="w-full max-w-2xl rounded-2xl border border-border bg-background/80 p-8 shadow-sm">
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
-          {user.name.charAt(0).toUpperCase()}
-        </div>
+        <Avatar
+          name={user.name}
+          src={user.avatar_url}
+          className="h-14 w-14 text-xl"
+        />
         <div>
           <p className="text-sm font-medium text-muted-foreground">
             Signed in as

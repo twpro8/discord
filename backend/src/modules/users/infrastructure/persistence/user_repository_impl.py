@@ -29,6 +29,12 @@ class UserRepositoryImpl:
         model = result.scalar_one_or_none()
         return UserDataMapper.to_entity(model) if model else None
 
+    async def get_by_email(self, email: str) -> User | None:
+        query = select(UserOrm).filter_by(email=email)
+        result = await self._session.execute(query)
+        model = result.scalar_one_or_none()
+        return UserDataMapper.to_entity(model) if model else None
+
     async def update(self, user_id: uuid.UUID, data: UserUpdate) -> User:
         statement = (
             update(UserOrm)
