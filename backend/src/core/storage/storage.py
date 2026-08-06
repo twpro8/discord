@@ -1,3 +1,4 @@
+from contextlib import AbstractAsyncContextManager
 from typing import Protocol, cast
 
 from botocore.client import BaseClient
@@ -43,8 +44,10 @@ class R2Storage:
         client: BaseClient,
         bucket: str,
         public_base_url: str,
+        client_context: AbstractAsyncContextManager[BaseClient] | None = None,
     ) -> None:
         self._client = client
+        self._client_context = client_context
         self._bucket = bucket
         self._public_base_url = public_base_url.rstrip("/")
 
@@ -86,4 +89,8 @@ class R2Storage:
         return f"{self._public_base_url}/{key}"
 
     async def close(self) -> None:
+        if self._client_context is not None:
+            await self._client_context.__aexit__(None, None, None)
+            self._client_context = None
+            return
         await self._client.close()
