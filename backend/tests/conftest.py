@@ -17,6 +17,7 @@ from tests.dependency_overrides.redis_subscription_manager import (
     get_test_redis_subscription_manager,
 )
 from tests.dependency_overrides.session import get_null_pool_session
+from tests.dependency_overrides.storage import get_test_storage
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -36,6 +37,7 @@ def override_dependencies(
         get_job_dispatcher,
         get_redis,
         get_redis_subscription_manager,
+        get_storage,
     )
 
     app.dependency_overrides[get_session] = get_null_pool_session
@@ -46,6 +48,7 @@ def override_dependencies(
         get_test_redis_subscription_manager
     )
     app.dependency_overrides[get_job_dispatcher] = get_test_job_dispatcher
+    app.dependency_overrides[get_storage] = get_test_storage
 
 
 @pytest.fixture(name="ac")

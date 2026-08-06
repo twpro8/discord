@@ -44,6 +44,9 @@ class FakeUserRepository:
             (u for u in self.users.values() if str(u.username) == username), None
         )
 
+    async def get_by_email(self, email: str) -> User | None:
+        return next((u for u in self.users.values() if str(u.email) == email), None)
+
     async def update(self, user_id: UUID, data: UserUpdate) -> User:
         user = self.users[user_id]
         updates = set_fields(data)
@@ -81,6 +84,35 @@ class FakeCache:
 
     async def delete(self, key: str) -> None:
         self.store.pop(key, None)
+
+
+class FakeStorage:
+    def __init__(self, public_base_url: str = "https://files.example.com") -> None:
+        self.objects: dict[str, bytes] = {}
+        self._public_base_url = public_base_url
+
+    async def upload_bytes(
+        self,
+        key: str,
+        data: bytes,
+        content_type: str | None = None,
+        metadata: dict[str, str] | None = None,
+    ) -> None:
+        self.objects[key] = data
+
+    async def download_bytes(self, key: str) -> bytes:
+        return self.objects[key]
+
+    async def delete(self, key: str) -> None:
+        self.objects.pop(key, None)
+
+    def presigned_upload_url(
+        self, key: str, content_type: str | None = None, expires_in: int = 900
+    ) -> str:
+        return f"{self._public_base_url}/{key}?presigned=1"
+
+    def public_url(self, key: str) -> str:
+        return f"{self._public_base_url}/{key}"
 
 
 class FakeEventBus:
