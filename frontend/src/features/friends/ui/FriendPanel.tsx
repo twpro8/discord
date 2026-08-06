@@ -47,7 +47,6 @@ export function FriendPanel({ className }: { className?: string }) {
   const closeFriends = useShellDrawer((state) => state.closeFriends);
 
   const { data: user } = useCurrentUser();
-  if (!user) return null;
 
   const { incoming, sent, isLoading: isLoadingRequests } = useFriendRequests();
   const { data: friends = [], isLoading: isLoadingFriends } = useFriends();
@@ -62,6 +61,8 @@ export function FriendPanel({ className }: { className?: string }) {
   const deleteMutation = useDeleteFriendRequest();
   const removeMutation = useRemoveFriend();
   const createChatMutation = useCreatePrivateChat();
+
+  if (!user) return null;
 
   const handleOpenChat = (friend: FriendRequestWithUser) => {
     const peerId = getFriendPeerId(friend, user.id);
