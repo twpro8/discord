@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     REDIS_SOCKET_CONNECT_TIMEOUT: int = 2
     REDIS_RETRY_ON_TIMEOUT: bool = True
 
+    CELERY_BROKER_DB: int = 1
+    CELERY_WORKER_CONCURRENCY: int = 4
+    CELERY_WORKER_PREFETCH_MULTIPLIER: int = 1
+    CELERY_TASK_MAX_RETRIES: int = 3
+    CELERY_TASK_DEFAULT_RETRY_DELAY: int = 10
+
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
@@ -77,6 +83,14 @@ class Settings(BaseSettings):
     @property
     def REDIS_URL(self) -> str:
         return f"redis://{self.REDIS_USER}:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}"
+
+    @computed_field  # type: ignore
+    @property
+    def CELERY_BROKER_URL(self) -> str:
+        return (
+            f"redis://{self.REDIS_USER}:{self.REDIS_PASSWORD}@"
+            f"{self.REDIS_HOST}:{self.REDIS_PORT}/{self.CELERY_BROKER_DB}"
+        )
 
     @computed_field  # type: ignore
     @property

@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from uuid import UUID
 
@@ -12,6 +12,7 @@ from src.core.cache import RedisCache
 from src.core.config import settings
 from src.core.database.session import get_session_factory
 from src.core.event_bus import InMemoryEventBus, RedisStreamsEventBus
+from src.core.jobs import CeleryJobDispatcher, celery_app
 from src.core.logging import configure_logging, get_logger
 from src.core.realtime.notifier import RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
@@ -30,7 +31,7 @@ logger = get_logger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     configure_logging()
     logger.info("app.startup", env=settings.ENVIRONMENT)
     # Initialize Redis connection pool
@@ -45,6 +46,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if settings.ENVIRONMENT == "testing"
         else RedisStreamsEventBus(app.state.redis)
     )
+    # Dispatches background jobs to Celery workers via the shared Redis
+    # broker (see core.jobs). Command handlers depend on the JobDispatcher
+    # Protocol only, never this concrete adapter or `celery_app` itself.
+    app.state.job_dispatcher = CeleryJobDispatcher(celery_app)
     # Owns all locally-open WebSocket connections for this process (see
     # core.websocket.manager). Cross-instance fan-out is a separate layer:
     # RedisSubscriptionManager subscribes to whatever rooms this instance
