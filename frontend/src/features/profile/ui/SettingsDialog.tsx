@@ -23,7 +23,7 @@ export function SettingsDialog({
 
   return (
     <Modal open={open} onClose={onClose}>
-      <div className="flex gap-1 rounded-lg bg-muted p-1">
+      <div className="flex gap-1 rounded-lg bg-muted p-1 mt-10">
         <TabButton active={tab === "profile"} onClick={() => setTab("profile")}>
           Profile
         </TabButton>
