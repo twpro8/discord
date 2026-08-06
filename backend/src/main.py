@@ -17,6 +17,7 @@ from src.core.logging import configure_logging, get_logger
 from src.core.realtime.notifier import RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.redis import close_redis, init_redis
+from src.core.storage import close_storage, init_storage
 from src.core.websocket.manager import ConnectionManager
 from src.modules.friends.public.facade import build_friends_facade
 from src.modules.presence.application.presence_service import PresenceService
@@ -38,6 +39,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     app.state.redis = await init_redis()
     # Read-model cache (cache-aside), shares the pool above
     app.state.cache = RedisCache(app.state.redis)
+    # Object storage (Cloudflare R2). None when R2 isn't configured.
+    app.state.storage = await init_storage()
     # Process-wide event bus for cross-module domain events. In-memory in
     # tests (no Redis dependency for assertions); Redis Streams otherwise
     # so events survive a process restart.
@@ -115,6 +118,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     await app.state.redis_subscription_manager.stop()
     # Close Redis connection
     await close_redis(app.state.redis)
+    # Close R2 storage client if it was initialized
+    if app.state.storage is not None:
+        await close_storage(app.state.storage)
 
 
 def create_app() -> FastAPI:

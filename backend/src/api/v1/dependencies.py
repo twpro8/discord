@@ -17,6 +17,7 @@ from src.core.realtime.membership import DistributedRoomMembershipUpdater
 from src.core.realtime.notifier import RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.security.jwt import decode_access_token
+from src.core.storage import Storage
 from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.modules.channels.composition import register_channel_handlers
@@ -52,6 +53,10 @@ def get_cache(request: Request) -> Cache:
     return cast(Cache, request.app.state.cache)
 
 
+def get_storage(request: Request) -> Storage | None:
+    return cast(Storage | None, request.app.state.storage)
+
+
 def get_redis_subscription_manager(request: Request) -> RedisSubscriptionManager:
     return cast(RedisSubscriptionManager, request.app.state.redis_subscription_manager)
 
@@ -63,6 +68,7 @@ def get_job_dispatcher(request: Request) -> JobDispatcher:
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 EventBusDep = Annotated[EventBus, Depends(get_event_bus)]
 CacheDep = Annotated[Cache, Depends(get_cache)]
+StorageDep = Annotated[Storage | None, Depends(get_storage)]
 AccessTokenDep = Annotated[str, Depends(access_cookie_scheme)]
 RedisSubscriptionManagerDep = Annotated[
     RedisSubscriptionManager, Depends(get_redis_subscription_manager)
