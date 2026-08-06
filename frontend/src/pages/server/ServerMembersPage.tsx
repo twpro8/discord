@@ -9,14 +9,14 @@ import { useShellDrawer } from "@/shared/ui/shell-drawer";
 
 // features
 import { useServers } from "@/features/servers/model/use-servers";
-import { ServerMemberList } from "@/features/servers/ui/ServerMemberList";
 
 const HEADER_BUTTON =
   "flex size-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:size-8";
 
 /**
- * Minimal server view scoped to what presence needs: a member roster with
- * live status. Not a channel/message UI — that's separate, larger work.
+ * Server view placeholder: the member roster lives in the right-hand members
+ * panel (HomeLayout), and a channel/chat UI doesn't exist yet, so the middle
+ * stays empty apart from the navigation header.
  */
 export default function ServerMembersPage() {
   const { serverId } = useParams({ from: "/home/servers/$serverId" });
@@ -47,7 +47,7 @@ export default function ServerMembersPage() {
             type="button"
             onClick={openFriends}
             className={HEADER_BUTTON}
-            aria-label="Open friends panel"
+            aria-label="Open members panel"
           >
             <Users className="h-5 w-5" />
           </button>
@@ -66,13 +66,8 @@ export default function ServerMembersPage() {
           <p className="truncate text-sm font-semibold text-foreground">
             {displayName}
           </p>
-          <p className="text-xs text-muted-foreground">Members</p>
         </div>
       </header>
-
-      <div className="min-h-0 flex-1 overflow-y-auto py-2">
-        <ServerMemberList serverId={serverId} />
-      </div>
     </div>
   );
 }

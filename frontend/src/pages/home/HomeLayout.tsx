@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 
 // third party
-import { Outlet } from "@tanstack/react-router";
+import { Outlet, useMatchRoute } from "@tanstack/react-router";
 
 // shared
 import { breakpoints } from "@/shared/helpers/breakpoints";
@@ -14,6 +14,7 @@ import { useShellDrawer } from "@/shared/ui/shell-drawer";
 import { FriendPanel } from "@/features/friends/ui/FriendPanel";
 import { RealtimeProvider } from "@/features/realtime/RealtimeProvider";
 import { CreateServerModal } from "@/features/servers/ui/CreateServerModal";
+import { ServerMemberPanel } from "@/features/servers/ui/ServerMemberPanel";
 import { ServerSidebar } from "@/features/servers/ui/ServerSidebar";
 
 /** Authenticated shell with adaptive sidebars and the content outlet. */
@@ -27,6 +28,12 @@ export default function HomeLayout() {
 
   const serversInDrawer = isMobile;
   const friendsInDrawer = !isDesktop;
+
+  const matchRoute = useMatchRoute();
+  const serverParams = matchRoute({ to: "/home/servers/$serverId" });
+  const isServerRoute = serverParams !== false;
+  const serverId = isServerRoute ? serverParams.serverId : undefined;
+  const rightLabel = isServerRoute ? "Members" : "Friends";
 
   useEffect(() => {
     if (!serversInDrawer) closeServers();
@@ -62,10 +69,16 @@ export default function HomeLayout() {
             open={isFriendsOpen}
             onClose={closeFriends}
             side="right"
-            label="Friends"
+            label={rightLabel}
           >
-            <FriendPanel />
+            {isServerRoute && serverId ? (
+              <ServerMemberPanel serverId={serverId} />
+            ) : (
+              <FriendPanel />
+            )}
           </Drawer>
+        ) : isServerRoute && serverId ? (
+          <ServerMemberPanel serverId={serverId} />
         ) : (
           <FriendPanel />
         )}
