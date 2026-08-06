@@ -2,7 +2,11 @@ import { useShellDrawer } from "../shell-drawer";
 
 describe("useShellDrawer", () => {
   beforeEach(() => {
-    useShellDrawer.setState({ isServersOpen: false, isFriendsOpen: false });
+    useShellDrawer.setState({
+      isServersOpen: false,
+      isChannelsOpen: false,
+      isFriendsOpen: false,
+    });
   });
 
   it("opens a drawer", () => {
@@ -15,6 +19,13 @@ describe("useShellDrawer", () => {
     useShellDrawer.getState().openFriends();
     expect(useShellDrawer.getState().isServersOpen).toBe(false);
     expect(useShellDrawer.getState().isFriendsOpen).toBe(true);
+  });
+
+  it("closes other drawers when opening channels", () => {
+    useShellDrawer.getState().openFriends();
+    useShellDrawer.getState().openChannels();
+    expect(useShellDrawer.getState().isChannelsOpen).toBe(true);
+    expect(useShellDrawer.getState().isFriendsOpen).toBe(false);
   });
 
   it("toggles a drawer", () => {

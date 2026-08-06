@@ -1,6 +1,6 @@
 // third party
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { ArrowLeft, Menu, Users } from "lucide-react";
+import { ArrowLeft, Hash, Menu, Users } from "lucide-react";
 
 // shared
 import { breakpoints } from "@/shared/helpers/breakpoints";
@@ -24,6 +24,7 @@ export default function ServerMembersPage() {
   const isDesktop = useMediaQuery(breakpoints.desktop);
   const isMobile = useMediaQuery(breakpoints.mobile);
   const openServers = useShellDrawer((state) => state.openServers);
+  const toggleChannels = useShellDrawer((state) => state.toggleChannels);
   const openFriends = useShellDrawer((state) => state.openFriends);
   const { data: servers = [] } = useServers();
   const server = servers.find((s) => s.id === serverId);
@@ -40,6 +41,16 @@ export default function ServerMembersPage() {
             aria-label="Open server menu"
           >
             <Menu className="h-5 w-5" />
+          </button>
+        )}
+        {isMobile && (
+          <button
+            type="button"
+            onClick={toggleChannels}
+            className={HEADER_BUTTON}
+            aria-label="Toggle channels"
+          >
+            <Hash className="h-4 w-4" />
           </button>
         )}
         {!isDesktop && (
