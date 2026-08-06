@@ -4,6 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.cache import Cache
 from src.core.event_bus import EventBus
+from src.core.storage import Storage
+from src.modules.users.application.commands.change_password import (
+    ChangePasswordCommand,
+    ChangePasswordCommandHandler,
+)
 from src.modules.users.application.commands.create_user import (
     CreateUserCommand,
     CreateUserCommandHandler,
@@ -11,6 +16,10 @@ from src.modules.users.application.commands.create_user import (
 from src.modules.users.application.commands.delete_user import (
     DeleteUserCommand,
     DeleteUserCommandHandler,
+)
+from src.modules.users.application.commands.update_avatar import (
+    UpdateAvatarCommand,
+    UpdateAvatarCommandHandler,
 )
 from src.modules.users.application.commands.update_user import (
     UpdateUserCommand,
@@ -43,6 +52,7 @@ async def register_user_handlers(
     stack: AsyncExitStack,
     event_bus: EventBus,
     cache: Cache,
+    storage: Storage | None,
 ) -> None:
     user_repository = UserRepositoryImpl(session)
     uow = await stack.enter_async_context(UserUnitOfWorkImpl(session, user_repository))
@@ -51,6 +61,13 @@ async def register_user_handlers(
     mediator.register_command(DeleteUserCommand, DeleteUserCommandHandler(uow, cache))
     mediator.register_command(
         CreateUserCommand, CreateUserCommandHandler(uow, event_bus)
+    )
+    mediator.register_command(
+        ChangePasswordCommand, ChangePasswordCommandHandler(uow, cache)
+    )
+    mediator.register_command(
+        UpdateAvatarCommand,
+        UpdateAvatarCommandHandler(uow, cache, storage),
     )
     mediator.register_query(
         GetUserByIDQuery, GetUserByIDQueryHandler(user_repository, cache)

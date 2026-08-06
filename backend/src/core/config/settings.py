@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     R2_CONNECT_TIMEOUT: float = 5.0
     R2_READ_TIMEOUT: float = 30.0
     R2_MAX_POOL_CONNECTIONS: int = 50
+    R2_MAX_AVATAR_BYTES: int = 5_000_000
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
