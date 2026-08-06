@@ -32,3 +32,18 @@ class InvalidEmail(UserError, ValidationError):
 class InvalidUsername(UserError, ValidationError):
     def __init__(self, value: str) -> None:
         super().__init__(f"'{value}' is not a valid username (3-32 characters)")
+
+
+class StorageNotConfiguredError(UserError):
+    detail = "Object storage is not configured"
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+class UnsupportedAvatarFormatError(UserError, ValidationError):
+    detail = "Avatar must be a JPEG, PNG, or WebP image"
+    status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+
+
+class AvatarTooLargeError(UserError, ValidationError):
+    detail = "Avatar image exceeds the maximum allowed size"
+    status_code = status.HTTP_413_CONTENT_TOO_LARGE

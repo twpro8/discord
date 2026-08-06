@@ -2,7 +2,7 @@
 import { MessageCircle, Trash2 } from "lucide-react";
 
 // shared
-import { AvatarInitial, type PresenceStatus } from "@/shared/ui/avatar-initial";
+import { Avatar, type AvatarStatus } from "@/shared/ui/avatar";
 
 // relative
 import { getFriendPeerId } from "../model/get-friend-peer-id";
@@ -19,11 +19,15 @@ function FriendItem({
   disabled: boolean;
   onOpenChat: (friend: FriendRequestWithUser) => void;
   onRemove: (id: string) => void;
-  status?: PresenceStatus;
+  status?: AvatarStatus;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50">
-      <AvatarInitial username={request.username} status={status} />
+      <Avatar
+        name={request.username}
+        src={request.avatar_url}
+        status={status}
+      />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">
           {request.username}
@@ -94,7 +98,7 @@ export function FriendList({
   onOpenChat: (friend: FriendRequestWithUser) => void;
   onRemove: (id: string) => void;
   currentUserId: string;
-  statusByUserId?: Record<string, PresenceStatus>;
+  statusByUserId?: Record<string, AvatarStatus>;
 }) {
   if (isLoading) return <Skeleton />;
   if (friends.length === 0) return <EmptyState />;

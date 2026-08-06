@@ -12,6 +12,11 @@ class UserUpdateRequest(BaseSchema):
     email: EmailStr | None = Field(None, min_length=3, max_length=32)
 
 
+class ChangePasswordRequest(BaseSchema):
+    current_password: str = Field(min_length=3, max_length=128)
+    new_password: str = Field(min_length=3, max_length=128)
+
+
 class UserResponse(BaseSchema):
     id: UUID
     name: str
