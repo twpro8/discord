@@ -18,7 +18,7 @@ async def init_storage() -> R2Storage | None:
         logger.warning("storage.not_configured")
         return None
     session = AioSession()
-    client = await session.create_client(
+    client_context = session.create_client(
         "s3",
         endpoint_url=settings.R2_ENDPOINT_URL,
         aws_access_key_id=settings.R2_ACCESS_KEY_ID,
@@ -31,10 +31,15 @@ async def init_storage() -> R2Storage | None:
             retries={"max_attempts": 2, "mode": "standard"},
         ),
     )
+    # aiobotocore creates clients through an async context manager. Keep that
+    # context open for the application's lifetime; R2Storage closes it during
+    # FastAPI shutdown.
+    client = await client_context.__aenter__()
     storage = R2Storage(
         client,
         bucket=settings.R2_BUCKET_NAME,
         public_base_url=settings.R2_PUBLIC_BASE_URL,
+        client_context=client_context,
     )
     try:
         await client.head_bucket(Bucket=settings.R2_BUCKET_NAME)
