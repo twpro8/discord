@@ -11,3 +11,4 @@ class JobTaskName(StrEnum):
     """
 
     PING = "core.ping"
+    SEND_EMAIL = "email.send"
