@@ -12,6 +12,7 @@ model discovery logic accordingly.
 from src.modules.auth.infrastructure.persistence.models import RefreshTokenOrm
 from src.modules.channels.infrastructure.persistence.models import ChannelOrm
 from src.modules.chats.infrastructure.persistence.models import ChatOrm
+from src.modules.email.infrastructure.persistence.models import EmailMessageOrm
 from src.modules.friends.infrastructure.persistence.models import FriendOrm
 from src.modules.messages.infrastructure.persistence.models import MessageOrm
 from src.modules.servers.infrastructure.persistence.models import ServerOrm
@@ -25,4 +26,5 @@ __all__ = [
     "MessageOrm",
     "RefreshTokenOrm",
     "FriendOrm",
+    "EmailMessageOrm",
 ]
