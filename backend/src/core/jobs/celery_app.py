@@ -41,7 +41,9 @@ def build_celery_app() -> Celery:
     # dependency on modules/*.
     app.autodiscover_tasks(
         [
-            # "src.modules.notifications",  # add once a module has transport/tasks/
+            # related_name="tasks" imports "<package>.tasks" for each entry
+            # below, so the string must resolve to <module>.transport.tasks.
+            "src.modules.email.transport",
         ],
         related_name="tasks",
     )
