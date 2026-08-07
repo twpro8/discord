@@ -21,6 +21,8 @@ from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.modules.channels.composition import register_channel_handlers
 from src.modules.chats.composition import register_chat_handlers
+from src.modules.email.composition import register_email_handlers
+from src.modules.email.public.facade import build_email_facade
 from src.modules.friends.composition import register_friend_handlers
 from src.modules.friends.public.facade import build_friends_facade
 from src.modules.messages.composition import register_message_handlers
@@ -84,6 +86,7 @@ async def get_mediator(
     cache: CacheDep,
     redis: RedisDep,
     redis_subscription_manager: RedisSubscriptionManagerDep,
+    job_dispatcher: JobDispatcherDep,
 ) -> AsyncGenerator[Mediator]:
     async with AsyncExitStack() as stack:
         mediator = InProcessMediator()
@@ -97,6 +100,11 @@ async def get_mediator(
         # instead (same shape as chats_facade/channels_facade elsewhere).
         friends_facade = build_friends_facade(session)
         servers_facade = build_servers_facade(session)
+        # Handler-backed, same shape as channels_facade — email has no
+        # command handlers registered anywhere else for another module to
+        # dispatch through, so this wraps its own SendEmailCommandHandler
+        # directly (see modules/email/public/facade.py).
+        email_facade = await build_email_facade(session, stack, job_dispatcher)
         # Redis-backed: reaches every instance's local connections, not
         # just this process's — every connection already auto-joins its
         # own user:{user_id} room on connect (see api/v1/ws.py), and
@@ -110,11 +118,14 @@ async def get_mediator(
             redis_subscription_manager
         )
 
-        await register_auth_handlers(mediator, session, stack, users_facade)
+        await register_auth_handlers(
+            mediator, session, stack, users_facade, email_facade
+        )
         await register_channel_handlers(mediator, session, stack)
         await register_chat_handlers(
             mediator, session, stack, event_bus, users_facade, room_membership_updater
         )
+        await register_email_handlers(mediator, session, stack, job_dispatcher)
         await register_friend_handlers(mediator, session, stack, users_facade)
         await register_message_handlers(
             mediator, session, stack, realtime_notifier, room_membership_updater
