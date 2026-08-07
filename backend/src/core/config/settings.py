@@ -39,6 +39,17 @@ class Settings(BaseSettings):
     CELERY_TASK_MAX_RETRIES: int = 3
     CELERY_TASK_DEFAULT_RETRY_DELAY: int = 10
 
+    # Emails — consumed by modules/email only (see its infrastructure/providers)
+    EMAIL_PROVIDER: Literal["smtp"] = "smtp"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    EMAILS_FROM_EMAIL: str = "info@example.com"
+    EMAILS_FROM_NAME: str = "Lumiere"
+
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
