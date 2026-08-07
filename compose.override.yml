@@ -101,6 +101,11 @@ services:
       - worker
       - --loglevel=info
       - --concurrency=4
+    environment:
+      SMTP_HOST: "mailcatcher"
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      EMAILS_FROM_EMAIL: "noreply@example.com"
     develop:
       watch:
         - path: ./backend
