@@ -16,6 +16,7 @@ import { useTypingUsers } from "@/features/typing/model/use-typing-users";
 import { TypingIndicator } from "@/features/typing/ui/TypingIndicator";
 
 // relative
+import { useChatDetails } from "../model/use-chat-details";
 import { useChatMessages } from "../model/use-chat-messages";
 import { useSendChatMessage } from "../model/use-send-chat-message";
 import { MessageComposer } from "./MessageComposer";
@@ -42,14 +43,24 @@ export function DmChatView({
   const { data: user } = useCurrentUser();
   const { data: messages = [] } = useChatMessages(chatId);
   const sendMutation = useSendChatMessage(chatId);
+  // The peer only arrives via URL search params on one navigation path
+  // (FriendPanel's "message" button) — a refresh, browser back/forward,
+  // or a bookmarked link all leave peerId/peerName undefined. GET
+  // /chats/{chatId} resolves the peer authoritatively regardless of how
+  // the user got here; the props are kept only as an instant optimistic
+  // display for the one path that already has them for free, while this
+  // query is in flight.
+  const { data: chatDetails } = useChatDetails(chatId);
+  const resolvedPeerId = chatDetails?.peer_id ?? peerId;
+  const resolvedPeerName = chatDetails?.peer_name ?? peerName;
   // Presence is scoped to friends only — a DM peer who isn't (or is no
   // longer) a friend just shows no dot, which is the correct fallback.
   const { data: presenceEntries = [] } = useFriendsPresence();
   const peerStatus = presenceEntries.find(
-    (entry) => entry.user_id === peerId,
+    (entry) => entry.user_id === resolvedPeerId,
   )?.status;
 
-  const displayName = peerName || "Direct message";
+  const displayName = resolvedPeerName || "Direct message";
 
   const { notifyTyping, notifyStopTyping } = useSendTyping(chatId);
   const typingUserIds = useTypingUsers(chatId);
