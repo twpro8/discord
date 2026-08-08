@@ -15,10 +15,16 @@ describe("AvatarInitial", () => {
     expect(screen.queryByText("Offline")).not.toBeInTheDocument();
   });
 
+  it("renders no status dot for offline — it's the default, unconnected state", () => {
+    render(<AvatarInitial username="alice" status="offline" />);
+    expect(screen.queryByText("Online")).not.toBeInTheDocument();
+    expect(screen.queryByText("Away")).not.toBeInTheDocument();
+    expect(screen.queryByText("Offline")).not.toBeInTheDocument();
+  });
+
   it.each([
     ["online", "Online"],
     ["away", "Away"],
-    ["offline", "Offline"],
   ] as const)(
     "pairs the %s status with visually-hidden text, not color alone",
     (status, label) => {
