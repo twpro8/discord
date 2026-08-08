@@ -42,7 +42,10 @@ export function Avatar({
       ) : (
         <div className={circle}>{name.charAt(0).toUpperCase()}</div>
       )}
-      {status && (
+      {/* Offline renders no dot at all, rather than a gray one — it's the
+          default state for anyone not actively connected, so a dot for it
+          would just be visual noise on most avatars. */}
+      {status && status !== "offline" && (
         <span
           className={cn(
             "absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full ring-2 ring-surface",
