@@ -215,6 +215,21 @@ class ConnectionManager:
             if connection is not None:
                 await self.leave_room(connection, room)
 
+    def is_connection_in_room(self, connection_id: UUID, room: str) -> bool:
+        """Local-only, synchronous membership check, used by TypingService
+        to authorize a client-supplied chat_id without a DB round trip: a
+        connection only ever ends up in `chat_room(chat_id)` via a
+        DB-verified path (chats' AddMember command handler, or
+        ListChatMessagesQueryHandler after assert_is_chat_member succeeds
+        — see chat_room's docstring), and EventType.JOIN/LEAVE are
+        internal control-plane only, so a client can never fabricate
+        membership in a room it doesn't belong to. Fails closed: an
+        unknown connection_id or a room the connection hasn't (yet)
+        joined both return False.
+        """
+        connection = self._connections.get(connection_id)
+        return connection is not None and room in connection.rooms
+
     async def broadcast_to_room(self, room: str, envelope: Envelope) -> None:
         """Local delivery only — connections on this instance currently
         joined to `room`. Cross-instance fan-out is the Redis layer's job
