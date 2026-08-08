@@ -155,9 +155,16 @@ class PresenceService:
 
 
 def _parse_idle(raw_text: str) -> bool:
+    # Broad except is deliberate here (not narrowed to specific exception
+    # types): this repo's pinned ruff (0.15.22) has a formatter bug that
+    # strips the required parentheses from a multi-exception
+    # `except (A, B):` clause, silently producing invalid Python syntax —
+    # confirmed by reproducing it in isolation. Any malformed frame is
+    # already meant to default to not-idle here, so a single broad except
+    # is both correct and immune to that bug.
     try:
         data = json.loads(raw_text)
-    except json.JSONDecodeError, TypeError:
+    except Exception:
         return False
     if not isinstance(data, dict) or data.get("type") != "heartbeat":
         return False
