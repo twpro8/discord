@@ -26,6 +26,7 @@ from src.modules.presence.infrastructure.persistence.redis_presence_repository i
     RedisPresenceRepository,
 )
 from src.modules.servers.public.facade import build_servers_facade
+from src.modules.typing.application.typing_service import TypingService
 from src.utils import custom_generate_unique_id
 
 logger = get_logger(__name__)
@@ -94,14 +95,38 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
             return friend_ids, server_ids
 
     presence_repository = RedisPresenceRepository(
-        app.state.redis, stale_after_seconds=settings.WS_PRESENCE_STALE_AFTER_SECONDS
+        app.state.redis,
+        stale_after_seconds=settings.WS_PRESENCE_STALE_AFTER_SECONDS,
     )
     presence_service = PresenceService(
         presence_repository,
         RedisRealtimeNotifier(redis_subscription_manager),
         lookup_presence_fan_out_targets,
     )
-    connection_manager.set_activity_callback(presence_service.on_activity)
+    typing_service = TypingService(
+        connection_manager.is_connection_in_room,
+        RedisRealtimeNotifier(redis_subscription_manager),
+    )
+
+    async def dispatch_activity(
+        user_id: UUID, connection_id: UUID, raw_text: str
+    ) -> None:
+        # Each call wrapped independently: ConnectionManager.serve()'s
+        # reader loop has no try/except of its own around on_activity — an
+        # uncaught exception here would propagate up and disconnect the
+        # connection, so one service misbehaving must never sink the
+        # other.
+        for service in (presence_service, typing_service):
+            try:
+                await service.on_activity(user_id, connection_id, raw_text)
+            except Exception:
+                logger.exception(
+                    "realtime.activity_dispatch_failed",
+                    service=type(service).__name__,
+                )
+
+    connection_manager.set_activity_callback(dispatch_activity)
+    app.state.typing_service = typing_service
     presence_sweeper = PresenceSweeper(
         presence_service,
         interval_seconds=settings.WS_PRESENCE_SWEEP_INTERVAL_SECONDS,

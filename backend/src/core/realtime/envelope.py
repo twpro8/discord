@@ -19,6 +19,7 @@ class EventType(StrEnum):
     MESSAGE_UPDATED = "message.updated"
     MESSAGE_DELETED = "message.deleted"
     PRESENCE_UPDATE = "presence.update"
+    TYPING_UPDATE = "typing.update"
     HEARTBEAT = "heartbeat"
     JOIN = "room.join"
     LEAVE = "room.leave"
