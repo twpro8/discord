@@ -11,12 +11,15 @@ import { WS_EVENTS_URL } from "@/shared/config/env";
 import { mergeIncomingMessages } from "@/features/chats/model/use-chat-messages";
 import { applyPresenceUpdate } from "@/features/presence/model/apply-presence-update";
 import { useCurrentUser } from "@/features/profile/model/use-current-user";
+import { useTypingStore } from "@/features/typing/model/use-typing-store";
 
 // relative
+import { setSocketSend } from "./model/socket-sender";
 import { useIdle } from "./model/use-idle";
 import {
   isMessageCreatedEvent,
   isPresenceUpdateEvent,
+  isTypingUpdateEvent,
   type RealtimeEvent,
 } from "./types";
 
@@ -31,11 +34,13 @@ const HEARTBEAT_INTERVAL_MS = 25_000;
  * while the current user is authenticated, reconnecting with backoff on
  * drops. Incoming `message.created` events are merged into the matching
  * chat-messages cache; `presence.update` events are applied to the
- * friends/server presence caches. Also sends periodic heartbeats carrying
- * the client's idle state, which the server uses to derive Away, and
- * invalidates presence queries on every reconnect (Redis pub/sub has no
- * replay, so a presence.update published during a dropped connection is
- * otherwise silently missed).
+ * friends/server presence caches; `typing.update` events are applied to
+ * the typing store. Also sends periodic heartbeats carrying the client's
+ * idle state, which the server uses to derive Away, and invalidates
+ * presence queries on every reconnect (Redis pub/sub has no replay, so a
+ * presence.update published during a dropped connection is otherwise
+ * silently missed — typing needs no equivalent catch-up, it just clears
+ * itself out via the typing store's own auto-expiry).
  */
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -84,6 +89,11 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         mergeIncomingMessages(queryClient, message.chat_id, [message]);
       } else if (isPresenceUpdateEvent(parsed)) {
         applyPresenceUpdate(queryClient, parsed.payload);
+      } else if (isTypingUpdateEvent(parsed)) {
+        const { chat_id, user_id, is_typing } = parsed.payload;
+        useTypingStore
+          .getState()
+          .applyTypingUpdate(chat_id, user_id, is_typing);
       }
     };
 
@@ -92,7 +102,20 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       socketRef.current = socket;
       socket.onopen = () => {
         retryMs = INITIAL_RETRY_MS;
+        setSocketSend((data) => socket.send(JSON.stringify(data)));
         void queryClient.invalidateQueries({ queryKey: ["presence"] });
+        // Chat-room membership (unlike presence's user_room) is joined as
+        // a side effect of GET .../messages, and only reaches this user's
+        // *currently open* connections (see backend
+        // ConnectionManager.join_user_to_room) — a silent no-op if that
+        // request lands before this connection exists at all (a real race
+        // on first page load) or after any prior connection dropped (any
+        // reconnect: a network blip, a backend restart, laptop sleep).
+        // Refetching here, now that this connection is guaranteed open,
+        // re-joins whichever chat(s) are currently mounted — without it,
+        // a dropped-and-reconnected socket would silently never receive
+        // further messages or typing events for an already-open chat.
+        void queryClient.invalidateQueries({ queryKey: ["chat-messages"] });
         heartbeatTimer = window.setInterval(() => {
           socket.send(
             JSON.stringify({ type: "heartbeat", idle: idleRef.current }),
@@ -102,6 +125,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       socket.onmessage = handleEvent;
       socket.onerror = () => socket.close();
       socket.onclose = () => {
+        setSocketSend(() => {});
         window.clearInterval(heartbeatTimer);
         if (socketRef.current === socket) socketRef.current = null;
         if (disposed) return;
@@ -116,6 +140,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
     return () => {
       disposed = true;
+      setSocketSend(() => {});
       window.clearTimeout(retryTimer);
       window.clearInterval(heartbeatTimer);
       socketRef.current?.close();

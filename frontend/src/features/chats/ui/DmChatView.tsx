@@ -11,6 +11,9 @@ import { useShellDrawer } from "@/shared/ui/shell-drawer";
 import { useFriendsPresence } from "@/features/presence/model/use-friends-presence";
 // features
 import { useCurrentUser } from "@/features/profile/model/use-current-user";
+import { useSendTyping } from "@/features/typing/model/use-send-typing";
+import { useTypingUsers } from "@/features/typing/model/use-typing-users";
+import { TypingIndicator } from "@/features/typing/ui/TypingIndicator";
 
 // relative
 import { useChatMessages } from "../model/use-chat-messages";
@@ -47,6 +50,12 @@ export function DmChatView({
   )?.status;
 
   const displayName = peerName || "Direct message";
+
+  const { notifyTyping, notifyStopTyping } = useSendTyping(chatId);
+  const typingUserIds = useTypingUsers(chatId);
+  // A DM only ever has one other participant, so any typer is the peer —
+  // no name-resolution step needed until a group chat view exists.
+  const typingNames = typingUserIds.length > 0 ? [displayName] : [];
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -98,10 +107,14 @@ export function DmChatView({
         />
       </div>
 
+      <TypingIndicator names={typingNames} />
+
       <div className="shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <MessageComposer
           onSend={(body) => sendMutation.mutate(body)}
           disabled={sendMutation.isPending}
+          onTyping={notifyTyping}
+          onStopTyping={notifyStopTyping}
         />
       </div>
     </div>
