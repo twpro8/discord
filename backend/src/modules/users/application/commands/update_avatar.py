@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from src.core.cache import Cache
 from src.core.config import settings
@@ -58,8 +58,9 @@ class UpdateAvatarCommandHandler:
             key, command.content, content_type=command.content_type
         )
         # A short random query param busts browser/edge caches when the key
-        # is overwritten in place on re-upload.
-        avatar_url = f"{self._storage.public_url(key)}?v={command.user_id.hex[:8]}"
+        # is overwritten in place on re-upload. Unique per upload, so the
+        # stored URL changes every time the avatar content changes.
+        avatar_url = f"{self._storage.public_url(key)}?v={uuid4().hex[:8]}"
 
         user = await self._uow.users.update(
             command.user_id, UserUpdate(avatar_url=avatar_url)
