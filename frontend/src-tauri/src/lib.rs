@@ -1,3 +1,9 @@
+#[cfg(target_os = "linux")]
+use tauri::Manager;
+
+#[cfg(target_os = "linux")]
+mod linux_permissions;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -10,6 +16,12 @@ pub fn run() {
             .build(),
         )?;
       }
+
+      #[cfg(target_os = "linux")]
+      for (_, webview) in app.webviews() {
+        linux_permissions::enable_media_permissions(&webview)?;
+      }
+
       Ok(())
     })
     .run(tauri::generate_context!())

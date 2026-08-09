@@ -75,6 +75,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-log",
  "tauri-plugin-macos-permissions",
+ "webkit2gtk",
 ]
 
 [[package]]
