@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { socketSend } from "@/features/realtime/model/socket-sender";
 
 // relative
+import { ensureMicrophonePermission } from "./ensure-microphone-permission";
 import { microphoneErrorMessage } from "./microphone-error";
 import { useCallStore } from "./use-call-store";
 import { getIceServers } from "./use-ice-servers";
@@ -26,6 +27,13 @@ export function useStartCall() {
       // avoids ringing the callee and then failing, and removes the
       // post-accept latency of a permission prompt + getUserMedia before
       // an offer can be created.
+      try {
+        await ensureMicrophonePermission();
+      } catch (error) {
+        toast.error(microphoneErrorMessage(error));
+        return;
+      }
+
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });

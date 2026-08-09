@@ -11,6 +11,7 @@ import { useChatDetails } from "@/features/chats/model/use-chat-details";
 import { socketSend } from "@/features/realtime/model/socket-sender";
 
 // relative
+import { ensureMicrophonePermission } from "../model/ensure-microphone-permission";
 import { microphoneErrorMessage } from "../model/microphone-error";
 import { useCallStore } from "../model/use-call-store";
 import { getIceServers } from "../model/use-ice-servers";
@@ -39,6 +40,17 @@ export function IncomingCallModal() {
   };
 
   const handleAccept = async () => {
+    try {
+      await ensureMicrophonePermission();
+    } catch (error) {
+      // A real rejection, not a silent hang — the caller shouldn't wait
+      // out the full ring timeout for this.
+      toast.error(microphoneErrorMessage(error));
+      socketSend({ type: "call.reject", call_id: callId });
+      useCallStore.getState().reset();
+      return;
+    }
+
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
