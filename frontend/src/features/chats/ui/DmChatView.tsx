@@ -8,6 +8,7 @@ import { useMediaQuery } from "@/shared/helpers/use-media-query";
 import { Avatar } from "@/shared/ui/avatar";
 import { useShellDrawer } from "@/shared/ui/shell-drawer";
 
+import { CallButton } from "@/features/calls/ui/CallButton";
 import { useFriendsPresence } from "@/features/presence/model/use-friends-presence";
 // features
 import { useCurrentUser } from "@/features/profile/model/use-current-user";
@@ -108,6 +109,12 @@ export function DmChatView({
           </p>
           <p className="text-xs text-muted-foreground">Direct message</p>
         </div>
+        <CallButton
+          chatId={chatId}
+          peerId={resolvedPeerId}
+          peerName={displayName}
+          className="ml-auto"
+        />
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
