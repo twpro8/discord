@@ -29,3 +29,16 @@ def server_room(server_id: UUID) -> str:
     get_server_where_user_member), mirroring chat_room's join pattern.
     """
     return f"server:{server_id}"
+
+
+def connection_room(connection_id: UUID) -> str:
+    """Every connection's own private room, joined once at connect time
+    (see api/v1/ws.py) — the finest-grained delivery target, for events
+    that must reach exactly one open socket (e.g. call signaling relayed
+    only to the specific tab that answered a call) rather than every
+    connection for a user (user_room) or every member of a chat
+    (chat_room). The server always knows the relevant connection_id for
+    free from ConnectionManager.serve()'s reader loop, so callers never
+    need a client to self-report one.
+    """
+    return f"connection:{connection_id}"

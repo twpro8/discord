@@ -90,6 +90,24 @@ class Settings(BaseSettings):
     WS_PRESENCE_STALE_AFTER_SECONDS: float = 75.0
     WS_PRESENCE_SWEEP_INTERVAL_SECONDS: float = 30.0
 
+    # Voice calls: how long an invite rings before the caller gets
+    # call.timeout, and the backstop TTL for an accepted call's Redis
+    # state (self-heals a crashed process that never ran its own
+    # disconnect/hangup cleanup — see modules.calls).
+    CALL_RING_TIMEOUT_SECONDS: float = 45.0
+    CALL_ACTIVE_SESSION_TTL_SECONDS: float = 14400.0
+
+    # TURN/STUN (WebRTC NAT traversal for voice calls). Empty TURN_* means
+    # the credentials endpoint returns STUN-only (fine for most home/office
+    # networks in dev); set both for production. This is the single source
+    # of ICE server config — the frontend has none of its own, it only
+    # renders whatever GET /calls/turn-credentials returns. See
+    # modules.calls.application.turn_credentials.
+    STUN_URLS: str = "stun:stun.l.google.com:19302"
+    TURN_URLS: str = ""
+    TURN_SECRET_KEY: str = ""
+    TURN_CREDENTIAL_TTL_SECONDS: float = 3600.0
+
     FRONTEND_HOST: str
     CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = []
 
@@ -129,6 +147,11 @@ class Settings(BaseSettings):
         return bool(
             self.R2_ACCOUNT_ID and self.R2_ACCESS_KEY_ID and self.R2_BUCKET_NAME
         )
+
+    @computed_field  # type: ignore
+    @property
+    def turn_configured(self) -> bool:
+        return bool(self.TURN_URLS and self.TURN_SECRET_KEY)
 
     @computed_field  # type: ignore
     @property
