@@ -10,7 +10,8 @@ import {
  * so request it via the plugin first (AVFoundation, which works even in
  * `tauri dev`, where the raw debug binary has no bundled Info.plist).
  * No-op outside macOS Tauri: browsers prompt on the getUserMedia call
- * itself, and WebView2/WebKitGTK prompt natively. Throws a
+ * itself, Windows WebView2 prompts natively, and on Linux the shell's
+ * native permission-request handler grants media access. Throws a
  * NotAllowedError DOMException when the user denies so callers can
  * format it with microphoneErrorMessage. */
 export async function ensureMicrophonePermission(): Promise<void> {
