@@ -103,6 +103,21 @@ def test_message_fans_out_to_members(client: TestClient) -> None:
             assert chat_resp.status_code == 201
             chat_id = chat_resp.json()["id"]
 
+            # Chat creation only joins members' connections to chat_room on
+            # a genuinely fresh create (see CreateChatCommandHandler) — a
+            # session-scoped seeded database shared with other test files
+            # may already have this exact pair's private chat from an
+            # earlier file, in which case this POST just reuses it and
+            # skips that join. Explicitly listing messages for both sides
+            # (the same lazy join-on-view path the real frontend uses)
+            # guarantees each socket is in the room regardless of whether
+            # this run was the fresh-create — mirrors test_ws_typing.py's
+            # _create_and_join_chat helper, which documents the same race.
+            assert client.get(f"/api/v1/chats/{chat_id}/messages").status_code == 200
+            _set_access_token(client, bob_token)
+            assert client.get(f"/api/v1/chats/{chat_id}/messages").status_code == 200
+            _set_access_token(client, alice_token)
+
             message_resp = client.post(
                 f"/api/v1/chats/{chat_id}/messages",
                 json={"body": "hello over the wire"},

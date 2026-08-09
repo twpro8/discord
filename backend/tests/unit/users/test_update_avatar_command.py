@@ -36,9 +36,8 @@ async def test_uploads_avatar_and_updates_url() -> None:
     key = f"user_avatar/{user.id}.png"
     assert key in storage.objects
     assert storage.objects[key] == b"fake-png-bytes"
-    assert result.value.avatar_url.startswith(
-        f"https://files.example.com/{key}?v="
-    )
+    assert result.value.avatar_url is not None
+    assert result.value.avatar_url.startswith(f"https://files.example.com/{key}?v=")
     assert uow.committed
     assert cache_key(user.id) not in cache.store
 
@@ -58,6 +57,7 @@ async def test_each_upload_gets_a_new_avatar_url() -> None:
     second = await handler.handle(command)
 
     assert first.is_ok and second.is_ok
+    assert first.value.avatar_url is not None
     assert first.value.avatar_url != second.value.avatar_url
     assert first.value.avatar_url.startswith(
         f"https://files.example.com/user_avatar/{user.id}.png?v="
