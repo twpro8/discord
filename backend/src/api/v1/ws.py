@@ -4,9 +4,11 @@ from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, WebSocket
 
-from src.core.realtime.rooms import user_room
+from src.core.realtime.envelope import Envelope, EventType
+from src.core.realtime.rooms import connection_room, user_room
 from src.core.websocket.auth import UserIdWSDep
 from src.core.websocket.manager import ConnectionManager
+from src.modules.calls.application.call_signaling_service import CallSignalingService
 from src.modules.presence.application.presence_service import PresenceService
 
 router = APIRouter()
@@ -51,15 +53,45 @@ def get_presence_service_ws(websocket: WebSocket) -> PresenceService:
 PresenceServiceDep = Annotated[PresenceService, Depends(get_presence_service_ws)]
 
 
+def get_call_signaling_service_ws(websocket: WebSocket) -> CallSignalingService:
+    """Mirror of get_connection_manager_ws/get_presence_service_ws —
+    CallSignalingService is likewise a startup singleton on app.state, not
+    mediator-resolved (see modules.calls.application.call_signaling_service
+    and PresenceService's own docstring for why WS routes can't use
+    MediatorDep)."""
+    return cast(CallSignalingService, websocket.app.state.call_signaling_service)
+
+
+CallSignalingServiceDep = Annotated[
+    CallSignalingService, Depends(get_call_signaling_service_ws)
+]
+
+
 @router.websocket("/ws")
 async def realtime_socket(
     websocket: WebSocket,
     user_id: UserIdWSDep,
     manager: ConnectionManagerWSDep,
     presence_service: PresenceServiceDep,
+    call_signaling_service: CallSignalingServiceDep,
 ) -> None:
     connection = await manager.connect(websocket, user_id)
     await manager.join_room(connection, user_room(user_id))
+    # Finest-grained delivery target — call signaling relays offer/answer/
+    # ICE/accept-race-loser events to exactly this one connection via
+    # connection_room, never a client-reported identifier (see plan §2.4
+    # and core.realtime.rooms.connection_room's docstring).
+    await manager.join_room(connection, connection_room(connection.connection_id))
+    # Resyncs a call.invite that was published while this user had no open
+    # connection at all (offline) and was therefore lost. Sent directly to
+    # this connection (not published to a room) — see
+    # CallSignalingService.get_pending_invite's docstring for why a
+    # broadcast here would race the connection_room join just above.
+    pending_invite = await call_signaling_service.get_pending_invite(user_id)
+    if pending_invite is not None:
+        await connection.send(
+            Envelope(type=EventType.CALL_INVITE, payload=pending_invite)
+        )
     await presence_service.mark_connection_online(user_id, connection.connection_id)
     try:
         await manager.serve(connection)
@@ -84,4 +116,7 @@ async def realtime_socket(
         # that narrower case.
         _fire_and_forget(
             presence_service.mark_connection_offline(user_id, connection.connection_id)
+        )
+        _fire_and_forget(
+            call_signaling_service.handle_disconnect(user_id, connection.connection_id)
         )
