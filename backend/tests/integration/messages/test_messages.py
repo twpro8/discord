@@ -136,7 +136,12 @@ class TestSendChatMessage:
         data = response.json()
         assert data["body"] == "Hello from chat!"
         assert data["chat_id"] == chat_id
-        assert data["sequence"] == 1
+        # Not asserted as exactly 1: this reuses the same find-or-create
+        # private chat as other tests in the shared seeded database (see
+        # the chat_id comment above), so it may carry earlier message
+        # history. Exact sequencing is covered by
+        # test_sequence_increments_monotonically, which uses a fresh chat.
+        assert data["sequence"] >= 1
         assert UUID(data["sender_id"])
         assert data["parent_id"] is None
         assert data["is_edited"] is False
