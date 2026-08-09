@@ -7,7 +7,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.channels.infrastructure.persistence.models import ChannelOrm
-from src.modules.chats.infrastructure.persistence.models import ChatOrm
 from src.modules.users.domain.entities.user import User
 
 
@@ -110,7 +109,6 @@ class TestSendChatMessage:
         authed_client: AsyncClient,
         current_user: User,
         get_all_users: list[User],
-        session: AsyncSession,
     ) -> None:
         other = next(u for u in get_all_users if u.id != current_user.id)
 
@@ -122,18 +120,22 @@ class TestSendChatMessage:
             },
         )
         assert chat_resp.status_code == 201
-
-        result = await session.execute(select(ChatOrm).limit(1))
-        chat = result.scalar_one()
+        # Private-chat creation is find-or-create (design doc §3.2), so a
+        # session-scoped seeded database shared with other tests may
+        # already have a chat for this pair — use the id the create call
+        # itself returns rather than guessing via a DB query (which, with
+        # no reliable ordering, can't tell "this pair's chat" apart from
+        # any other chat created earlier in the session).
+        chat_id = chat_resp.json()["id"]
 
         response = await authed_client.post(
-            f"/api/v1/chats/{chat.id}/messages",
+            f"/api/v1/chats/{chat_id}/messages",
             json={"body": "Hello from chat!"},
         )
         assert response.status_code == 200
         data = response.json()
         assert data["body"] == "Hello from chat!"
-        assert data["chat_id"] == str(chat.id)
+        assert data["chat_id"] == chat_id
         assert data["sequence"] == 1
         assert UUID(data["sender_id"])
         assert data["parent_id"] is None
@@ -176,7 +178,6 @@ class TestSendChatMessage:
         authed_client: AsyncClient,
         current_user: User,
         get_all_users: list[User],
-        session: AsyncSession,
     ) -> None:
         other = next(u for u in get_all_users if u.id != current_user.id)
 
@@ -188,9 +189,9 @@ class TestSendChatMessage:
             },
         )
         assert chat_resp.status_code == 201
-
-        result = await session.execute(select(ChatOrm).limit(1))
-        chat = result.scalar_one()
+        # See test_success's comment: use the id directly rather than
+        # guessing via an unordered/best-effort DB query.
+        chat_id = chat_resp.json()["id"]
 
         alice = next(u for u in get_all_users if str(u.username) == "alice")
         await ac.post(
@@ -198,7 +199,7 @@ class TestSendChatMessage:
             json={"username": str(alice.username), "password": "12345678"},
         )
         response = await ac.post(
-            f"/api/v1/chats/{chat.id}/messages",
+            f"/api/v1/chats/{chat_id}/messages",
             json={"body": "hello"},
         )
         assert response.status_code == 403
