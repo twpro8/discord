@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from fastapi import APIRouter
 
 from src.modules.auth.module import register_auth_module
+from src.modules.calls.module import register_calls_module
 from src.modules.channels.module import register_channels_module
 from src.modules.chats.module import register_chats_module
 from src.modules.friends.module import register_friends_module
@@ -26,6 +27,7 @@ def build_container() -> Container:
     channels_router = register_channels_module()
     chats_router = register_chats_module()
     presence_router = register_presence_module()
+    calls_router = register_calls_module()
 
     container.module_routers.append(auth_module)
     container.module_routers.append(users_router)
@@ -34,5 +36,6 @@ def build_container() -> Container:
     container.module_routers.append(channels_router)
     container.module_routers.append(chats_router)
     container.module_routers.append(presence_router)
+    container.module_routers.append(calls_router)
 
     return container

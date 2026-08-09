@@ -19,6 +19,11 @@ from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.redis import close_redis, init_redis
 from src.core.storage import close_storage, init_storage
 from src.core.websocket.manager import ConnectionManager
+from src.modules.calls.application.call_signaling_service import CallSignalingService
+from src.modules.calls.infrastructure.persistence.redis_call_repository import (
+    RedisCallRepository,
+)
+from src.modules.chats.public.facade import build_chats_facade
 from src.modules.friends.public.facade import build_friends_facade
 from src.modules.presence.application.presence_service import PresenceService
 from src.modules.presence.application.presence_sweeper import PresenceSweeper
@@ -108,6 +113,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         RedisRealtimeNotifier(redis_subscription_manager),
     )
 
+    # Calls: same "built once, not per-request" rationale as presence/
+    # typing above — CallSignalingService lives for the WS connection's
+    # lifetime, not one HTTP request, so it can't hold a request-scoped
+    # AsyncSession. The one DB read it occasionally needs (chat membership
+    # on invite) gets its own short-lived session per call, mirroring
+    # lookup_presence_fan_out_targets above exactly.
+    async def list_chat_member_ids(chat_id: UUID) -> set[UUID]:
+        async with get_session_factory()() as session:
+            return await build_chats_facade(session).list_active_user_ids(chat_id)
+
+    call_repository = RedisCallRepository(app.state.redis)
+    call_signaling_service = CallSignalingService(
+        call_repository,
+        RedisRealtimeNotifier(redis_subscription_manager),
+        list_chat_member_ids,
+        ring_timeout_seconds=settings.CALL_RING_TIMEOUT_SECONDS,
+        active_session_ttl_seconds=settings.CALL_ACTIVE_SESSION_TTL_SECONDS,
+    )
+
     async def dispatch_activity(
         user_id: UUID, connection_id: UUID, raw_text: str
     ) -> None:
@@ -116,7 +140,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         # uncaught exception here would propagate up and disconnect the
         # connection, so one service misbehaving must never sink the
         # other.
-        for service in (presence_service, typing_service):
+        for service in (presence_service, typing_service, call_signaling_service):
             try:
                 await service.on_activity(user_id, connection_id, raw_text)
             except Exception:
@@ -127,6 +151,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
     connection_manager.set_activity_callback(dispatch_activity)
     app.state.typing_service = typing_service
+    app.state.call_signaling_service = call_signaling_service
     presence_sweeper = PresenceSweeper(
         presence_service,
         interval_seconds=settings.WS_PRESENCE_SWEEP_INTERVAL_SECONDS,
