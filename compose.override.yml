@@ -129,6 +129,23 @@ services:
       args:
         - VITE_API_URL=http://localhost:8000
 
+  # Observability (opt-in, see compose.yml): host ports for local access
+  # without going through Traefik.
+  prometheus:
+    restart: "no"
+    ports:
+      - "9090:9090"
+
+  loki:
+    restart: "no"
+    ports:
+      - "3100:3100"
+
+  grafana:
+    restart: "no"
+    ports:
+      - "3000:3000"
+
 networks:
   traefik-public:
     # For local dev, don't expect an external Traefik network
