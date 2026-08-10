@@ -144,6 +144,59 @@ test page and confirm `relay`-typed candidates are gathered, or check
 `docker compose logs coturn` for allocate/permission requests during a
 real call.
 
+## Observability: Grafana, Prometheus, Loki
+
+Centralized backend logs and basic HTTP metrics are available through
+Grafana, opt-in via the `observability` Compose profile (it doesn't start
+with a plain `docker compose watch`, to keep the default stack lean):
+
+```bash
+docker compose --profile observability up -d
+```
+
+| Name                                                     | URL                        |
+|-----------------------------------------------------------|----------------------------|
+| Grafana                                                    | <http://localhost:3000>    |
+| Prometheus                                                 | <http://localhost:9090>    |
+| Loki (API only, query through Grafana)                     | <http://localhost:3100>    |
+
+Log in to Grafana with `GF_SECURITY_ADMIN_USER`/`GF_SECURITY_ADMIN_PASSWORD`
+from `.env` (defaults to `admin`/`changethis` — **change this for any real
+deployment**, same as `JWT_SECRET_KEY`/`POSTGRES_PASSWORD`). Both the
+Prometheus and Loki datasources, and a starter **Lumiere FastAPI Backend**
+dashboard (request rate, latency percentiles, status code breakdown,
+4xx/5xx error rate, log volume by level, and a live logs panel), are
+auto-provisioned — no manual setup needed.
+
+**How it works**: the backend always exposes `GET /metrics`
+(`prometheus-fastapi-instrumentator`), scraped by Prometheus every 15s.
+Backend/worker container logs (JSON via `LOG_FORMAT=json`, set for both
+containers regardless of whether this profile is running) are tailed by
+Grafana Alloy straight from the Docker socket — filtered to just those two
+services — and pushed to Loki. Only Grafana gets a public Traefik route in
+production (`grafana.${DOMAIN}`, gated by its own login, same pattern as
+`adminer`); Prometheus/Loki/Alloy are never routed externally, reachable
+only from other containers on the same Docker network.
+
+To verify logs/metrics are flowing:
+
+```bash
+# Generate some traffic, then:
+curl http://localhost:8000/metrics | grep http_requests_total
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name="backend"}'
+```
+
+or just open Grafana → Explore → Loki and run `{service_name=~"backend|worker"}`.
+
+**Retention**: Loki keeps logs for 14 days (`observability/loki/loki-config.yml`).
+Prometheus/Grafana use default retention with persistent named volumes
+(`prometheus-data`, `loki-data`, `grafana-data`) so data survives container
+restarts. None of this affects the app itself — the backend and worker run
+identically whether or not the `observability` profile is up; the only
+things that would notice Prometheus/Loki/Grafana being down are Grafana's
+own dashboards showing stale/no data.
+
 ## Git Hooks
 
 This project uses `prek`, a modern, Rust-based alternative to `pre-commit`, to run checks before each commit.
