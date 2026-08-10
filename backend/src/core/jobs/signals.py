@@ -1,8 +1,22 @@
 from typing import Any
 
 from celery import Task
-from celery.signals import task_postrun, task_prerun
+from celery.signals import setup_logging, task_postrun, task_prerun
 from structlog.contextvars import bind_contextvars, clear_contextvars
+
+from src.core.logging import configure_logging
+
+
+@setup_logging.connect  # type: ignore[untyped-decorator]
+def configure_worker_logging(**_kwargs: Any) -> None:
+    """Connecting to this signal disables Celery's own default logging
+    setup entirely (see Celery's `setup_logging` docs), so the worker
+    process gets the same structlog config (LOG_FORMAT/LOG_LEVEL) as the
+    API instead of Celery's separate `--loglevel` formatting — required
+    for worker logs to reach Loki as parseable JSON, same as `main.py`'s
+    `lifespan()` does for uvicorn.
+    """
+    configure_logging()
 
 
 @task_prerun.connect  # type: ignore[untyped-decorator]

@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     APP_NAME: str = "FastAPI"
     ENVIRONMENT: Literal["development", "testing", "production"] = "development"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    # "json" for machine-parseable logs (set by compose.yml for containerized
+    # runs, so Loki/Grafana can filter on structured fields); "console" (the
+    # default) keeps colored pretty-printing for native/test runs.
+    LOG_FORMAT: Literal["console", "json"] = "console"
 
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
