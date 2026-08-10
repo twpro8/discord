@@ -1,0 +1,12 @@
+# Static scrape config: one deployment = one environment, so there's no
+# need for env-var templating here (Prometheus config has no built-in
+# ${VAR} expansion) or an "environment" label.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: lumiere-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["backend:8000"]
