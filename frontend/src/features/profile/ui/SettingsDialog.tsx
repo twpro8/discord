@@ -59,6 +59,9 @@ export function SettingsDialog({
             <PasswordForm />
           )}
         </div>
+        <div className="shrink-0 px-4 pb-3 text-right text-xs text-muted-foreground">
+          v{__APP_VERSION__}
+        </div>
       </div>
     </Modal>
   );
