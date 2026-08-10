@@ -231,3 +231,15 @@ Generate Frontend SDK....................................................Passed
 ```
 
 Using `prek` ensures that formatting, linting, type checking, frontend SDK generation, and other automated checks are applied consistently before changes are committed.
+
+`prek` also installs a `commit-msg` hook that enforces [Conventional Commits](https://www.conventionalcommits.org/) formatting (`feat: ...`, `fix(scope): ...`, etc.) — see [Versioning & releases](#versioning--releases) below for why. If you installed the Git hooks before this was added, re-run `uv run prek install -f` to pick up the new hook type; otherwise the commit-msg check won't actually run locally (it'll still be enforced in CI via the same commit history that drives releases).
+
+## Versioning & releases
+
+Lumiere's version is bumped and `CHANGES.md` is updated automatically by [python-semantic-release](https://python-semantic-release.readthedocs.io/), based on Conventional Commit messages merged into `main`. There's no manual version bumping or changelog editing.
+
+- **Canonical version:** `backend/pyproject.toml`'s `[project].version` is the version to look at day-to-day (and what `uv`/`hatchling` build against). `frontend/package.json`, `frontend/src-tauri/tauri.conf.json`, and `frontend/src-tauri/Cargo.toml` are kept in sync automatically on every release. The backend also exposes its running version at `/api/v1/health` and in the `/docs` OpenAPI schema.
+- **How releases happen:** every push to `main` (i.e. every `dev` → `main` merge) is evaluated by `.github/workflows/release.yml`. If there are releasable commits since the last tag (any `feat`/`fix`/breaking-change commit), it computes the next version, updates all version files and `CHANGES.md`, tags the commit, and publishes a GitHub Release — fully automatically. If there's nothing releasable (e.g. only `chore`/`docs`/`ci` commits), it's a no-op.
+- **Commit messages drive this directly**, which is why they're enforced by the `commit-msg` hook above: `feat:` bumps minor, `fix:` bumps patch, a `!` after the type/scope (e.g. `feat(auth)!: ...`) or a `BREAKING CHANGE:` footer bumps... also minor for now, since the project is pre-1.0 and breaking changes intentionally don't jump straight to `1.0.0`.
+- **"Unreleased" work** is just whatever's on `dev` (or an open PR) that hasn't been merged to `main` yet — there's no separate "Unreleased" section in `CHANGES.md`; every entry in it is already released.
+- Don't hand-edit the version in any of the four files above, and don't hand-edit `CHANGES.md` — both are bot-managed.
