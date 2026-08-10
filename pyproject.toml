@@ -5,38 +5,7 @@ members = ["backend"]
 dev = [
     "prek>=0.4.10,<1.0.0",
     "zizmor>=1.28.0",
-    "python-semantic-release>=10.6.1,<11.0.0",
 ]
-
-[tool.semantic_release]
-# major_on_zero is silently ignored unless allow_zero_version is also true.
-allow_zero_version = true
-major_on_zero = false
-tag_format = "v{version}"
-
-version_toml = [
-    "backend/pyproject.toml:project.version",
-    "frontend/src-tauri/Cargo.toml:package.version",
-]
-version_variables = [
-    "frontend/package.json:version",
-    "frontend/src-tauri/tauri.conf.json:version",
-]
-
-[tool.semantic_release.changelog]
-exclude_commit_patterns = [
-    "^chore(\\(.+\\))?:",
-    "^ci(\\(.+\\))?:",
-    "^style(\\(.+\\))?:",
-    "^test(\\(.+\\))?:",
-    "^docs(\\(.+\\))?:",
-]
-
-[tool.semantic_release.changelog.default_templates]
-changelog_file = "CHANGES.md"
-
-[tool.semantic_release.remote]
-type = "github"
 
 [tool.typos.files]
 extend-exclude = [
