@@ -8,9 +8,20 @@ import structlog
 from src.core.config import settings
 
 
+def _add_service_context(
+    _logger: structlog.typing.WrappedLogger,
+    _method_name: str,
+    event_dict: structlog.typing.EventDict,
+) -> structlog.typing.EventDict:
+    event_dict.setdefault("service", settings.APP_NAME)
+    event_dict.setdefault("environment", settings.ENVIRONMENT)
+    return event_dict
+
+
 def configure_logging() -> None:
-    """Configure structlog for structured JSON logging in production,
-    pretty-printed console output in development."""
+    """Configure structlog for structured JSON logging (LOG_FORMAT=json,
+    used in containerized runs so Loki/Grafana can parse structured
+    fields), pretty-printed console output otherwise."""
 
     shared_processors: list[structlog.typing.Processor] = [
         structlog.contextvars.merge_contextvars,
@@ -18,11 +29,12 @@ def configure_logging() -> None:
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
+        _add_service_context,
     ]
 
     renderer: Callable[..., Any]
 
-    if settings.ENVIRONMENT == "production":
+    if settings.LOG_FORMAT == "json":
         renderer = structlog.processors.JSONRenderer()
     else:
         renderer = structlog.dev.ConsoleRenderer(colors=True)
