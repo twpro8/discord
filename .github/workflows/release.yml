@@ -8,31 +8,20 @@ on:
 permissions: {}
 
 jobs:
-  release:
+  release-please:
     runs-on: ubuntu-latest
 
     concurrency:
-      group: ${{ github.workflow }}-release-${{ github.ref_name }}
+      group: ${{ github.workflow }}-${{ github.ref_name }}
       cancel-in-progress: false
 
     permissions:
-      contents: write # push the version-bump commit, tag, and GitHub Release
+      contents: write # open/update the release PR's branch, create tags and GitHub Releases
+      pull-requests: write # open/update the release PR
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
-          ref: ${{ github.ref_name }}
-          persist-credentials: true
-
-      - name: Ensure branch is at workflow sha
-        env:
-          TARGET_SHA: ${{ github.sha }}
-        run: git reset --hard "$TARGET_SHA"
-
-      - name: Semantic Version Release
-        uses: python-semantic-release/python-semantic-release@39dd2052f2ce8282a5d932c31d58a2ca06d2550e # v10.6.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          git_committer_name: "github-actions"
-          git_committer_email: "actions@users.noreply.github.com"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
