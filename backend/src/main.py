@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.api.errors import register_exception_handlers
 from src.api.v1.router import build_api_v1_router
@@ -189,6 +190,14 @@ def create_app() -> FastAPI:
     )
 
     register_exception_handlers(app)
+
+    # Multiprocess-safe (PROMETHEUS_MULTIPROC_DIR, see backend/scripts/start.sh)
+    # since uvicorn runs multiple worker processes in Docker. Excludes
+    # /metrics itself and the health check from the request metrics so
+    # Prometheus's own scrapes and container healthchecks don't skew them.
+    Instrumentator(excluded_handlers=["/metrics", "/api/v1/health"]).instrument(
+        app
+    ).expose(app, include_in_schema=False, tags=["Meta"])
 
     container = build_container()
     app.state.container = container

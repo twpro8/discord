@@ -63,13 +63,9 @@ services:
       dockerfile: backend/Dockerfile
     # command: sleep infinity  # Infinite loop to keep container alive doing nothing
     command:
-      - uvicorn
-      - src.main:app
+      - bash
+      - scripts/start.sh
       - --reload
-      - --host
-      - "0.0.0.0"
-      - --port
-      - "8000"
     develop:
       watch:
         - path: ./backend
