@@ -3,6 +3,7 @@ from contextlib import AsyncExitStack
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.event_bus import EventBus
+from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.chats.application.commands.add_member import (
     AddMemberCommand,
     AddMemberCommandHandler,
@@ -56,6 +57,7 @@ async def register_chat_handlers(
     stack: AsyncExitStack,
     event_bus: EventBus,
     users_facade: UsersFacade,
+    room_membership_updater: RoomMembershipUpdater,
 ) -> None:
     chat_repository = ChatRepositoryImpl(session)
     chat_member_repository = ChatMemberRepositoryImpl(session)
@@ -68,14 +70,21 @@ async def register_chat_handlers(
     )
 
     mediator.register_command(
-        CreateChatCommand, CreateChatCommandHandler(uow, event_bus)
+        CreateChatCommand,
+        CreateChatCommandHandler(uow, event_bus, room_membership_updater),
     )
     mediator.register_command(UpdateChatCommand, UpdateChatCommandHandler(uow))
     mediator.register_command(
-        AddMemberCommand, AddMemberCommandHandler(uow, users_facade)
+        AddMemberCommand,
+        AddMemberCommandHandler(uow, users_facade, room_membership_updater),
     )
-    mediator.register_command(RemoveMemberCommand, RemoveMemberCommandHandler(uow))
-    mediator.register_command(LeaveChatCommand, LeaveChatCommandHandler(uow))
+    mediator.register_command(
+        RemoveMemberCommand,
+        RemoveMemberCommandHandler(uow, room_membership_updater),
+    )
+    mediator.register_command(
+        LeaveChatCommand, LeaveChatCommandHandler(uow, room_membership_updater)
+    )
     mediator.register_command(MarkChatAsReadCommand, MarkChatAsReadCommandHandler(uow))
 
     mediator.register_query(GetChatsQuery, GetChatsQueryHandler(chat_repository))

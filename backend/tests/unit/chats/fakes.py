@@ -19,6 +19,18 @@ from src.shared.domain.domain_event import DomainEvent
 from src.shared.domain.unset import set_fields
 
 
+class FakeRoomMembershipUpdater:
+    def __init__(self) -> None:
+        self.joined: list[tuple[UUID, str]] = []
+        self.left: list[tuple[UUID, str]] = []
+
+    async def join_user_to_room(self, user_id: UUID, room: str) -> None:
+        self.joined.append((user_id, room))
+
+    async def leave_user_from_room(self, user_id: UUID, room: str) -> None:
+        self.left.append((user_id, room))
+
+
 class FakeChatRepository:
     def __init__(self) -> None:
         self.chats: dict[UUID, Chat] = {}

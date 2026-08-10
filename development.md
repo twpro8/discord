@@ -100,6 +100,103 @@ After changing any environment variables, restart the stack:
 docker compose watch
 ```
 
+## Voice calls: TURN server (production)
+
+Voice calling works over STUN alone for most home/office networks with no
+extra setup — the backend's `GET /api/v1/calls/turn-credentials` endpoint
+returns STUN-only ICE servers by default (`STUN_URLS` in `.env`).
+
+For reliable connectivity behind symmetric NATs or restrictive corporate
+firewalls, a TURN relay is needed. A self-hosted `coturn` service is
+defined in `compose.yml`, gated behind the `turn` Compose profile so it
+doesn't start by default:
+
+```bash
+docker compose --profile turn up -d coturn
+```
+
+Then set in `.env`:
+
+```
+TURN_URLS=turn:your-domain:3478
+TURN_SECRET_KEY=<a strong random secret>
+```
+
+Two things this repo's Compose setup cannot do for you, since they're
+host/network infrastructure rather than application config:
+
+* **Firewall/port-forwarding**: open UDP+TCP `3478` (the TURN listener)
+  and the UDP relay range `49152-49252` on the host firewall or cloud
+  security group. `coturn` runs with `network_mode: host` (required for
+  ICE relay candidates to be reachable at the host's real IP), so it is
+  **not** routed through Traefik — Traefik only proxies HTTP(S), not a
+  raw UDP port range.
+* **Single-host constraint**: `network_mode: host` means `coturn` only
+  makes sense on a single host. If this stack ever moves to multi-host or
+  managed Kubernetes, swap to a managed TURN provider that supports the
+  same REST-API HMAC credential scheme (`TURN_URLS`/`TURN_SECRET_KEY`) —
+  no backend code changes needed either way.
+
+To verify TURN is actually working, feed the response of
+`GET /api/v1/calls/turn-credentials` (while logged in) into the public
+[Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice)
+test page and confirm `relay`-typed candidates are gathered, or check
+`docker compose logs coturn` for allocate/permission requests during a
+real call.
+
+## Observability: Grafana, Prometheus, Loki
+
+Centralized backend logs and basic HTTP metrics are available through
+Grafana, opt-in via the `observability` Compose profile (it doesn't start
+with a plain `docker compose watch`, to keep the default stack lean):
+
+```bash
+docker compose --profile observability up -d
+```
+
+| Name                                                     | URL                        |
+|-----------------------------------------------------------|----------------------------|
+| Grafana                                                    | <http://localhost:3000>    |
+| Prometheus                                                 | <http://localhost:9090>    |
+| Loki (API only, query through Grafana)                     | <http://localhost:3100>    |
+
+Log in to Grafana with `GF_SECURITY_ADMIN_USER`/`GF_SECURITY_ADMIN_PASSWORD`
+from `.env` (defaults to `admin`/`changethis` — **change this for any real
+deployment**, same as `JWT_SECRET_KEY`/`POSTGRES_PASSWORD`). Both the
+Prometheus and Loki datasources, and a starter **Lumiere FastAPI Backend**
+dashboard (request rate, latency percentiles, status code breakdown,
+4xx/5xx error rate, log volume by level, and a live logs panel), are
+auto-provisioned — no manual setup needed.
+
+**How it works**: the backend always exposes `GET /metrics`
+(`prometheus-fastapi-instrumentator`), scraped by Prometheus every 15s.
+Backend/worker container logs (JSON via `LOG_FORMAT=json`, set for both
+containers regardless of whether this profile is running) are tailed by
+Grafana Alloy straight from the Docker socket — filtered to just those two
+services — and pushed to Loki. Only Grafana gets a public Traefik route in
+production (`grafana.${DOMAIN}`, gated by its own login, same pattern as
+`adminer`); Prometheus/Loki/Alloy are never routed externally, reachable
+only from other containers on the same Docker network.
+
+To verify logs/metrics are flowing:
+
+```bash
+# Generate some traffic, then:
+curl http://localhost:8000/metrics | grep http_requests_total
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name="backend"}'
+```
+
+or just open Grafana → Explore → Loki and run `{service_name=~"backend|worker"}`.
+
+**Retention**: Loki keeps logs for 14 days (`observability/loki/loki-config.yml`).
+Prometheus/Grafana use default retention with persistent named volumes
+(`prometheus-data`, `loki-data`, `grafana-data`) so data survives container
+restarts. None of this affects the app itself — the backend and worker run
+identically whether or not the `observability` profile is up; the only
+things that would notice Prometheus/Loki/Grafana being down are Grafana's
+own dashboards showing stale/no data.
+
 ## Git Hooks
 
 This project uses `prek`, a modern, Rust-based alternative to `pre-commit`, to run checks before each commit.
@@ -134,3 +231,15 @@ Generate Frontend SDK....................................................Passed
 ```
 
 Using `prek` ensures that formatting, linting, type checking, frontend SDK generation, and other automated checks are applied consistently before changes are committed.
+
+`prek` also installs a `commit-msg` hook that enforces [Conventional Commits](https://www.conventionalcommits.org/) formatting (`feat: ...`, `fix(scope): ...`, etc.) — see [Versioning & releases](#versioning--releases) below for why. If you installed the Git hooks before this was added, re-run `uv run prek install -f` to pick up the new hook type; otherwise the commit-msg check won't actually run locally (it'll still be enforced in CI via the same commit history that drives releases).
+
+## Versioning & releases
+
+Lumiere's version is bumped and `CHANGES.md` is updated automatically by [release-please](https://github.com/googleapis/release-please), based on Conventional Commit messages merged into `main`. There's no manual version bumping or changelog editing.
+
+- **Canonical version:** `backend/pyproject.toml`'s `[project].version` is the version to look at day-to-day (and what `uv`/`hatchling` build against). `frontend/package.json`, `frontend/src-tauri/tauri.conf.json`, and `frontend/src-tauri/Cargo.toml` are kept in sync automatically on every release. The backend also exposes its running version at `/api/v1/health` and in the `/docs` OpenAPI schema.
+- **How releases happen:** since `main` never receives direct pushes (everything, including release automation, goes through a PR), releasing is a two-step flow rather than a single automatic action. Every push to `main` (i.e. every `dev` → `main` merge) is evaluated by `.github/workflows/release.yml`. If there are releasable commits since the last release (any `feat`/`fix` commit — see below), release-please opens or updates a standing **release PR** against `main`, containing the computed version bump for all version files and the generated `CHANGES.md` entry. Merging that PR — through the normal review/CI process, like any other PR — is what finalizes the release: release-please then creates the git tag and publishes a GitHub Release. If there's nothing releasable (e.g. only `chore`/`docs`/`ci`/`style`/`test` commits), no release PR is opened at all.
+- **Commit messages drive this directly**, which is why they're enforced by the `commit-msg` hook above: `feat:` bumps minor, `fix:` bumps patch, a `!` after the type/scope (e.g. `feat(auth)!: ...`) or a `BREAKING CHANGE:` footer bumps... also minor for now, since the project is pre-1.0 and breaking changes intentionally don't jump straight to `1.0.0`.
+- **"Unreleased" work** is whatever's on `dev` (or an open feature PR) that hasn't been merged to `main` yet, *plus* — once it has been merged to `main` — whatever's sitting in the still-open release PR waiting to be reviewed and merged. There's no separate "Unreleased" section maintained by hand in `CHANGES.md`; every entry in it corresponds to a release PR that was actually merged.
+- Don't hand-edit the version in any of the four files above, and don't hand-edit `CHANGES.md`, `release-please-config.json`, or `.release-please-manifest.json` — all are bot-managed.

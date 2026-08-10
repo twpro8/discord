@@ -2,7 +2,9 @@ from dataclasses import asdict, dataclass
 from uuid import UUID
 
 from src.core.logging import get_logger
+from src.core.realtime.envelope import EventType
 from src.core.realtime.notifier import RealtimeNotifier
+from src.core.realtime.rooms import chat_room
 from src.modules.chats.public.facade import ChatsFacade
 from src.modules.messages.domain.entities.dtos import (
     ChatMessage,
@@ -63,27 +65,22 @@ class SendChatMessageCommandHandler:
         return Result.ok(chat_message)
 
     async def _notify(self, chat_id: UUID, message: ChatMessage) -> None:
-        """Fan the new message out to each member's WebSocket connection.
+        """Fan the new message out to everyone in the chat's room.
+
+        A single publish, not one per member: every member's connection
+        is joined to the chat's room either dynamically (at chat
+        creation/membership-add time, see chats' Create/AddMember command
+        handlers) or at connect time for pre-existing memberships (see
+        api/v1/ws.py).
 
         Best effort: a realtime delivery failure must not fail the send the
         caller asked for (matches the codebase's mark-as-read precedent).
         """
         try:
-            member_ids = await self._chats_facade.list_active_user_ids(chat_id)
-        except Exception:
-            logger.exception(
-                "realtime.member_lookup_failed",
-                chat_id=str(chat_id),
+            await self._realtime.publish_to_room(
+                room=chat_room(chat_id),
+                event_type=EventType.MESSAGE_CREATED,
+                payload=asdict(message),
             )
-            return
-
-        event = {"type": "message.created", "payload": asdict(message)}
-        for member_id in member_ids:
-            try:
-                await self._realtime.publish_user_event(member_id, event)
-            except Exception:
-                logger.exception(
-                    "realtime.publish_failed",
-                    user_id=str(member_id),
-                    chat_id=str(chat_id),
-                )
+        except Exception:
+            logger.exception("realtime.publish_failed", chat_id=str(chat_id))

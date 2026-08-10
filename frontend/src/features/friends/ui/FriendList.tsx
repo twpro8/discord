@@ -2,9 +2,10 @@
 import { MessageCircle, Trash2 } from "lucide-react";
 
 // shared
-import { AvatarInitial } from "@/shared/ui/avatar-initial";
+import { Avatar, type AvatarStatus } from "@/shared/ui/avatar";
 
 // relative
+import { getFriendPeerId } from "../model/get-friend-peer-id";
 import type { FriendRequestWithUser } from "../model/types";
 
 function FriendItem({
@@ -12,15 +13,21 @@ function FriendItem({
   disabled,
   onOpenChat,
   onRemove,
+  status,
 }: {
   request: FriendRequestWithUser;
   disabled: boolean;
   onOpenChat: (friend: FriendRequestWithUser) => void;
   onRemove: (id: string) => void;
+  status?: AvatarStatus;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50">
-      <AvatarInitial username={request.username} />
+      <Avatar
+        name={request.username}
+        src={request.avatar_url}
+        status={status}
+      />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">
           {request.username}
@@ -74,34 +81,43 @@ function EmptyState() {
   );
 }
 
-/** Lists friends with chat and remove actions. */
+/** Lists friends with chat and remove actions, showing each friend's
+ * presence status when known. */
 export function FriendList({
   friends,
   isLoading,
   disabled,
   onOpenChat,
   onRemove,
+  currentUserId,
+  statusByUserId = {},
 }: {
   friends: FriendRequestWithUser[];
   isLoading: boolean;
   disabled: boolean;
   onOpenChat: (friend: FriendRequestWithUser) => void;
   onRemove: (id: string) => void;
+  currentUserId: string;
+  statusByUserId?: Record<string, AvatarStatus>;
 }) {
   if (isLoading) return <Skeleton />;
   if (friends.length === 0) return <EmptyState />;
 
   return (
     <div className="space-y-0.5">
-      {friends.map((friend) => (
-        <FriendItem
-          key={friend.id}
-          request={friend}
-          disabled={disabled}
-          onOpenChat={onOpenChat}
-          onRemove={onRemove}
-        />
-      ))}
+      {friends.map((friend) => {
+        const peerId = getFriendPeerId(friend, currentUserId);
+        return (
+          <FriendItem
+            key={friend.id}
+            request={friend}
+            disabled={disabled}
+            onOpenChat={onOpenChat}
+            onRemove={onRemove}
+            status={statusByUserId[peerId]}
+          />
+        );
+      })}
     </div>
   );
 }

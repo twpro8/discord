@@ -107,6 +107,7 @@ services:
     environment:
       - POSTGRES_HOST=db
       - REDIS_HOST=redis
+      - LOG_FORMAT=json
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -114,6 +115,9 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
       - traefik.constraint-label=traefik-public
+      # Read by Alloy's log-shipping relabel rules (observability profile),
+      # not by Traefik.
+      - lumiere.environment=${ENVIRONMENT?Variable not set}
 
       - traefik.http.services.${STACK_NAME?Variable not set}-backend.loadbalancer.server.port=8000
 
@@ -127,6 +131,35 @@ services:
 
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.middlewares=https-redirect
+
+  worker:
+    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_healthy
+        restart: true
+      prestart:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=db
+      - REDIS_HOST=redis
+      - LOG_FORMAT=json
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: celery -A src.core.jobs.celery_app:celery_app worker --loglevel=info --concurrency=4
+    labels:
+      # Read by Alloy's log-shipping relabel rules (observability profile).
+      - lumiere.environment=${ENVIRONMENT?Variable not set}
 
   frontend:
     image: '${DOCKER_IMAGE_FRONTEND?Variable not set}:${TAG-latest}'
@@ -157,9 +190,93 @@ services:
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 
+  # WebRTC TURN relay for voice calls (NAT traversal)
+  coturn:
+    image: coturn/coturn:4.6
+    restart: unless-stopped
+    profiles: ["turn"]
+    network_mode: host
+    env_file:
+      - .env
+    command: >
+      turnserver
+      --listening-port=3478
+      --min-port=49152 --max-port=49252
+      --realm=${DOMAIN?Variable not set}
+      --use-auth-secret --static-auth-secret=${TURN_SECRET_KEY}
+      --no-cli --log-file=stdout
+
+  # Observability stack (Grafana + Prometheus + Loki + Alloy), opt-in:
+  # docker compose --profile observability up -d
+  # See development.md for URLs and verification steps.
+  prometheus:
+    image: prom/prometheus:v3.8.1
+    restart: unless-stopped
+    profiles: ["observability"]
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+  loki:
+    image: grafana/loki:3.7.6
+    restart: unless-stopped
+    profiles: ["observability"]
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+
+  alloy:
+    image: grafana/alloy:v1.18.1
+    restart: unless-stopped
+    profiles: ["observability"]
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:13.1.1
+    restart: unless-stopped
+    profiles: ["observability"]
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      - prometheus
+      - loki
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER?Variable not set}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD?Variable not set}
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.services.${STACK_NAME?Variable not set}-grafana.loadbalancer.server.port=3000
+      - traefik.http.routers.${STACK_NAME?Variable not set}-grafana-http.rule=Host(`grafana.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-grafana-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME?Variable not set}-grafana-https.rule=Host(`grafana.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-grafana-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME?Variable not set}-grafana-https.tls=true
+      - traefik.http.routers.${STACK_NAME?Variable not set}-grafana-https.tls.certresolver=le
+      - traefik.http.routers.${STACK_NAME?Variable not set}-grafana-http.middlewares=https-redirect
+
 volumes:
   app-db-data:
   redis-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:
 
 networks:
   traefik-public:

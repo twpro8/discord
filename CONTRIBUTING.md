@@ -25,6 +25,12 @@ To reduce supply chain risk, Pull Requests from external contributors must **not
 
 If your contribution requires adding, removing, or updating a dependency, please open a Discussion or Issue first so we can review the proposal before implementation.
 
+## Commit Messages
+
+Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat: ...`, `fix(scope): ...`, `chore: ...`, etc.), enforced locally by a `commit-msg` Git hook (see [development.md](development.md#git-hooks)). This isn't just a style preference: `feat`/`fix`/breaking-change commits merged into `main` automatically drive the project's version bump and `CHANGES.md` entry (see [development.md](development.md#versioning--releases)), so an inaccurately-typed commit type will misrepresent the release.
+
+Relatedly, `backend/pyproject.toml`'s version, `frontend/package.json`'s version, the Tauri app's version files, `CHANGES.md`, `release-please-config.json`, and `.release-please-manifest.json` are all bot-managed by the release automation — please don't hand-edit them in a Pull Request.
+
 ## Before Opening a Pull Request
 
 Please make sure that:

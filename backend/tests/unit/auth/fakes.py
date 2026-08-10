@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from src.core.security.hashing import hash_password, verify_password
@@ -7,6 +8,8 @@ from src.modules.auth.domain.entities.refresh_token import RefreshToken
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AuthUnitOfWork,
 )
+from src.modules.email.domain.entities.dtos import EmailMessageDTO
+from src.modules.email.domain.enums import EmailStatus, EmailTemplateName
 from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
 from src.modules.users.domain.entities.user import User
 from src.modules.users.domain.exceptions import (
@@ -82,6 +85,52 @@ class FakeUsersFacade:
         if not verify_password(plain_password, user.password_hash):
             return Result.err(IncorrectPasswordError())
         return Result.ok(user_to_dto(user))
+
+
+class FakeEmailFacade:
+    """Records `send_email` calls instead of touching a real UoW/broker —
+    same shape as `FakeJobDispatcher` (tests/dependency_overrides/job_dispatcher.py)."""
+
+    def __init__(self, *, error: LumiereError | None = None) -> None:
+        self.error = error
+        self.calls: list[dict[str, Any]] = []
+
+    async def send_email(
+        self,
+        *,
+        to: str,
+        template: EmailTemplateName,
+        context: dict[str, Any],
+        idempotency_key: str | None = None,
+    ) -> Result[EmailMessageDTO, LumiereError]:
+        self.calls.append(
+            {
+                "to": to,
+                "template": template,
+                "context": context,
+                "idempotency_key": idempotency_key,
+            }
+        )
+        if self.error is not None:
+            return Result.err(self.error)
+        now = datetime.now(UTC)
+        return Result.ok(
+            EmailMessageDTO(
+                id=uuid4(),
+                to=to,
+                template=template,
+                status=EmailStatus.PENDING,
+                attempts=0,
+                error_message=None,
+                provider_message_id=None,
+                created_at=now,
+                updated_at=now,
+                sent_at=None,
+            )
+        )
+
+    async def get_email_status(self, message_id: UUID) -> EmailMessageDTO | None:
+        return None
 
 
 class FakeRefreshTokenRepository:

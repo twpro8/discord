@@ -6,6 +6,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
+ENV PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc_dir
 
 WORKDIR /app/
 
@@ -29,4 +30,4 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 WORKDIR /app/backend/
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["bash", "scripts/start.sh", "--workers", "4"]

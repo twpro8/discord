@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     APP_NAME: str = "FastAPI"
     ENVIRONMENT: Literal["development", "testing", "production"] = "development"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    # "json" for machine-parseable logs (set by compose.yml for containerized
+    # runs, so Loki/Grafana can filter on structured fields); "console" (the
+    # default) keeps colored pretty-printing for native/test runs.
+    LOG_FORMAT: Literal["console", "json"] = "console"
 
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
@@ -33,11 +37,80 @@ class Settings(BaseSettings):
     REDIS_SOCKET_CONNECT_TIMEOUT: int = 2
     REDIS_RETRY_ON_TIMEOUT: bool = True
 
+    CELERY_BROKER_DB: int = 1
+    CELERY_WORKER_CONCURRENCY: int = 4
+    CELERY_WORKER_PREFETCH_MULTIPLIER: int = 1
+    CELERY_TASK_MAX_RETRIES: int = 3
+    CELERY_TASK_DEFAULT_RETRY_DELAY: int = 10
+
+    # Emails — consumed by modules/email only (see its infrastructure/providers)
+    EMAIL_PROVIDER: Literal["smtp"] = "smtp"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    EMAILS_FROM_EMAIL: str = "info@example.com"
+    EMAILS_FROM_NAME: str = "Lumiere"
+
+    # Cloudflare R2 object storage (S3-compatible API). Empty credentials
+    # mean storage is not configured: init_storage() skips startup wiring
+    # and the app runs without object storage.
+    R2_ACCOUNT_ID: str = ""
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_BUCKET_NAME: str = ""
+    # Base URL for public object URLs (R2 public bucket or custom domain),
+    # e.g. https://pub-<hash>.r2.dev or https://files.example.com
+    R2_PUBLIC_BASE_URL: str = ""
+    R2_CONNECT_TIMEOUT: float = 5.0
+    R2_READ_TIMEOUT: float = 30.0
+    R2_MAX_POOL_CONNECTIONS: int = 50
+    R2_MAX_AVATAR_BYTES: int = 5_000_000
+
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     REFRESH_TOKEN_EXPIRE_SECONDS: int = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+
+    # Bounded per-connection send queue: a WebSocket write slower than the
+    # produce rate fails fast (disconnect) past this depth rather than
+    # blocking the event loop or silently dropping messages.
+    WS_SEND_QUEUE_MAXSIZE: int = 256
+
+    # Reconnect backoff for the realtime Redis subscription listener:
+    # delay = min(BASE * 2**attempt, MAX) * uniform(JITTER, 1.0)
+    WS_REDIS_BACKOFF_BASE_SECONDS: float = 0.5
+    WS_REDIS_BACKOFF_MAX_SECONDS: float = 30.0
+    WS_REDIS_BACKOFF_JITTER: float = 0.5
+
+    # Presence heartbeats: how often clients are expected to send one, how
+    # long a connection can go without one before the sweeper considers it
+    # dead (a crashed tab that never sent a close frame), and how often the
+    # sweeper runs.
+    WS_PRESENCE_HEARTBEAT_INTERVAL_SECONDS: float = 25.0
+    WS_PRESENCE_STALE_AFTER_SECONDS: float = 75.0
+    WS_PRESENCE_SWEEP_INTERVAL_SECONDS: float = 30.0
+
+    # Voice calls: how long an invite rings before the caller gets
+    # call.timeout, and the backstop TTL for an accepted call's Redis
+    # state (self-heals a crashed process that never ran its own
+    # disconnect/hangup cleanup — see modules.calls).
+    CALL_RING_TIMEOUT_SECONDS: float = 45.0
+    CALL_ACTIVE_SESSION_TTL_SECONDS: float = 14400.0
+
+    # TURN/STUN (WebRTC NAT traversal for voice calls). Empty TURN_* means
+    # the credentials endpoint returns STUN-only (fine for most home/office
+    # networks in dev); set both for production. This is the single source
+    # of ICE server config — the frontend has none of its own, it only
+    # renders whatever GET /calls/turn-credentials returns. See
+    # modules.calls.application.turn_credentials.
+    STUN_URLS: str = "stun:stun.l.google.com:19302"
+    TURN_URLS: str = ""
+    TURN_SECRET_KEY: str = ""
+    TURN_CREDENTIAL_TTL_SECONDS: float = 3600.0
 
     FRONTEND_HOST: str
     CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = []
@@ -58,6 +131,31 @@ class Settings(BaseSettings):
     @property
     def REDIS_URL(self) -> str:
         return f"redis://{self.REDIS_USER}:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}"
+
+    @computed_field  # type: ignore
+    @property
+    def CELERY_BROKER_URL(self) -> str:
+        return (
+            f"redis://{self.REDIS_USER}:{self.REDIS_PASSWORD}@"
+            f"{self.REDIS_HOST}:{self.REDIS_PORT}/{self.CELERY_BROKER_DB}"
+        )
+
+    @computed_field  # type: ignore
+    @property
+    def R2_ENDPOINT_URL(self) -> str:
+        return f"https://{self.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+
+    @computed_field  # type: ignore
+    @property
+    def r2_configured(self) -> bool:
+        return bool(
+            self.R2_ACCOUNT_ID and self.R2_ACCESS_KEY_ID and self.R2_BUCKET_NAME
+        )
+
+    @computed_field  # type: ignore
+    @property
+    def turn_configured(self) -> bool:
+        return bool(self.TURN_URLS and self.TURN_SECRET_KEY)
 
     @computed_field  # type: ignore
     @property

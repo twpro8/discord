@@ -63,13 +63,9 @@ services:
       dockerfile: backend/Dockerfile
     # command: sleep infinity  # Infinite loop to keep container alive doing nothing
     command:
-      - uvicorn
-      - src.main:app
+      - bash
+      - scripts/start.sh
       - --reload
-      - --host
-      - "0.0.0.0"
-      - --port
-      - "8000"
     develop:
       watch:
         - path: ./backend
@@ -89,6 +85,34 @@ services:
       SMTP_TLS: "false"
       EMAILS_FROM_EMAIL: "noreply@example.com"
 
+  worker:
+    restart: "no"
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command:
+      - celery
+      - -A
+      - src.core.jobs.celery_app:celery_app
+      - worker
+      - --loglevel=info
+      - --concurrency=4
+    environment:
+      SMTP_HOST: "mailcatcher"
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      EMAILS_FROM_EMAIL: "noreply@example.com"
+    develop:
+      watch:
+        - path: ./backend
+          action: sync+restart
+          target: /app/backend
+          ignore:
+            - ./backend/.venv
+            - .venv
+        - path: ./backend/pyproject.toml
+          action: rebuild
+
   mailcatcher:
     image: schickling/mailcatcher
     ports:
@@ -104,6 +128,23 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         - VITE_API_URL=http://localhost:8000
+
+  # Observability (opt-in, see compose.yml): host ports for local access
+  # without going through Traefik.
+  prometheus:
+    restart: "no"
+    ports:
+      - "9090:9090"
+
+  loki:
+    restart: "no"
+    ports:
+      - "3100:3100"
+
+  grafana:
+    restart: "no"
+    ports:
+      - "3000:3000"
 
 networks:
   traefik-public:

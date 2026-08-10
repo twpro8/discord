@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from src.core.realtime.rooms import chat_room
 from src.modules.chats.application.commands.create_chat import (
     CreateChatCommand,
     CreateChatCommandHandler,
@@ -12,6 +13,7 @@ from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
     FakeChatUnitOfWork,
+    FakeRoomMembershipUpdater,
     RecordingEventBus,
 )
 
@@ -21,16 +23,24 @@ def _handler() -> tuple[
     FakeChatRepository,
     FakeChatMemberRepository,
     RecordingEventBus,
+    FakeRoomMembershipUpdater,
 ]:
     chats = FakeChatRepository()
     members = FakeChatMemberRepository()
     uow = FakeChatUnitOfWork(chats, members)
     event_bus = RecordingEventBus()
-    return CreateChatCommandHandler(uow, event_bus), chats, members, event_bus
+    room_updater = FakeRoomMembershipUpdater()
+    return (
+        CreateChatCommandHandler(uow, event_bus, room_updater),
+        chats,
+        members,
+        event_bus,
+        room_updater,
+    )
 
 
 async def test_self_chat_is_rejected() -> None:
-    handler, _, members, _ = _handler()
+    handler, _, members, _, _ = _handler()
     user_id = uuid4()
 
     result = await handler.handle(
@@ -51,7 +61,7 @@ async def test_self_chat_is_rejected() -> None:
 
 
 async def test_creates_private_chat_and_adds_both_members() -> None:
-    handler, _, members, event_bus = _handler()
+    handler, _, members, event_bus, room_updater = _handler()
     creator_id, target_id = uuid4(), uuid4()
 
     result = await handler.handle(
@@ -73,9 +83,12 @@ async def test_creates_private_chat_and_adds_both_members() -> None:
     assert isinstance(event_bus.published[0], ChatCreatedEvent)
     assert event_bus.published[0].chat_id == result.value.id
 
+    room = chat_room(result.value.id)
+    assert set(room_updater.joined) == {(creator_id, room), (target_id, room)}
+
 
 async def test_reuses_existing_private_chat_without_adding_members() -> None:
-    handler, chats, members, event_bus = _handler()
+    handler, chats, members, event_bus, room_updater = _handler()
     creator_id, target_id = uuid4(), uuid4()
     existing = await chats.create(ChatCreate(type=ChatType.private))
     chats.seed_private_chat(creator_id, target_id, existing)
@@ -96,10 +109,11 @@ async def test_reuses_existing_private_chat_without_adding_members() -> None:
     assert result.value.id == existing.id
     assert members.members == []
     assert event_bus.published == []
+    assert room_updater.joined == []
 
 
 async def test_creates_group_chat_with_owner_and_members() -> None:
-    handler, _, members, event_bus = _handler()
+    handler, _, members, event_bus, room_updater = _handler()
     creator_id, member_id = uuid4(), uuid4()
 
     result = await handler.handle(
@@ -125,3 +139,6 @@ async def test_creates_group_chat_with_owner_and_members() -> None:
 
     assert len(event_bus.published) == 1
     assert isinstance(event_bus.published[0], ChatCreatedEvent)
+
+    room = chat_room(chat.id)
+    assert set(room_updater.joined) == {(creator_id, room), (member_id, room)}

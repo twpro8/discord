@@ -8,9 +8,13 @@ import { Send } from "lucide-react";
 export function MessageComposer({
   onSend,
   disabled = false,
+  onTyping,
+  onStopTyping,
 }: {
   onSend: (body: string) => void;
   disabled?: boolean;
+  onTyping?: () => void;
+  onStopTyping?: () => void;
 }) {
   const [body, setBody] = useState("");
 
@@ -20,6 +24,17 @@ export function MessageComposer({
     if (!trimmed || disabled) return;
     onSend(trimmed);
     setBody("");
+    onStopTyping?.();
+  };
+
+  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = event.target.value;
+    setBody(value);
+    if (value.trim()) {
+      onTyping?.();
+    } else {
+      onStopTyping?.();
+    }
   };
 
   return (
@@ -29,7 +44,7 @@ export function MessageComposer({
     >
       <textarea
         value={body}
-        onChange={(event) => setBody(event.target.value)}
+        onChange={handleChange}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
@@ -44,7 +59,7 @@ export function MessageComposer({
       <button
         type="submit"
         disabled={!body.trim() || disabled}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:opacity-50"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:opacity-50"
         aria-label="Send message"
       >
         <Send className="h-4 w-4" />

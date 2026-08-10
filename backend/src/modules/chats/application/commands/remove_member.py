@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from src.core.websocket.manager import RoomMembershipUpdater
+from src.modules.chats.application.realtime import leave_members_from_chat_room
 from src.modules.chats.domain import services
 from src.modules.chats.domain.exceptions import (
     CannotRemoveSelfError,
@@ -20,8 +22,11 @@ class RemoveMemberCommand(Command):
 
 
 class RemoveMemberCommandHandler:
-    def __init__(self, uow: ChatUnitOfWork) -> None:
+    def __init__(
+        self, uow: ChatUnitOfWork, room_membership_updater: RoomMembershipUpdater
+    ) -> None:
         self._uow = uow
+        self._room_membership_updater = room_membership_updater
 
     async def handle(self, command: RemoveMemberCommand) -> Result[None, LumiereError]:
         try:
@@ -43,4 +48,7 @@ class RemoveMemberCommandHandler:
             return Result.err(error)
 
         await self._uow.commit()
+        await leave_members_from_chat_room(
+            self._room_membership_updater, command.chat_id, [command.target_user_id]
+        )
         return Result.ok(None)

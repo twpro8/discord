@@ -3,7 +3,7 @@ import { MessagesSquare } from "lucide-react";
 
 // shared
 import { timeAgo } from "@/shared/helpers/utils";
-import { AvatarInitial } from "@/shared/ui/avatar-initial";
+import { Avatar } from "@/shared/ui/avatar";
 
 // relative
 import type { ChatMessage } from "../model/types";
@@ -11,7 +11,7 @@ import type { ChatMessage } from "../model/types";
 function MessageRow({ message, name }: { message: ChatMessage; name: string }) {
   return (
     <div className="flex gap-3 px-4 py-2">
-      <AvatarInitial username={name} />
+      <Avatar name={name} />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <p className="text-sm font-semibold text-foreground">{name}</p>
@@ -51,7 +51,7 @@ export function MessageList({
   if (messages.length === 0) return <EmptyState />;
 
   return (
-    <div className="py-4">
+    <div className="mx-auto w-full max-w-220 py-4">
       {messages.map((message) => (
         <MessageRow
           key={message.id}

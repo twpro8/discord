@@ -22,6 +22,7 @@ from src.modules.auth.infrastructure.auth_unit_of_work_impl import AuthUnitOfWor
 from src.modules.auth.infrastructure.persistence.refresh_token_repository_impl import (
     RefreshTokenRepositoryImpl,
 )
+from src.modules.email.public.facade import EmailFacade
 from src.modules.users.public.facade import UsersFacade
 from src.shared.application.in_process_mediator import InProcessMediator
 
@@ -31,13 +32,16 @@ async def register_auth_handlers(
     session: AsyncSession,
     stack: AsyncExitStack,
     users_facade: UsersFacade,
+    email_facade: EmailFacade,
 ) -> None:
     refresh_token_repository = RefreshTokenRepositoryImpl(session)
     uow = await stack.enter_async_context(
         AuthUnitOfWorkImpl(session, refresh_token_repository)
     )
 
-    mediator.register_command(LoginCommand, LoginCommandHandler(uow, users_facade))
+    mediator.register_command(
+        LoginCommand, LoginCommandHandler(uow, users_facade, email_facade)
+    )
     mediator.register_command(RegisterCommand, RegisterCommandHandler(users_facade))
     mediator.register_command(RefreshCommand, RefreshCommandHandler(uow))
     mediator.register_command(LogoutCommand, LogoutCommandHandler(uow))

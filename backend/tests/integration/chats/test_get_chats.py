@@ -31,12 +31,21 @@ async def test_get_my_chats_returns_private_and_group_summaries(
     assert response.status_code == 200
     body = response.json()
     assert set(body.keys()) == {"items", "next_cursor", "total"}
-    assert body["total"] == 2
 
-    items_by_type = {item["type"]: item for item in body["items"]}
-    assert set(items_by_type) == {"private", "group"}
+    # Looked up by id, not asserted as an exact total/by-type count: this
+    # is a session-scoped seeded database shared with every other
+    # integration test, so `current_user` may already have other chats
+    # from tests that ran earlier (e.g. other private chats created
+    # elsewhere in the suite) — only the two chats this test itself just
+    # created are asserted on.
+    private_chat_id = private_response.json()["id"]
+    group_chat_id = group_response.json()["id"]
+    items_by_id = {item["id"]: item for item in body["items"]}
+    assert private_chat_id in items_by_id
+    assert group_chat_id in items_by_id
 
-    private_item = items_by_type["private"]
+    private_item = items_by_id[private_chat_id]
+    assert private_item["type"] == "private"
     assert set(private_item.keys()) == {
         "id",
         "type",
@@ -48,7 +57,8 @@ async def test_get_my_chats_returns_private_and_group_summaries(
     }
     assert private_item["peer_id"] == str(peer.id)
 
-    group_item = items_by_type["group"]
+    group_item = items_by_id[group_chat_id]
+    assert group_item["type"] == "group"
     assert set(group_item.keys()) == {
         "id",
         "type",

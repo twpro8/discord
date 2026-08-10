@@ -1,48 +1,65 @@
-import json
-from datetime import date, datetime
+from collections.abc import Mapping
 from typing import Any, Protocol
-from uuid import UUID
 
-from src.core.logging import get_logger
-from src.core.realtime.redis_pubsub import PubSubTransport
-
-logger = get_logger(__name__)
-
-TOPIC_PREFIX = "user"
-
-
-def user_topic(user_id: UUID) -> str:
-    """Redis pubsub topic a user's open WebSocket connections subscribe to."""
-    return f"{TOPIC_PREFIX}:{user_id}:events"
+from src.core.realtime.envelope import Envelope, EventType
+from src.core.realtime.redis_pubsub import RedisSubscriptionManager
+from src.core.websocket.manager import ConnectionManager
 
 
 class RealtimeNotifier(Protocol):
-    """Fan-out of opaque payloads to a user's WebSocket connections.
+    """Fan-out of typed realtime events to WebSocket connections.
+
+    Everything is a room — including a single user's own pseudo-room
+    (see `core.realtime.rooms.user_room`), which is just a room like any
+    other, not a distinct delivery mode. Callers who want to reach one
+    user pass `user_room(user_id)`, same as any other room.
 
     Distinct from the domain EventBus: this is high-frequency realtime
     delivery to open sockets, not module-to-module domain events.
     """
 
-    async def publish_user_event(
-        self, user_id: UUID, payload: dict[str, Any]
+    async def publish_to_room(
+        self, room: str, event_type: EventType, payload: Mapping[str, Any]
     ) -> None: ...
 
 
+class LocalRealtimeNotifier:
+    """Delivers directly through this process's ConnectionManager.
+
+    Correct — not just a stand-in — for single-instance deployments:
+    within one process, local broadcast already reaches every connection
+    that should receive the event. Cross-instance fan-out needs the
+    Redis-backed notifier instead, so other instances' local connections
+    can be reached too.
+    """
+
+    def __init__(self, connection_manager: ConnectionManager) -> None:
+        self._connection_manager = connection_manager
+
+    async def publish_to_room(
+        self, room: str, event_type: EventType, payload: Mapping[str, Any]
+    ) -> None:
+        envelope = Envelope(type=event_type, payload=dict(payload), room=room)
+        await self._connection_manager.broadcast_to_room(room, envelope)
+
+
 class RedisRealtimeNotifier:
-    def __init__(self, transport: PubSubTransport) -> None:
-        self._transport = transport
+    """Publishes through Redis so other instances' locally-connected
+    sockets are reached too, not just this process's.
 
-    async def publish_user_event(self, user_id: UUID, payload: dict[str, Any]) -> None:
-        await self._transport.publish(
-            user_topic(user_id),
-            json.dumps(payload, default=_json_default),
-        )
+    Delivery back to *this* instance's own local connections happens the
+    same way as any other instance's: RedisSubscriptionManager, subscribed
+    to this room because it has a local subscriber, receives the publish
+    back and calls ConnectionManager.broadcast_to_room — there's no direct
+    local-delivery shortcut here, which keeps this instance's behavior
+    identical to every other instance's rather than a special case.
+    """
 
+    def __init__(self, subscription_manager: RedisSubscriptionManager) -> None:
+        self._subscription_manager = subscription_manager
 
-def _json_default(value: Any) -> str:
-    """Serialize non-JSON values the way the REST layer does (ISO 8601)."""
-    if isinstance(value, datetime):
-        return value.isoformat()
-    if isinstance(value, date):
-        return value.isoformat()
-    return str(value)
+    async def publish_to_room(
+        self, room: str, event_type: EventType, payload: Mapping[str, Any]
+    ) -> None:
+        envelope = Envelope(type=event_type, payload=dict(payload), room=room)
+        await self._subscription_manager.publish(room, envelope)
