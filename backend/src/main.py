@@ -19,6 +19,7 @@ from src.core.realtime.notifier import RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.redis import close_redis, init_redis
 from src.core.storage import close_storage, init_storage
+from src.core.version import get_app_version
 from src.core.websocket.manager import ConnectionManager
 from src.modules.calls.application.call_signaling_service import CallSignalingService
 from src.modules.calls.infrastructure.persistence.redis_call_repository import (
@@ -177,6 +178,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.APP_NAME,
+        version=get_app_version(),
         lifespan=lifespan,
         openapi_url="/api/v1/openapi.json",
         generate_unique_id_function=custom_generate_unique_id,
