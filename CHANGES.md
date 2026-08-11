@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/twpro8/lumiere/compare/v0.3.1...v0.3.2) (2026-08-11)
+
+
+### Bug Fixes
+
+* **desktop:** resolve webkit2gtk/tauri API mismatches in Linux media permissions ([211b774](https://github.com/twpro8/lumiere/commit/211b77488f866f488934b4d3cb53492bc113cef8))
+
 ## [0.3.1](https://github.com/twpro8/lumiere/compare/v0.3.0...v0.3.1) (2026-08-11)
 
 
