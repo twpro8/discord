@@ -8,6 +8,7 @@ mod linux_permissions;
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_macos_permissions::init())
+    .plugin(tauri_plugin_http::init())
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
