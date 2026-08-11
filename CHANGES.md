@@ -5,7 +5,6 @@
 
 ### Bug Fixes
 
-* **desktop:** send auth cookies over Tauri's native HTTP client ([24ae75a](https://github.com/twpro8/lumiere/commit/24ae75a3b54ab337100d44e348e77517d76e89aa))
 * **desktop:** send auth cookies over Tauri's native HTTP client ([4f9cde5](https://github.com/twpro8/lumiere/commit/4f9cde5c7ba80df6a86d290ade478058dce04826))
 
 ## [0.3.3](https://github.com/twpro8/lumiere/compare/v0.3.2...v0.3.3) (2026-08-11)
