@@ -7,7 +7,8 @@
 //! handle media permissions in the webview engine itself.
 
 use tauri::Webview;
-use webkit2gtk::prelude::*;
+use webkit2gtk::glib::prelude::Cast;
+use webkit2gtk::{PermissionRequestExt, SettingsExt, WebViewExt};
 
 /// Grants media-stream and webrtc capabilities and auto-answers
 /// permission requests for user-media; all other permission requests
