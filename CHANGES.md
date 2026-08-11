@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/twpro8/lumiere/compare/v0.3.3...v0.3.4) (2026-08-11)
+
+
+### Bug Fixes
+
+* **desktop:** send auth cookies over Tauri's native HTTP client ([4f9cde5](https://github.com/twpro8/lumiere/commit/4f9cde5c7ba80df6a86d290ade478058dce04826))
+
 ## [0.3.3](https://github.com/twpro8/lumiere/compare/v0.3.2...v0.3.3) (2026-08-11)
 
 
