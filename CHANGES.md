@@ -5,7 +5,6 @@
 
 ### Features
 
-* **release:** add manual desktop release workflow and self-hosted backend config ([1e8e320](https://github.com/twpro8/lumiere/commit/1e8e3204c4ac8f530d8fc794b81c353e13f43152))
 * **release:** add manual desktop release workflow and self-hosted backend config ([1af9efc](https://github.com/twpro8/lumiere/commit/1af9efc0db844b5cc2176413ebc03a63007b6112))
 
 ## [0.2.0](https://github.com/twpro8/lumiere/compare/v0.1.0...v0.2.0) (2026-08-10)
