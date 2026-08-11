@@ -1,6 +1,9 @@
 // react
 import { useState } from "react";
 
+// third party
+import { isTauri } from "@tauri-apps/api/core";
+
 // shared
 import { cn } from "@/shared/helpers/utils";
 import { Modal } from "@/shared/ui/modal";
@@ -8,10 +11,11 @@ import { Modal } from "@/shared/ui/modal";
 import { ThemeForm } from "@/features/theme/ui/ThemeForm";
 
 // relative
+import { BackendUrlForm } from "./BackendUrlForm";
 import { PasswordForm } from "./PasswordForm";
 import { ProfileForm } from "./ProfileForm";
 
-type SettingsTab = "profile" | "appearance" | "password";
+type SettingsTab = "profile" | "appearance" | "password" | "server";
 
 /** Modal for editing the current user's profile, appearance, and password. */
 export function SettingsDialog({
@@ -22,6 +26,7 @@ export function SettingsDialog({
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<SettingsTab>("profile");
+  const showServerTab = isTauri();
 
   return (
     <Modal
@@ -49,14 +54,24 @@ export function SettingsDialog({
           >
             Password
           </TabButton>
+          {showServerTab && (
+            <TabButton
+              active={tab === "server"}
+              onClick={() => setTab("server")}
+            >
+              Server
+            </TabButton>
+          )}
         </div>
         <div className="min-h-0 overflow-y-auto p-4">
           {tab === "profile" ? (
             <ProfileForm />
           ) : tab === "appearance" ? (
             <ThemeForm />
-          ) : (
+          ) : tab === "password" ? (
             <PasswordForm />
+          ) : (
+            <BackendUrlForm />
           )}
         </div>
         <div className="shrink-0 px-4 pb-3 text-right text-xs text-muted-foreground">

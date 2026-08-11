@@ -2,13 +2,17 @@
 import axios from "axios";
 
 // relative
-import { API_BASE_URL } from "../config/env";
+import { getApiBaseUrl } from "../config/backend";
 
 /** Axios instance configured for the backend API with automatic 401 refresh. */
 export const api = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1`,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  config.baseURL = `${getApiBaseUrl()}/api/v1`;
+  return config;
 });
 
 api.interceptors.response.use(
@@ -21,7 +25,7 @@ api.interceptors.response.use(
 
       try {
         await axios.post(
-          `${API_BASE_URL}/api/v1/auth/refresh`,
+          `${getApiBaseUrl()}/api/v1/auth/refresh`,
           {},
           { withCredentials: true },
         );
