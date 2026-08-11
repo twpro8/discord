@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3](https://github.com/twpro8/lumiere/compare/v0.3.2...v0.3.3) (2026-08-11)
+
+
+### Bug Fixes
+
+* **desktop:** let unauthenticated users reach the server URL setting ([11ae95f](https://github.com/twpro8/lumiere/commit/11ae95f58f9200c89b5b9d908ff535919c4921a3))
+* **desktop:** let unauthenticated users reach the server URL setting ([54dc7a1](https://github.com/twpro8/lumiere/commit/54dc7a1bf87cb77dd85fab8ed5844d91895fd285))
+
 ## [0.3.2](https://github.com/twpro8/lumiere/compare/v0.3.1...v0.3.2) (2026-08-11)
 
 
