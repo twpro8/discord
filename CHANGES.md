@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/twpro8/lumiere/compare/v0.3.0...v0.3.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* **release:** run frontend lint/test via pnpm --filter in desktop-release.yml ([3add8c7](https://github.com/twpro8/lumiere/commit/3add8c70a93b363553667249dfebdb9b79088f1d))
+* **release:** run frontend lint/test via pnpm --filter in desktop-release.yml ([a18ffdd](https://github.com/twpro8/lumiere/commit/a18ffddb02281fd4426933bbe5ef15174c11f70c))
+
 ## [0.3.0](https://github.com/twpro8/lumiere/compare/v0.2.0...v0.3.0) (2026-08-11)
 
 
