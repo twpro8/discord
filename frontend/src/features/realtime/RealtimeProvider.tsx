@@ -5,7 +5,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 // shared
-import { WS_EVENTS_URL } from "@/shared/config/env";
+import { getWsEventsUrl } from "@/shared/config/backend";
 
 // features
 import {
@@ -149,7 +149,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     };
 
     const connect = () => {
-      const socket = new WebSocket(WS_EVENTS_URL);
+      const socket = new WebSocket(getWsEventsUrl());
       socketRef.current = socket;
       socket.onopen = () => {
         retryMs = INITIAL_RETRY_MS;

@@ -1,0 +1,430 @@
+name: Desktop Release
+
+# Manually triggered only. Never runs on pull_request, push, or as a side
+# effect of release.yml's automatic version bump — see development.md's
+# "Versioning & releases" section for how that automation works. This
+# workflow only builds/attaches desktop installers to a version release-
+# please already owns; it never bumps a version file or manages
+# release-please-config.json/.release-please-manifest.json itself.
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Release channel to build"
+        type: choice
+        required: true
+        options:
+          - alpha
+          - beta
+          - stable
+      ref:
+        description: "Branch or commit to build from (alpha/beta only — ignored for stable)"
+        type: string
+        default: dev
+      tag:
+        description: "Existing release-please tag to attach artifacts to, e.g. v0.3.0 (required for stable, ignored otherwise — no automatic 'latest tag' resolution, publishing a stable release is a deliberate action)"
+        type: string
+        default: ""
+      overwrite:
+        description: "Replace existing matching desktop assets on the target release instead of failing"
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: desktop-release-${{ inputs.release_type }}-${{ inputs.release_type == 'stable' && inputs.tag || inputs.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Resolves what "the version" and "the release" mean for this run, and is
+  # the only job that creates or looks up tags/releases. The build matrix
+  # never creates anything — it only uploads to the release_id this job
+  # hands it, checking out the exact target_sha this job resolved, so all
+  # three platforms are provably built from one identical revision even if
+  # `ref` moves while the workflow is running.
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TYPE: ${{ inputs.release_type }}
+      REF_INPUT: ${{ inputs.ref }}
+      TAG_INPUT: ${{ inputs.tag }}
+      OVERWRITE: ${{ inputs.overwrite }}
+    outputs:
+      version: ${{ steps.resolve-stable.outputs.version || steps.resolve-prerelease.outputs.version }}
+      tag: ${{ steps.resolve-stable.outputs.tag || steps.resolve-prerelease.outputs.tag }}
+      release_id: ${{ steps.resolve-stable.outputs.release_id || steps.resolve-prerelease.outputs.release_id }}
+      target_sha: ${{ steps.resolve-stable.outputs.target_sha || steps.resolve-prerelease.outputs.target_sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.19.0"
+
+      - name: Resolve and validate the stable target release
+        if: inputs.release_type == 'stable'
+        id: resolve-stable
+        run: |
+          set -euo pipefail
+
+          if [ -z "$TAG_INPUT" ]; then
+            echo "::error::release_type=stable requires an explicit 'tag' input (e.g. v0.3.0). There is no automatic 'latest tag' fallback — publishing a stable release is a deliberate action." >&2
+            exit 1
+          fi
+
+          if ! git rev-parse "refs/tags/${TAG_INPUT}" >/dev/null 2>&1; then
+            echo "::error::tag '${TAG_INPUT}' does not exist in this repository." >&2
+            exit 1
+          fi
+
+          if ! release_json=$(gh release view "$TAG_INPUT" --json databaseId,isDraft,isPrerelease,targetCommitish,assets 2>&1); then
+            echo "::error::no GitHub Release found for tag '${TAG_INPUT}': ${release_json}" >&2
+            exit 1
+          fi
+
+          is_draft=$(echo "$release_json" | jq -r '.isDraft')
+          is_prerelease=$(echo "$release_json" | jq -r '.isPrerelease')
+          if [ "$is_draft" = "true" ] || [ "$is_prerelease" = "true" ]; then
+            echo "::error::'${TAG_INPUT}' is a draft or prerelease release. release_type=stable requires an existing, published, non-prerelease release-please release." >&2
+            exit 1
+          fi
+
+          target_sha=$(git rev-parse "refs/tags/${TAG_INPUT}^{commit}")
+          if ! git merge-base --is-ancestor "$target_sha" origin/main; then
+            echo "::error::'${TAG_INPUT}' (${target_sha}) is not reachable from main. Refusing to attach desktop artifacts to a release outside release-please's own history." >&2
+            exit 1
+          fi
+
+          release_id=$(echo "$release_json" | jq -r '.databaseId')
+          version=$(git show "${target_sha}:backend/pyproject.toml" | grep -m1 '^version' | sed -E 's/version = "([^"]+)"/\1/')
+          if [ -z "$version" ]; then
+            echo "::error::could not read the version from backend/pyproject.toml at ${target_sha}." >&2
+            exit 1
+          fi
+
+          existing_assets=$(echo "$release_json" | jq -r '.assets // [] | .[].name' 2>/dev/null || true)
+          # Not exact-filename matching: tauri-action's own generated filenames
+          # (productName/version/arch-specific suffixes) aren't predictable
+          # ahead of a real build, so collisions are detected per platform
+          # extension instead — "does this release already have an .exe /
+          # .deb / .dmg asset" is what actually matters for duplicate
+          # protection here.
+          collisions=""
+          for ext in exe deb dmg; do
+            if echo "$existing_assets" | grep -qi "\.${ext}$"; then
+              collisions="${collisions} .${ext}"
+            fi
+          done
+
+          if [ -n "$collisions" ]; then
+            if [ "$OVERWRITE" != "true" ]; then
+              echo "::error::release '${TAG_INPUT}' already has desktop asset(s) matching:${collisions} — re-run with overwrite: true to replace them." >&2
+              exit 1
+            fi
+            echo "Overwrite requested — deleting existing asset(s) matching:${collisions}"
+            while IFS= read -r name; do
+              case "$name" in
+                *.exe|*.deb|*.dmg) gh release delete-asset "$TAG_INPUT" "$name" --yes ;;
+              esac
+            done <<< "$existing_assets"
+          fi
+
+          {
+            echo "version=${version}"
+            echo "tag=${TAG_INPUT}"
+            echo "release_id=${release_id}"
+            echo "target_sha=${target_sha}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Stable target: ${TAG_INPUT} (${version}) @ ${target_sha}"
+
+      - name: Resolve alpha/beta version and create the draft prerelease
+        if: inputs.release_type != 'stable'
+        id: resolve-prerelease
+        run: |
+          set -euo pipefail
+
+          # `ref` may be a branch name (only reachable as the remote-tracking
+          # `origin/<ref>` in this fetch-depth:0 checkout, since only the
+          # branch actually checked out becomes a local branch) or a raw
+          # commit SHA (which has no "origin/" form) — try both.
+          if target_sha=$(git rev-parse --verify "origin/${REF_INPUT}^{commit}" 2>/dev/null); then
+            :
+          elif target_sha=$(git rev-parse --verify "${REF_INPUT}^{commit}" 2>/dev/null); then
+            :
+          else
+            echo "::error::ref '${REF_INPUT}' does not resolve to a commit in this repository." >&2
+            exit 1
+          fi
+
+          base_version=$(git show origin/main:.release-please-manifest.json | jq -r '."."')
+          if [ -z "$base_version" ] || [ "$base_version" = "null" ]; then
+            echo "::error::could not read the current version from origin/main's .release-please-manifest.json." >&2
+            exit 1
+          fi
+
+          next_version=$(git log "origin/main..${target_sha}" --format='%B%x1e' \
+            | node scripts/compute-prerelease-version.mjs "$base_version")
+
+          if [ "$next_version" = "none" ]; then
+            echo "::error::no releasable commits between origin/main and ${REF_INPUT} (${target_sha}) — nothing to build." >&2
+            exit 1
+          fi
+
+          last_n=0
+          for existing in $(git tag -l "v${next_version}-${RELEASE_TYPE}.*"); do
+            n="${existing##*.}"
+            if [ "$n" -gt "$last_n" ] 2>/dev/null; then
+              last_n="$n"
+            fi
+          done
+          n=$((last_n + 1))
+          version="${next_version}-${RELEASE_TYPE}.${n}"
+          tag="v${version}"
+
+          if git rev-parse "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "::error::tag '${tag}' already exists — refusing to reuse it (race condition or stale prerelease counter)." >&2
+            exit 1
+          fi
+
+          # gh release create auto-creates the tag at --target if it doesn't
+          # exist yet (see `gh release create --help`) — no separate git
+          # tag/push step needed.
+          gh release create "$tag" \
+            --target "$target_sha" \
+            --title "$tag" \
+            --prerelease \
+            --draft \
+            --generate-notes \
+            --notes "Built from ${{ github.repository }}@${target_sha}"
+
+          release_id=$(gh release view "$tag" --json databaseId -q '.databaseId')
+
+          {
+            echo "version=${version}"
+            echo "tag=${tag}"
+            echo "release_id=${release_id}"
+            echo "target_sha=${target_sha}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Prerelease target: ${tag} (${version}) @ ${target_sha}"
+
+  # The "test/validate" step of the desired flow, run explicitly here since
+  # a release-please version-bump PR only touches version files and so
+  # never actually triggers backend-lint/backend-test/compose-test's own
+  # `paths:` filters. Deliberately does NOT run `pnpm run build`: that's
+  # `tsc -b && vite build`, and Tauri's own `beforeBuildCommand` runs that
+  # exact command again, on the exact same checked-out source, inside every
+  # one of the build matrix's three legs — a fourth build here wouldn't
+  # catch anything the matrix won't already catch on its own, it would only
+  # buy discovering a broken build on one cheap runner instead of three
+  # expensive native ones. Not worth unconditionally paying for a full
+  # production build that's about to be redone three more times regardless.
+  validate:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      ENVIRONMENT: testing
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: changethis
+          POSTGRES_DB: lumiere
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d lumiere"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.prepare.outputs.target_sha }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version-file: .python-version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+        with:
+          version: "0.11.18"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen --package lumiere-backend
+
+      - name: Prepare backend test environment
+        run: cp .env.example .env
+
+      - name: Backend lint
+        working-directory: backend
+        run: uv run bash scripts/lint.sh
+
+      - name: Backend tests
+        working-directory: backend
+        run: uv run bash scripts/test.sh
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: "11.20.0"
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.19.0"
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Frontend lint
+        run: pnpm run lint
+
+      - name: Frontend tests
+        run: pnpm run test
+
+  # Tauri GUI bundling isn't reasonably cross-compiled, so this mirrors
+  # Tauri's own recommended matrix of native runners (one leg per required
+  # target: Windows x64 -> .exe via nsis, Linux x64 -> .deb, macOS ARM64 ->
+  # .dmg). `--bundles` is passed explicitly on every leg so only the one
+  # requested format is produced (not Tauri's "all" default, which would
+  # also emit msi/rpm/AppImage/.app).
+  build:
+    needs: [prepare, validate]
+    runs-on: ${{ matrix.platform }}
+    permissions:
+      contents: write
+    # windows-latest defaults `run:` steps to pwsh, where `$VERSION` isn't
+    # valid env-var syntax (that's `$env:VERSION`) — force bash everywhere
+    # in this job so the same steps behave identically on all 3 platforms.
+    # Windows GitHub-hosted runners ship Git Bash for exactly this reason.
+    defaults:
+      run:
+        shell: bash
+    env:
+      RELEASE_TYPE: ${{ inputs.release_type }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-latest
+            args: "--bundles deb"
+          - platform: windows-latest
+            args: "--bundles nsis"
+          - platform: macos-latest
+            args: "--bundles dmg --target aarch64-apple-darwin"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.prepare.outputs.target_sha }}
+          persist-credentials: false
+
+      - name: Install Linux bundling dependencies
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: "11.20.0"
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.19.0"
+          cache: pnpm
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
+
+      - name: Cache Rust build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            frontend/src-tauri/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ matrix.platform }}-cargo-${{ hashFiles('frontend/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ matrix.platform }}-cargo-
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Never for stable: the checked-out tag's files already carry the
+      # real, release-please-committed version. Ephemeral for alpha/beta —
+      # edits this runner's own checkout only, nothing is pushed back.
+      - name: Stamp prerelease version
+        if: env.RELEASE_TYPE != 'stable'
+        run: node frontend/src-tauri/scripts/set-desktop-version.mjs "$VERSION"
+
+      - name: Build and attach desktop bundle
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: frontend
+          releaseId: ${{ needs.prepare.outputs.release_id }}
+          # The pnpm lockfile lives at the repo root (pnpm workspace), not
+          # inside projectPath, so tauri-action's own package-manager
+          # auto-detection can't be trusted here — force pnpm explicitly.
+          tauriScript: pnpm tauri
+          args: ${{ matrix.args }}
+          # No updater plugin is configured in src-tauri/Cargo.toml — skip
+          # generating/uploading the updater manifest and .sig files this
+          # project has no signing key for.
+          uploadUpdaterJson: false
+
+  # Only meaningful for alpha/beta: flips the draft prerelease `prepare`
+  # created to published, now that all three artifacts are attached, so a
+  # build-matrix failure never leaves a half-populated prerelease visible to
+  # testers. For stable this is a no-op — that release was never drafted,
+  # it's release-please's own already-published release, and assets simply
+  # appeared on it as each build leg finished.
+  publish:
+    needs: [prepare, build]
+    if: inputs.release_type != 'stable'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ needs.prepare.outputs.tag }}
+    steps:
+      - name: Publish prerelease
+        run: gh release edit "$TAG" --draft=false --repo "${{ github.repository }}"
