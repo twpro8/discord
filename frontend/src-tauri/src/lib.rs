@@ -18,8 +18,8 @@ pub fn run() {
       }
 
       #[cfg(target_os = "linux")]
-      for (_, webview) in app.webviews() {
-        linux_permissions::enable_media_permissions(&webview)?;
+      for (_, webview) in app.webview_windows() {
+        linux_permissions::enable_media_permissions(webview.as_ref())?;
       }
 
       Ok(())
