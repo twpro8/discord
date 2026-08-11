@@ -306,10 +306,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Frontend lint
-        run: pnpm run lint
+        run: pnpm --filter frontend lint
 
       - name: Frontend tests
-        run: pnpm run test
+        run: pnpm --filter frontend test
 
   # Tauri GUI bundling isn't reasonably cross-compiled, so this mirrors
   # Tauri's own recommended matrix of native runners (one leg per required
