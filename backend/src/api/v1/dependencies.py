@@ -128,7 +128,7 @@ async def get_mediator(
         await register_auth_handlers(
             mediator, session, stack, users_facade, email_facade
         )
-        await register_channel_handlers(mediator, session, stack)
+        await register_channel_handlers(mediator, session, stack, servers_facade)
         await register_chat_handlers(
             mediator, session, stack, event_bus, users_facade, room_membership_updater
         )

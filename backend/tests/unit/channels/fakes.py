@@ -2,10 +2,11 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from src.modules.channels.domain.entities.channel import Channel
-from src.modules.channels.domain.entities.dtos import ChannelCreate
+from src.modules.channels.domain.entities.dtos import ChannelCreate, ChannelUpdate
 from src.modules.channels.domain.repositories.channel_unit_of_work import (
     ChannelUnitOfWork,
 )
+from src.shared.domain.unset import set_fields
 
 
 class FakeChannelRepository:
@@ -31,6 +32,31 @@ class FakeChannelRepository:
 
     async def find_by_id(self, channel_id: UUID) -> Channel | None:
         return self.channels.get(channel_id)
+
+    async def find_by_name(self, server_id: UUID, name: str) -> Channel | None:
+        return next(
+            (
+                channel
+                for channel in self.channels.values()
+                if channel.server_id == server_id and channel.name == name
+            ),
+            None,
+        )
+
+    async def update(self, channel_id: UUID, data: ChannelUpdate) -> Channel:
+        channel = self.channels[channel_id]
+        for key, value in set_fields(data).items():
+            setattr(channel, key, value)
+        channel.updated_at = datetime.now(UTC)
+        return channel
+
+    async def delete(self, channel_id: UUID) -> None:
+        self.channels.pop(channel_id, None)
+
+    async def count_by_server(self, server_id: UUID) -> int:
+        return sum(
+            1 for channel in self.channels.values() if channel.server_id == server_id
+        )
 
     async def increment_sequence(self, channel_id: UUID) -> int:
         channel = self.channels[channel_id]
