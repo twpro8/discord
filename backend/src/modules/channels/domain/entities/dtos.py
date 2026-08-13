@@ -4,6 +4,7 @@ from uuid import UUID
 
 from src.modules.channels.domain.entities.channel import Channel
 from src.modules.channels.domain.enums import ChannelType
+from src.shared.domain.unset import UNSET, Unsettable
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -14,6 +15,20 @@ class ChannelCreate:
     topic: str | None = None
     position: int = 0
     is_private: bool = False
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChannelUpdateData:
+    """Mirrors the transport-layer update request; used as a Command field."""
+
+    name: Unsettable[str] = UNSET
+    topic: Unsettable[str | None] = UNSET
+    position: Unsettable[int] = UNSET
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChannelUpdate(ChannelUpdateData):
+    """Persistence payload for a channel update."""
 
 
 @dataclass(frozen=True, kw_only=True)
