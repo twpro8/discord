@@ -219,3 +219,6 @@ __marimo__/
 node_modules/
 
 graphify-out/
+
+#MacOS 
+.DS_Store
