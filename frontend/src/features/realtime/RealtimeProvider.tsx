@@ -17,6 +17,7 @@ import {
   handleCallHangup,
   handleCallIceCandidate,
   handleCallInvite,
+  handleCallMediaState,
   handleCallOffer,
   handleCallRejected,
   handleCallTimeout,
@@ -39,6 +40,7 @@ import {
   isCallHangupEvent,
   isCallIceCandidateEvent,
   isCallInviteEvent,
+  isCallMediaStateEvent,
   isCallOfferEvent,
   isCallRejectedEvent,
   isCallTimeoutEvent,
@@ -143,6 +145,8 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         handleCallAnswer(parsed.payload);
       } else if (isCallIceCandidateEvent(parsed)) {
         handleCallIceCandidate(parsed.payload);
+      } else if (isCallMediaStateEvent(parsed)) {
+        handleCallMediaState(parsed.payload);
       } else if (isErrorEvent(parsed)) {
         handleCallError(parsed.payload);
       }

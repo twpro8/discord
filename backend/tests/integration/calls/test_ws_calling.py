@@ -162,6 +162,57 @@ def test_full_happy_path_over_two_sockets(client: TestClient) -> None:
             assert bob_ws.receive_json()["type"] == "call.hangup"
 
 
+async def test_answerer_initiated_renegotiation_relays_offer_and_answer(
+    client: TestClient,
+) -> None:
+    alice_token = _login(client, ALICE_USERNAME)
+    bob_token = _login(client, BOB_USERNAME)
+
+    _set_access_token(client, alice_token)
+    chat_id = _create_private_chat(client, BOB_ID)
+
+    with client.websocket_connect("/api/v1/ws") as alice_ws:
+        _set_access_token(client, bob_token)
+        with client.websocket_connect("/api/v1/ws") as bob_ws:
+            _set_access_token(client, alice_token)
+            call_id = str(uuid4())
+
+            alice_ws.send_json(
+                {
+                    "type": "call.invite",
+                    "call_id": call_id,
+                    "chat_id": chat_id,
+                    "callee_id": str(BOB_ID),
+                }
+            )
+            assert alice_ws.receive_json()["type"] == "call.invite"
+            assert bob_ws.receive_json()["type"] == "call.invite"
+
+            bob_ws.send_json({"type": "call.accept", "call_id": call_id})
+            assert alice_ws.receive_json()["type"] == "call.accepted"
+            assert bob_ws.receive_json()["type"] == "call.accepted"
+
+            # The answerer renegotiates mid-call (e.g. adding a video track
+            # for camera/screen share) — the offer must reach the *caller*
+            # and the caller's answer must come back to the answerer.
+            bob_ws.send_json(
+                {"type": "call.offer", "call_id": call_id, "sdp": {"type": "offer"}}
+            )
+            offer_event = alice_ws.receive_json()
+            assert offer_event["type"] == "call.offer"
+            assert offer_event["payload"]["sdp"] == {"type": "offer"}
+
+            alice_ws.send_json(
+                {"type": "call.answer", "call_id": call_id, "sdp": {"type": "answer"}}
+            )
+            answer_event = bob_ws.receive_json()
+            assert answer_event["type"] == "call.answer"
+
+            alice_ws.send_json({"type": "call.hangup", "call_id": call_id})
+            assert alice_ws.receive_json()["type"] == "call.hangup"
+            assert bob_ws.receive_json()["type"] == "call.hangup"
+
+
 def test_reject_ends_the_call_for_both(client: TestClient) -> None:
     alice_token = _login(client, ALICE_USERNAME)
     bob_token = _login(client, BOB_USERNAME)

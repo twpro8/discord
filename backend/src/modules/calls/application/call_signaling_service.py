@@ -32,6 +32,7 @@ _FRAME_TYPES = {
     "call.offer",
     "call.answer",
     "call.ice_candidate",
+    "call.media_state",
 }
 
 
@@ -83,6 +84,7 @@ class CallSignalingService:
             "call.offer": self._handle_offer,
             "call.answer": self._handle_answer,
             "call.ice_candidate": self._handle_ice_candidate,
+            "call.media_state": self._handle_media_state,
         }
 
     async def on_activity(
@@ -355,15 +357,13 @@ class CallSignalingService:
         if call_id is None or sdp is None:
             return
         session = await self._calls.get_session(call_id)
-        if (
-            session is None
-            or session.state is not CallState.ACTIVE
-            or session.caller_connection_id != connection_id
-            or session.answering_connection_id is None
-        ):
+        if session is None:
+            return
+        target = self._peer_pinned_connection(session, connection_id)
+        if target is None:
             return
         await self._notifier.publish_to_room(
-            connection_room(session.answering_connection_id),
+            connection_room(target),
             EventType.CALL_OFFER,
             {"call_id": str(call_id), "sdp": sdp},
         )
@@ -376,17 +376,38 @@ class CallSignalingService:
         if call_id is None or sdp is None:
             return
         session = await self._calls.get_session(call_id)
-        if (
-            session is None
-            or session.state is not CallState.ACTIVE
-            or session.answering_connection_id != connection_id
-        ):
+        if session is None:
+            return
+        target = self._peer_pinned_connection(session, connection_id)
+        if target is None:
             return
         await self._notifier.publish_to_room(
-            connection_room(session.caller_connection_id),
+            connection_room(target),
             EventType.CALL_ANSWER,
             {"call_id": str(call_id), "sdp": sdp},
         )
+
+    def _peer_pinned_connection(
+        self, session: CallSession, connection_id: UUID
+    ) -> UUID | None:
+        """Resolves the *other* pinned connection of an ACTIVE session for
+        the connection sending an SDP frame. Either participant may
+        renegotiate mid-call (e.g. adding a video track for camera/screen
+        share), so offer/answer relaying is symmetric over the two pinned
+        connection rooms — the initial caller-offers/answerer-answers
+        direction is just the common case, not a constraint. Returns None
+        when the session isn't ACTIVE or the sender isn't one of the two
+        pinned connections."""
+        if (
+            session.state is not CallState.ACTIVE
+            or session.answering_connection_id is None
+        ):
+            return None
+        if connection_id == session.caller_connection_id:
+            return session.answering_connection_id
+        if connection_id == session.answering_connection_id:
+            return session.caller_connection_id
+        return None
 
     async def _handle_ice_candidate(
         self, user_id: UUID, connection_id: UUID, payload: dict[str, Any]
@@ -411,6 +432,28 @@ class CallSignalingService:
             connection_room(target),
             EventType.CALL_ICE_CANDIDATE,
             {"call_id": str(call_id), "candidate": candidate},
+        )
+
+    async def _handle_media_state(
+        self, user_id: UUID, connection_id: UUID, payload: dict[str, Any]
+    ) -> None:
+        call_id = _get_uuid(payload, "call_id")
+        if call_id is None:
+            return
+        session = await self._calls.get_session(call_id)
+        if session is None:
+            return
+        target = self._peer_pinned_connection(session, connection_id)
+        if target is None:
+            return
+        await self._notifier.publish_to_room(
+            connection_room(target),
+            EventType.CALL_MEDIA_STATE,
+            # The client frame carries a `type` discriminator along with
+            # its media flags — strip it so the relayed payload holds the
+            # flags verbatim (relayed opaquely, like SDP), not the wire
+            # key the Envelope already supplies as `type`.
+            {key: value for key, value in payload.items() if key != "type"},
         )
 
     def _schedule_ring_timeout(self, call_id: UUID) -> None:

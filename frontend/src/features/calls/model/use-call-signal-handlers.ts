@@ -8,6 +8,7 @@ import type {
   CallHangupPayload,
   CallIceCandidatePayload,
   CallInvitePayload,
+  CallMediaStatePayload,
   CallSdpPayload,
   CallSimplePayload,
 } from "./types";
@@ -128,6 +129,13 @@ export function handleCallAnswer(payload: CallSdpPayload): void {
 export function handleCallIceCandidate(payload: CallIceCandidatePayload): void {
   if (payload.call_id !== useCallStore.getState().callId) return;
   void addRemoteIceCandidate(payload.candidate);
+}
+
+export function handleCallMediaState(payload: CallMediaStatePayload): void {
+  if (payload.call_id !== useCallStore.getState().callId) return;
+  useCallStore
+    .getState()
+    .setPeerMediaState(payload.video_camera, payload.video_screen);
 }
 
 export function handleCallError(payload: CallErrorPayload): void {

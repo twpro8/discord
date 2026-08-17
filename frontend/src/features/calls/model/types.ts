@@ -49,6 +49,16 @@ export interface CallIceCandidatePayload {
   candidate: RTCIceCandidateInit;
 }
 
+/** Aligned with the backend's call.media_state WS event payload — the
+ * peer's live camera/screen share state, relayed verbatim like SDP.
+ * Future media toggles (mic mute, device changes) extend this payload
+ * without touching the backend relay. */
+export interface CallMediaStatePayload {
+  call_id: string;
+  video_camera: boolean;
+  video_screen: boolean;
+}
+
 /** Aligned with the backend's generic `error` WS event payload — calls is
  * currently the only feature that surfaces this event type. */
 export interface CallErrorPayload {

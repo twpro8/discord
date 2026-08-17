@@ -73,6 +73,16 @@ async def test_full_happy_path_publishes_expected_sequence() -> None:
         ),
     )
     await service.on_activity(
+        caller_id,
+        caller_conn,
+        _frame(
+            "call.media_state",
+            call_id=str(call_id),
+            video_camera=False,
+            video_screen=False,
+        ),
+    )
+    await service.on_activity(
         caller_id, caller_conn, _frame("call.hangup", call_id=str(call_id))
     )
 
@@ -103,6 +113,15 @@ async def test_full_happy_path_publishes_expected_sequence() -> None:
             {"call_id": str(call_id), "candidate": {"candidate": "x"}},
         ),
         (
+            connection_room(callee_conn),
+            EventType.CALL_MEDIA_STATE,
+            {
+                "call_id": str(call_id),
+                "video_camera": False,
+                "video_screen": False,
+            },
+        ),
+        (
             user_room(caller_id),
             EventType.CALL_HANGUP,
             {"call_id": str(call_id), "reason": "hangup"},
@@ -115,6 +134,121 @@ async def test_full_happy_path_publishes_expected_sequence() -> None:
     ]
     assert repo.sessions == {}
     assert repo.active_user == {}
+
+
+async def test_answerer_initiated_renegotiation_relays_both_ways() -> None:
+    notifier = FakeRealtimeNotifier()
+    repo = FakeCallRepository()
+    caller_id, callee_id, chat_id = uuid4(), uuid4(), uuid4()
+    caller_conn, callee_conn = uuid4(), uuid4()
+    call_id = uuid4()
+    service = _make_service(notifier, repo, members={chat_id: {caller_id, callee_id}})
+
+    await service.on_activity(
+        caller_id,
+        caller_conn,
+        _frame(
+            "call.invite",
+            call_id=str(call_id),
+            chat_id=str(chat_id),
+            callee_id=str(callee_id),
+        ),
+    )
+    await service.on_activity(
+        callee_id, callee_conn, _frame("call.accept", call_id=str(call_id))
+    )
+    notifier.published.clear()
+
+    # Mid-call renegotiation initiated by the *answerer* (e.g. adding a
+    # video track for camera/screen share): the offer relays to the
+    # caller's pinned connection and the caller's answer back to the
+    # answerer's — the relay is symmetric over the two pinned rooms, not
+    # fixed to the initial offerer.
+    await service.on_activity(
+        callee_id,
+        callee_conn,
+        _frame("call.offer", call_id=str(call_id), sdp={"type": "offer"}),
+    )
+    await service.on_activity(
+        caller_id,
+        caller_conn,
+        _frame("call.answer", call_id=str(call_id), sdp={"type": "answer"}),
+    )
+
+    assert notifier.published == [
+        (
+            connection_room(caller_conn),
+            EventType.CALL_OFFER,
+            {"call_id": str(call_id), "sdp": {"type": "offer"}},
+        ),
+        (
+            connection_room(callee_conn),
+            EventType.CALL_ANSWER,
+            {"call_id": str(call_id), "sdp": {"type": "answer"}},
+        ),
+    ]
+
+
+async def test_media_state_relays_both_ways_without_parsing_the_payload() -> None:
+    notifier = FakeRealtimeNotifier()
+    repo = FakeCallRepository()
+    caller_id, callee_id, chat_id = uuid4(), uuid4(), uuid4()
+    caller_conn, callee_conn = uuid4(), uuid4()
+    call_id = uuid4()
+    service = _make_service(notifier, repo, members={chat_id: {caller_id, callee_id}})
+
+    await service.on_activity(
+        caller_id,
+        caller_conn,
+        _frame(
+            "call.invite",
+            call_id=str(call_id),
+            chat_id=str(chat_id),
+            callee_id=str(callee_id),
+        ),
+    )
+    await service.on_activity(
+        callee_id, callee_conn, _frame("call.accept", call_id=str(call_id))
+    )
+    notifier.published.clear()
+
+    # Camera/screen share state is relayed verbatim (server never parses
+    # it beyond call_id) to whichever pinned connection holds the peer's
+    # RTCPeerConnection — symmetric over the two pinned rooms, like offer/
+    # answer — so future media flags reach the peer without backend changes.
+    await service.on_activity(
+        caller_id,
+        caller_conn,
+        _frame(
+            "call.media_state",
+            call_id=str(call_id),
+            video_camera=True,
+            video_screen=False,
+        ),
+    )
+    await service.on_activity(
+        callee_id,
+        callee_conn,
+        _frame(
+            "call.media_state",
+            call_id=str(call_id),
+            video_camera=False,
+            video_screen=True,
+        ),
+    )
+
+    assert notifier.published == [
+        (
+            connection_room(callee_conn),
+            EventType.CALL_MEDIA_STATE,
+            {"call_id": str(call_id), "video_camera": True, "video_screen": False},
+        ),
+        (
+            connection_room(caller_conn),
+            EventType.CALL_MEDIA_STATE,
+            {"call_id": str(call_id), "video_camera": False, "video_screen": True},
+        ),
+    ]
 
 
 async def test_invite_while_callee_busy_reports_callee_busy_and_creates_no_session() -> (
@@ -325,6 +459,7 @@ async def test_accept_reject_hangup_offer_answer_ice_from_non_participant_are_dr
         ("call.offer", {"sdp": {"type": "offer"}}),
         ("call.answer", {"sdp": {"type": "answer"}}),
         ("call.ice_candidate", {"candidate": {"candidate": "x"}}),
+        ("call.media_state", {"video_camera": True, "video_screen": False}),
     ):
         await service.on_activity(
             stranger_id,
@@ -354,6 +489,7 @@ async def test_signaling_for_missing_session_is_dropped() -> None:
         ("call.offer", {"sdp": {"type": "offer"}}),
         ("call.answer", {"sdp": {"type": "answer"}}),
         ("call.ice_candidate", {"candidate": {"candidate": "x"}}),
+        ("call.media_state", {"video_camera": True, "video_screen": False}),
     ):
         await service.on_activity(
             caller_id, caller_conn, _frame(frame_type, call_id=str(call_id), **extra)

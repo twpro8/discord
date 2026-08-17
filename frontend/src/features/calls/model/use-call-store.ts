@@ -12,6 +12,17 @@ interface CallStoreState {
   peerName: string | null;
   direction: "outgoing" | "incoming" | null;
   isMuted: boolean;
+  /** A local camera/display video track is being sent to the peer (added
+   * mid-call via webrtc-session.ts's startCameraShare/startScreenShare —
+   * calls themselves stay voice-only, video is opted into per-call). */
+  isSharingVideo: boolean;
+  isScreenSharing: boolean;
+  /** The peer's camera/screen share state as reported over signaling
+   * (call.media_state) — the authoritative "peer is/stopped sharing"
+   * signal. The peer's remote track muting fires no reliable event on
+   * stop, so the overlay's collapse must come from here, not tracks. */
+  peerIsSharingVideo: boolean;
+  peerIsScreenSharing: boolean;
   errorMessage: string | null;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
@@ -37,6 +48,15 @@ interface CallStoreState {
   transitionToConnecting: (localStream?: MediaStream) => void;
   transitionToActive: (remoteStream: MediaStream) => void;
   toggleMute: () => void;
+  /** Set by webrtc-session.ts when a camera/screen track starts or stops
+   * being sent — mirrors the store's non-renderable-object rule: the
+   * streams themselves live outside Zustand, only these renderable
+   * booleans cross it. */
+  setSharingVideo: (sharing: boolean) => void;
+  setSharingScreen: (sharing: boolean) => void;
+  /** Set by handleCallMediaState on call.media_state — mirrors the
+   * peer's own setSharingVideo/setSharingScreen onto THIS client. */
+  setPeerMediaState: (videoCamera: boolean, videoScreen: boolean) => void;
   /** Post-media-negotiation ending — briefly shows an "ended" state
    * (see ActiveCallOverlay's auto-reset) before the caller resets to
    * idle. Use `reset()` directly for pre-media endings (reject/cancel/
@@ -54,6 +74,10 @@ const INITIAL_STATE = {
   peerName: null,
   direction: null,
   isMuted: false,
+  isSharingVideo: false,
+  isScreenSharing: false,
+  peerIsSharingVideo: false,
+  peerIsScreenSharing: false,
   errorMessage: null,
   localStream: null,
   remoteStream: null,
@@ -108,6 +132,18 @@ export const useCallStore = create<CallStoreState>()((set) => ({
     set((state) => ({ isMuted: !state.isMuted }));
   },
 
+  setSharingVideo: (sharing) => {
+    set({ isSharingVideo: sharing });
+  },
+
+  setSharingScreen: (sharing) => {
+    set({ isScreenSharing: sharing });
+  },
+
+  setPeerMediaState: (videoCamera, videoScreen) => {
+    set({ peerIsSharingVideo: videoCamera, peerIsScreenSharing: videoScreen });
+  },
+
   endCall: (errorMessage = null) => {
     set((state) => ({
       ...state,
@@ -115,6 +151,8 @@ export const useCallStore = create<CallStoreState>()((set) => ({
       errorMessage,
       localStream: null,
       remoteStream: null,
+      peerIsSharingVideo: false,
+      peerIsScreenSharing: false,
     }));
   },
 

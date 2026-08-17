@@ -6,6 +6,7 @@ import {
   isCallHangupEvent,
   isCallIceCandidateEvent,
   isCallInviteEvent,
+  isCallMediaStateEvent,
   isCallOfferEvent,
   isCallRejectedEvent,
   isCallTimeoutEvent,
@@ -148,6 +149,15 @@ describe("call event guards", () => {
     };
     expect(isCallIceCandidateEvent(event)).toBe(true);
     expect(isErrorEvent(event)).toBe(false);
+  });
+
+  it("isCallMediaStateEvent narrows call.media_state", () => {
+    const event = {
+      type: "call.media_state" as const,
+      payload: { call_id: "c1", video_camera: true, video_screen: false },
+    };
+    expect(isCallMediaStateEvent(event)).toBe(true);
+    expect(isCallOfferEvent(event)).toBe(false);
   });
 
   it("isErrorEvent narrows the generic error event", () => {

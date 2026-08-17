@@ -5,6 +5,7 @@ import type {
   CallHangupPayload,
   CallIceCandidatePayload,
   CallInvitePayload,
+  CallMediaStatePayload,
   CallSdpPayload,
   CallSimplePayload,
 } from "@/features/calls/model/types";
@@ -27,6 +28,7 @@ export type RealtimeEvent =
   | { type: "call.offer"; payload: CallSdpPayload }
   | { type: "call.answer"; payload: CallSdpPayload }
   | { type: "call.ice_candidate"; payload: CallIceCandidatePayload }
+  | { type: "call.media_state"; payload: CallMediaStatePayload }
   | { type: "error"; payload: CallErrorPayload };
 
 /** Narrowing helper for the events the client currently handles. */
@@ -118,6 +120,13 @@ export function isCallIceCandidateEvent(
   event: RealtimeEvent,
 ): event is Extract<RealtimeEvent, { type: "call.ice_candidate" }> {
   return event.type === "call.ice_candidate";
+}
+
+/** Narrowing helper for call.media_state events. */
+export function isCallMediaStateEvent(
+  event: RealtimeEvent,
+): event is Extract<RealtimeEvent, { type: "call.media_state" }> {
+  return event.type === "call.media_state";
 }
 
 /** Narrowing helper for the generic error event. */

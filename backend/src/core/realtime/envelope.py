@@ -35,6 +35,7 @@ class EventType(StrEnum):
     CALL_OFFER = "call.offer"
     CALL_ANSWER = "call.answer"
     CALL_ICE_CANDIDATE = "call.ice_candidate"
+    CALL_MEDIA_STATE = "call.media_state"
 
 
 class Envelope(BaseModel):

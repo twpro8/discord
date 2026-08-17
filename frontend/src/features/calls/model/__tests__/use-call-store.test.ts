@@ -97,6 +97,33 @@ describe("useCallStore", () => {
     expect(useCallStore.getState().isMuted).toBe(false);
   });
 
+  it("sharing flags start false and are flipped by setSharingVideo/setSharingScreen", () => {
+    expect(useCallStore.getState().isSharingVideo).toBe(false);
+    expect(useCallStore.getState().isScreenSharing).toBe(false);
+
+    useCallStore.getState().setSharingVideo(true);
+    expect(useCallStore.getState().isSharingVideo).toBe(true);
+    expect(useCallStore.getState().isScreenSharing).toBe(false);
+
+    useCallStore.getState().setSharingScreen(true);
+    useCallStore.getState().setSharingVideo(false);
+    expect(useCallStore.getState().isScreenSharing).toBe(true);
+    expect(useCallStore.getState().isSharingVideo).toBe(false);
+  });
+
+  it("setPeerMediaState mirrors the peer's sharing flags", () => {
+    expect(useCallStore.getState().peerIsSharingVideo).toBe(false);
+    expect(useCallStore.getState().peerIsScreenSharing).toBe(false);
+
+    useCallStore.getState().setPeerMediaState(true, false);
+    expect(useCallStore.getState().peerIsSharingVideo).toBe(true);
+    expect(useCallStore.getState().peerIsScreenSharing).toBe(false);
+
+    useCallStore.getState().setPeerMediaState(false, true);
+    expect(useCallStore.getState().peerIsSharingVideo).toBe(false);
+    expect(useCallStore.getState().peerIsScreenSharing).toBe(true);
+  });
+
   it("endCall moves to ended, clears streams, and keeps peer identity for display", () => {
     useCallStore.getState().beginOutgoingCall({
       callId: "call-5",
@@ -114,6 +141,8 @@ describe("useCallStore", () => {
     expect(state.errorMessage).toBe("connection_failed");
     expect(state.localStream).toBeNull();
     expect(state.remoteStream).toBeNull();
+    expect(state.peerIsSharingVideo).toBe(false);
+    expect(state.peerIsScreenSharing).toBe(false);
     expect(state.peerName).toBe("Bob");
   });
 
@@ -138,5 +167,7 @@ describe("useCallStore", () => {
     expect(state.localStream).toBeNull();
     expect(state.remoteStream).toBeNull();
     expect(state.errorMessage).toBeNull();
+    expect(state.isSharingVideo).toBe(false);
+    expect(state.isScreenSharing).toBe(false);
   });
 });
