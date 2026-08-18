@@ -12,6 +12,7 @@ import { Label } from "@/shared/ui/label";
 // relative
 import { AuthFormShell } from "../../shared/ui/AuthFormShell";
 import { useLoginMutation } from "../model/mutations";
+import { connectSocket } from "../../api/socket";
 
 /** Login form with username and password fields. */
 export function LoginForm() {
@@ -22,6 +23,8 @@ export function LoginForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     loginMutation.mutate({ username, password });
+
+    connectSocket();
   };
 
   return (
