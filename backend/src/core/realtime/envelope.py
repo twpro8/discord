@@ -25,16 +25,6 @@ class EventType(StrEnum):
     LEAVE = "room.leave"
     ACK = "ack"
     ERROR = "error"
-    CALL_INVITE = "call.invite"
-    CALL_ACCEPTED = "call.accepted"
-    CALL_REJECTED = "call.rejected"
-    CALL_CANCELLED = "call.cancelled"
-    CALL_BUSY = "call.busy"
-    CALL_TIMEOUT = "call.timeout"
-    CALL_HANGUP = "call.hangup"
-    CALL_OFFER = "call.offer"
-    CALL_ANSWER = "call.answer"
-    CALL_ICE_CANDIDATE = "call.ice_candidate"
 
 
 class Envelope(BaseModel):

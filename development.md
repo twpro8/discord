@@ -100,50 +100,6 @@ After changing any environment variables, restart the stack:
 docker compose watch
 ```
 
-## Voice calls: TURN server (production)
-
-Voice calling works over STUN alone for most home/office networks with no
-extra setup — the backend's `GET /api/v1/calls/turn-credentials` endpoint
-returns STUN-only ICE servers by default (`STUN_URLS` in `.env`).
-
-For reliable connectivity behind symmetric NATs or restrictive corporate
-firewalls, a TURN relay is needed. A self-hosted `coturn` service is
-defined in `compose.yml`, gated behind the `turn` Compose profile so it
-doesn't start by default:
-
-```bash
-docker compose --profile turn up -d coturn
-```
-
-Then set in `.env`:
-
-```
-TURN_URLS=turn:your-domain:3478
-TURN_SECRET_KEY=<a strong random secret>
-```
-
-Two things this repo's Compose setup cannot do for you, since they're
-host/network infrastructure rather than application config:
-
-* **Firewall/port-forwarding**: open UDP+TCP `3478` (the TURN listener)
-  and the UDP relay range `49152-49252` on the host firewall or cloud
-  security group. `coturn` runs with `network_mode: host` (required for
-  ICE relay candidates to be reachable at the host's real IP), so it is
-  **not** routed through Traefik — Traefik only proxies HTTP(S), not a
-  raw UDP port range.
-* **Single-host constraint**: `network_mode: host` means `coturn` only
-  makes sense on a single host. If this stack ever moves to multi-host or
-  managed Kubernetes, swap to a managed TURN provider that supports the
-  same REST-API HMAC credential scheme (`TURN_URLS`/`TURN_SECRET_KEY`) —
-  no backend code changes needed either way.
-
-To verify TURN is actually working, feed the response of
-`GET /api/v1/calls/turn-credentials` (while logged in) into the public
-[Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice)
-test page and confirm `relay`-typed candidates are gathered, or check
-`docker compose logs coturn` for allocate/permission requests during a
-real call.
-
 ## Observability: Grafana, Prometheus, Loki
 
 Centralized backend logs and basic HTTP metrics are available through

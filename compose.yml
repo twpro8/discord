@@ -190,22 +190,6 @@ services:
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 
-  # WebRTC TURN relay for voice calls (NAT traversal)
-  coturn:
-    image: coturn/coturn:4.6
-    restart: unless-stopped
-    profiles: ["turn"]
-    network_mode: host
-    env_file:
-      - .env
-    command: >
-      turnserver
-      --listening-port=3478
-      --min-port=49152 --max-port=49252
-      --realm=${DOMAIN?Variable not set}
-      --use-auth-secret --static-auth-secret=${TURN_SECRET_KEY}
-      --no-cli --log-file=stdout
-
   # Observability stack (Grafana + Prometheus + Loki + Alloy), opt-in:
   # docker compose --profile observability up -d
   # See development.md for URLs and verification steps.
