@@ -7,7 +7,6 @@
   ],
   "permissions": [
     "core:default",
-    "macos-permissions:default",
     {
       "identifier": "http:default",
       "allow": [

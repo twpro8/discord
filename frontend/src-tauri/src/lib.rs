@@ -1,13 +1,6 @@
-#[cfg(target_os = "linux")]
-use tauri::Manager;
-
-#[cfg(target_os = "linux")]
-mod linux_permissions;
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
-    .plugin(tauri_plugin_macos_permissions::init())
     .plugin(tauri_plugin_http::init())
     .setup(|app| {
       if cfg!(debug_assertions) {
@@ -16,11 +9,6 @@ pub fn run() {
             .level(log::LevelFilter::Info)
             .build(),
         )?;
-      }
-
-      #[cfg(target_os = "linux")]
-      for (_, webview) in app.webview_windows() {
-        linux_permissions::enable_media_permissions(webview.as_ref())?;
       }
 
       Ok(())
