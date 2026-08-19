@@ -8,21 +8,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getWsEventsUrl } from "@/shared/config/backend";
 
 // features
-import {
-  handleCallAccepted,
-  handleCallAnswer,
-  handleCallBusy,
-  handleCallCancelled,
-  handleCallError,
-  handleCallHangup,
-  handleCallIceCandidate,
-  handleCallInvite,
-  handleCallOffer,
-  handleCallRejected,
-  handleCallTimeout,
-} from "@/features/calls/model/use-call-signal-handlers";
-import { useCallStore } from "@/features/calls/model/use-call-store";
-import { teardown as teardownCall } from "@/features/calls/model/webrtc-session";
 import { mergeIncomingMessages } from "@/features/chats/model/use-chat-messages";
 import { applyPresenceUpdate } from "@/features/presence/model/apply-presence-update";
 import { useCurrentUser } from "@/features/profile/model/use-current-user";
@@ -32,17 +17,6 @@ import { useTypingStore } from "@/features/typing/model/use-typing-store";
 import { setSocketSend } from "./model/socket-sender";
 import { useIdle } from "./model/use-idle";
 import {
-  isCallAcceptedEvent,
-  isCallAnswerEvent,
-  isCallBusyEvent,
-  isCallCancelledEvent,
-  isCallHangupEvent,
-  isCallIceCandidateEvent,
-  isCallInviteEvent,
-  isCallOfferEvent,
-  isCallRejectedEvent,
-  isCallTimeoutEvent,
-  isErrorEvent,
   isMessageCreatedEvent,
   isPresenceUpdateEvent,
   isTypingUpdateEvent,
@@ -61,15 +35,12 @@ const HEARTBEAT_INTERVAL_MS = 25_000;
  * drops. Incoming `message.created` events are merged into the matching
  * chat-messages cache; `presence.update` events are applied to the
  * friends/server presence caches; `typing.update` events are applied to
- * the typing store; `call.*`/`error` events are routed into the call
- * store + WebRTC session via use-call-signal-handlers.ts. Also sends
- * periodic heartbeats carrying the client's idle state, which the server
- * uses to derive Away, and invalidates presence queries on every
- * reconnect (Redis pub/sub has no replay, so a presence.update published
- * during a dropped connection is otherwise silently missed — typing
- * needs no equivalent catch-up, it just clears itself out via the typing
- * store's own auto-expiry; an in-progress call instead treats the drop
- * itself as the call ending, see the `onclose` handler below).
+ * the typing store. Also sends periodic heartbeats carrying the client's
+ * idle state, which the server uses to derive Away, and invalidates
+ * presence queries on every reconnect (Redis pub/sub has no replay, so a
+ * presence.update published during a dropped connection is otherwise
+ * silently missed — typing needs no equivalent catch-up, it just clears
+ * itself out via the typing store's own auto-expiry).
  */
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -123,28 +94,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         useTypingStore
           .getState()
           .applyTypingUpdate(chat_id, user_id, is_typing);
-      } else if (isCallInviteEvent(parsed)) {
-        if (userId) handleCallInvite(parsed.payload, userId);
-      } else if (isCallAcceptedEvent(parsed)) {
-        handleCallAccepted(parsed.payload);
-      } else if (isCallRejectedEvent(parsed)) {
-        handleCallRejected(parsed.payload);
-      } else if (isCallCancelledEvent(parsed)) {
-        handleCallCancelled(parsed.payload);
-      } else if (isCallBusyEvent(parsed)) {
-        handleCallBusy(parsed.payload);
-      } else if (isCallTimeoutEvent(parsed)) {
-        handleCallTimeout(parsed.payload);
-      } else if (isCallHangupEvent(parsed)) {
-        handleCallHangup(parsed.payload);
-      } else if (isCallOfferEvent(parsed)) {
-        handleCallOffer(parsed.payload);
-      } else if (isCallAnswerEvent(parsed)) {
-        handleCallAnswer(parsed.payload);
-      } else if (isCallIceCandidateEvent(parsed)) {
-        handleCallIceCandidate(parsed.payload);
-      } else if (isErrorEvent(parsed)) {
-        handleCallError(parsed.payload);
       }
     };
 
@@ -179,15 +128,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         setSocketSend(() => {});
         window.clearInterval(heartbeatTimer);
         if (socketRef.current === socket) socketRef.current = null;
-        // A dropped socket mid-call is treated as a dropped call — no
-        // resume-signaling semantics make sense for a live media session
-        // (see plan §6, "Network blip"). Applies on every close, not just
-        // a genuine disposal, since a reconnect-in-progress still means
-        // the call's signaling channel was gone for a period.
-        if (useCallStore.getState().phase !== "idle") {
-          teardownCall();
-          useCallStore.getState().endCall("disconnected");
-        }
         if (disposed) return;
         retryTimer = window.setTimeout(() => {
           retryMs = Math.min(retryMs * 2, MAX_RETRY_MS);

@@ -11,8 +11,6 @@ import { Drawer } from "@/shared/ui/drawer";
 import { useShellDrawer } from "@/shared/ui/shell-drawer";
 
 // features
-import { ActiveCallOverlay } from "@/features/calls/ui/ActiveCallOverlay";
-import { IncomingCallModal } from "@/features/calls/ui/IncomingCallModal";
 import { ChannelSidebar } from "@/features/channels/ui/ChannelSidebar";
 import { CreateChannelModal } from "@/features/channels/ui/CreateChannelModal";
 import { FriendPanel } from "@/features/friends/ui/FriendPanel";
@@ -134,9 +132,6 @@ export default function HomeLayout() {
             onClose={() => setIsCreateChannelOpen(false)}
           />
         )}
-
-        <IncomingCallModal />
-        <ActiveCallOverlay />
       </div>
     </RealtimeProvider>
   );
