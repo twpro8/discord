@@ -1,8 +1,12 @@
 // third party
 import { Phone } from "lucide-react";
 
+import { getUserChannel } from "@/shared/api/socket";
 // shared
 import { cn } from "@/shared/helpers/utils";
+
+// relative
+import { useOutgoingCall } from "../model/use-outgoing-call";
 
 // Matches DmChatView's HEADER_BUTTON class exactly, for visual
 // consistency with the chat header's other icon buttons — kept as a
@@ -12,17 +16,41 @@ import { cn } from "@/shared/helpers/utils";
 const HEADER_BUTTON =
   "flex size-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:size-8 disabled:pointer-events-none disabled:opacity-50";
 
-/** Disabled "Call" button for a DM chat header. Calls were removed from
- * the app, so this is a visual placeholder only — kept in the header for
- * layout consistency until a call feature is built out again. */
-export function CallButton({ className }: { className?: string }) {
+/** "Call" button for a DM chat header — rings the chat's peer by pushing
+ * `call_user` onto the current user's already-joined `user:{id}` Phoenix
+ * channel. A no-op while the current user id or the peer id is still
+ * unresolved. */
+export function CallButton({
+  userId,
+  peerId,
+  className,
+}: {
+  userId?: string;
+  peerId?: string;
+  className?: string;
+}) {
+  const openCall = useOutgoingCall((state) => state.open);
+
+  function handleCall() {
+    if (!userId || !peerId) return;
+
+    getUserChannel(userId)
+      .push("call_user", { target_user_id: peerId })
+      .receive("ok", () => {
+        openCall(peerId);
+      })
+      .receive("error", (error: unknown) => {
+        console.error("Call failed:", error);
+      });
+  }
+
   return (
     <button
+      onClick={handleCall}
       type="button"
-      disabled
       className={cn(HEADER_BUTTON, className)}
       aria-label="Start voice call"
-      title="Voice calls aren't available"
+      title="Start voice call"
     >
       <Phone className="h-4 w-4" />
     </button>
