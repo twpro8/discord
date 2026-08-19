@@ -15,6 +15,7 @@ import { ensureMicrophonePermission } from "../model/ensure-microphone-permissio
 import { microphoneErrorMessage } from "../model/microphone-error";
 import { useCallStore } from "../model/use-call-store";
 import { getIceServers } from "../model/use-ice-servers";
+import { useRingtone } from "../model/use-ringtone";
 import {
   attachLocalStream,
   createPeerConnection,
@@ -31,6 +32,8 @@ export function IncomingCallModal() {
   const storedPeerName = useCallStore((state) => state.peerName);
   const { data: chatDetails } = useChatDetails(chatId);
   const displayName = chatDetails?.peer_name ?? storedPeerName ?? "Someone";
+
+  useRingtone(phase === "incoming_ringing" && !!callId);
 
   if (phase !== "incoming_ringing" || !callId) return null;
 
