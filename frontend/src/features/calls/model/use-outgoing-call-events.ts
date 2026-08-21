@@ -6,18 +6,21 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 // shared
-import { getUserChannel, subscribeToDeclinedCall } from "@/shared/api/socket";
+import {
+  getUserChannel,
+  subscribeToCallAccepted,
+  subscribeToDeclinedCall,
+} from "@/shared/api/socket";
 
 // relative
 import { getUserById } from "../api/get-user";
 import { useOutgoingCall } from "./use-outgoing-call";
 
-/** Listens for `declined_call` broadcasts — the callee rejecting the
- * current user's outgoing call — closing the outgoing-call window and
- * surfacing an informative toast. Matching against the store's `peerId`
- * keeps an unrelated decline from closing a different call. The callee's
- * name comes from the shared `["user", id]` query cache, so no extra
- * request fires when the peer was already shown in the call window. */
+/** Listens for `declined_call` and `call_accepted` broadcasts on the
+ * current user's Phoenix channel. On decline, shows a toast and clears
+ * the outgoing-call state. On accept, stores the accepted callId so
+ * WebRTC can begin. Matching against the store's `callId` keeps
+ * unrelated events from affecting a different call. */
 export function useOutgoingCallEvents(userId?: string) {
   const queryClient = useQueryClient();
 
@@ -41,6 +44,17 @@ export function useOutgoingCallEvents(userId?: string) {
         toast.info("Your call was declined");
       } finally {
         clear();
+      }
+    });
+
+    subscribeToCallAccepted((payload) => {
+      const { call_id } = payload as {
+        call_id: string;
+        callee_id: string;
+      };
+      const { callId, setAccepted } = useOutgoingCall.getState();
+      if (callId === call_id) {
+        setAccepted(call_id);
       }
     });
   }, [queryClient, userId]);

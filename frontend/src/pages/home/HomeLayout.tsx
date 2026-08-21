@@ -15,6 +15,7 @@ import { useShellDrawer } from "@/shared/ui/shell-drawer";
 import { useIncomingCall } from "@/features/calls/model/use-incoming-call";
 import { useOutgoingCall } from "@/features/calls/model/use-outgoing-call";
 import { useOutgoingCallEvents } from "@/features/calls/model/use-outgoing-call-events";
+import { useWebRTC } from "@/features/calls/model/use-webRTC";
 import { CallWindow } from "@/features/calls/ui/CallWindow";
 import { ChannelSidebar } from "@/features/channels/ui/ChannelSidebar";
 import { CreateChannelModal } from "@/features/channels/ui/CreateChannelModal";
@@ -32,18 +33,38 @@ export default function HomeLayout() {
 
   const { data: user } = useCurrentUser();
   const userId = user?.id;
-  const { callerId, dismiss } = useIncomingCall(userId);
+  const { callerId, acceptedCallId, acceptCall, dismiss } =
+    useIncomingCall(userId);
   useOutgoingCallEvents(userId);
   const outgoingPeerId = useOutgoingCall((state) => state.peerId);
+  const outgoingAcceptedCallId = useOutgoingCall(
+    (state) => state.acceptedCallId,
+  );
   const clearOutgoing = useOutgoingCall((state) => state.clear);
 
+  const calleeWebRTC = useWebRTC({
+    callId: acceptedCallId,
+    role: "callee",
+  });
+
+  const callerWebRTC = useWebRTC({
+    callId: outgoingAcceptedCallId,
+    role: "caller",
+  });
+
   function handleCancelOutgoing() {
+    callerWebRTC.hangup();
     if (userId && outgoingPeerId) {
       getUserChannel(userId).push("cancel_call", {
         target_user_id: outgoingPeerId,
       });
     }
     clearOutgoing();
+  }
+
+  function handleHangupIncoming() {
+    calleeWebRTC.hangup();
+    dismiss();
   }
 
   const isDesktop = useMediaQuery(breakpoints.desktop);
@@ -155,11 +176,24 @@ export default function HomeLayout() {
           />
         )}
 
-        <CallWindow mode="incoming" id={callerId} onClose={dismiss} />
+        <CallWindow
+          mode="incoming"
+          id={callerId}
+          active={Boolean(acceptedCallId)}
+          muted={calleeWebRTC.muted}
+          onClose={acceptedCallId ? handleHangupIncoming : dismiss}
+          onClick={acceptCall}
+          onToggleMute={calleeWebRTC.toggleMute}
+          remoteStream={calleeWebRTC.remoteStream}
+        />
         <CallWindow
           mode="outgoing"
           id={outgoingPeerId}
+          active={Boolean(outgoingAcceptedCallId)}
+          muted={callerWebRTC.muted}
           onClose={handleCancelOutgoing}
+          onToggleMute={callerWebRTC.toggleMute}
+          remoteStream={callerWebRTC.remoteStream}
         />
       </div>
     </RealtimeProvider>
