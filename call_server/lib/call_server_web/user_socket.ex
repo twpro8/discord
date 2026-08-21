@@ -4,6 +4,7 @@ defmodule CallServerWeb.UserSocket do
   require Logger
 
   channel "user:*", CallServerWeb.UserChannel
+  channel "call:*", CallServerWeb.CallChannel
 
   def connect(_params, socket, _connect_info) do
     Logger.info("WebSocket connected!")

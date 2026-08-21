@@ -8,9 +8,8 @@ const CALL_SOCKET_URL = "ws://localhost:4000/socket";
 let socket: Socket | null = null;
 let userChannel: Channel | null = null;
 let joinedUserId: string | null = null;
-let incomingCallBound = false;
-let declinedCallBound = false;
-let callCancelledBound = false;
+let callChannel: Channel | null = null;
+let joinedCallId: string | null = null;
 
 /**
  * Returns the current user's `user:{id}` Phoenix channel, connecting the
@@ -24,9 +23,6 @@ export function getUserChannel(userId: string): Channel {
     socket.disconnect();
     socket = null;
     joinedUserId = null;
-    incomingCallBound = false;
-    declinedCallBound = false;
-    callCancelledBound = false;
   }
 
   if (!socket) {
@@ -45,35 +41,70 @@ export function getUserChannel(userId: string): Channel {
   return channel;
 }
 
-/** Subscribes the current user's `user:{id}` channel to incoming calls,
- * exactly once per channel lifetime. Call after joining (HomeLayout). */
+/** Subscribes the current user's `user:{id}` channel to incoming calls. */
 export function subscribeToIncomingCalls(
   callback: (payload: unknown) => void,
 ): void {
-  if (!userChannel || incomingCallBound) return;
+  if (!userChannel) return;
   userChannel.on("incoming_call", callback);
-  incomingCallBound = true;
 }
 
 /** Subscribes the current user's `user:{id}` channel to `declined_call`
- * (their outgoing call was declined by the callee), exactly once per
- * channel lifetime. The payload carries the callee's id as
- * `target_user_id`. */
+ * (their outgoing call was declined by the callee). The payload carries
+ * the callee's id as `target_user_id`. */
 export function subscribeToDeclinedCall(
   callback: (payload: unknown) => void,
 ): void {
-  if (!userChannel || declinedCallBound) return;
+  if (!userChannel) return;
   userChannel.on("declined_call", callback);
-  declinedCallBound = true;
 }
 
 /** Subscribes the current user's `user:{id}` channel to `call_cancelled`
- * (an incoming call was cancelled by the caller), exactly once per
- * channel lifetime. The payload carries the caller's id as `caller_id`. */
+ * (an incoming call was cancelled by the caller). The payload carries the
+ * caller's id as `caller_id`. */
 export function subscribeToCallCancelled(
   callback: (payload: unknown) => void,
 ): void {
-  if (!userChannel || callCancelledBound) return;
+  if (!userChannel) return;
   userChannel.on("call_cancelled", callback);
-  callCancelledBound = true;
+}
+
+/** Subscribes the current user's `user:{id}` channel to `call_accepted`
+ * (the callee accepted the call). */
+export function subscribeToCallAccepted(
+  callback: (payload: unknown) => void,
+): void {
+  if (!userChannel) return;
+  userChannel.on("call_accepted", callback);
+}
+
+/** Joins the `call:{callId}` channel for WebRTC signaling relay.
+ * Leaves any previously joined call channel first. */
+export function getCallChannel(callId: string): Channel {
+  if (callChannel && joinedCallId !== callId) {
+    callChannel.leave();
+    callChannel = null;
+    joinedCallId = null;
+  }
+
+  if (!callChannel) {
+    if (!socket) {
+      socket = new Socket(CALL_SOCKET_URL);
+      socket.connect();
+    }
+    callChannel = socket.channel(`call:${callId}`);
+    callChannel.join();
+    joinedCallId = callId;
+  }
+
+  return callChannel;
+}
+
+/** Leaves the current call channel and resets state. */
+export function leaveCallChannel(): void {
+  if (callChannel) {
+    callChannel.leave();
+    callChannel = null;
+    joinedCallId = null;
+  }
 }

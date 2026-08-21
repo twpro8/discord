@@ -36,8 +36,9 @@ export function CallButton({
 
     getUserChannel(userId)
       .push("call_user", { target_user_id: peerId })
-      .receive("ok", () => {
-        openCall(peerId);
+      .receive("ok", (response: unknown) => {
+        const { call_id } = response as { call_id: string };
+        openCall(peerId, call_id);
       })
       .receive("error", (error: unknown) => {
         console.error("Call failed:", error);
