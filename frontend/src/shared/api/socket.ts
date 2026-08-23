@@ -1,9 +1,11 @@
 // third party
 import { Socket, type Channel } from "phoenix";
 
+// relative
+import { CALL_SERVER_URL } from "../config/env";
+
 // Phoenix call server endpoint. The call server is a separate app from
 // the Lumiere backend and has no shared config channel with it.
-const CALL_SOCKET_URL = "ws://localhost:4000/socket";
 
 let socket: Socket | null = null;
 let userChannel: Channel | null = null;
@@ -26,7 +28,7 @@ export function getUserChannel(userId: string): Channel {
   }
 
   if (!socket) {
-    socket = new Socket(CALL_SOCKET_URL);
+    socket = new Socket(CALL_SERVER_URL);
     socket.connect();
   }
 
@@ -89,7 +91,7 @@ export function getCallChannel(callId: string): Channel {
 
   if (!callChannel) {
     if (!socket) {
-      socket = new Socket(CALL_SOCKET_URL);
+      socket = new Socket(CALL_SERVER_URL);
       socket.connect();
     }
     callChannel = socket.channel(`call:${callId}`);
