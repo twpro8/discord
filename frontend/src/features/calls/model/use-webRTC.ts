@@ -38,7 +38,6 @@ export function useWebRTC({ callId, role }: UseWebRTCOptions) {
       console.log("audio tracks:", stream?.getAudioTracks());
 
       setRemoteStream(event.streams[0] ?? null);
-
     };
 
     pc.oniceconnectionstatechange = () => {
@@ -89,7 +88,6 @@ export function useWebRTC({ callId, role }: UseWebRTCOptions) {
     };
 
     pc.onnegotiationneeded = async () => {
-
       if (roleRef.current !== "caller") return;
 
       if (makingOffer || pc.signalingState !== "stable") return;
