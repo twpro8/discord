@@ -32,11 +32,6 @@ export function useWebRTC({ callId, role }: UseWebRTCOptions) {
     pcRef.current = pc;
 
     pc.ontrack = (event) => {
-
-      console.log("🔊 ontrack fired");
-      console.log("event.streams:", event.streams);
-      console.log("event.track:", event.track);
-
       const stream = event.streams[0] ?? null;
 
       console.log("remote stream:", stream);
