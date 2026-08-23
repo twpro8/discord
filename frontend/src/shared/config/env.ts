@@ -15,6 +15,6 @@ export const WS_BASE_URL =
 export const WS_EVENTS_URL = `${WS_BASE_URL}/api/v1/ws`;
 
 /** Reailtime Communication URL*/
-export const CALL_SERVER_URL = 
-  (import.meta.env.VITE_CALL_SERVER_URL as string | undefined) 
-    ?? "ws://localhost:4000/socket";
+export const CALL_SERVER_URL =
+  (import.meta.env.VITE_CALL_SERVER_URL as string | undefined) ??
+  "ws://localhost:4000/socket";
