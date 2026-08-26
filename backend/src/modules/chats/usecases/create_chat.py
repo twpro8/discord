@@ -1,9 +1,7 @@
-from dataclasses import dataclass
 from uuid import UUID
 
 from src.core.event_bus import EventBus
 from src.core.websocket.manager import RoomMembershipUpdater
-from src.modules.chats.application.realtime import join_members_to_chat_room
 from src.modules.chats.domain.entities.chat import Chat
 from src.modules.chats.domain.entities.dtos import (
     ChatCreate,
@@ -16,17 +14,10 @@ from src.modules.chats.domain.exceptions import SelfChatForbiddenError
 from src.modules.chats.domain.repositories.chat_unit_of_work import (
     ChatUnitOfWork,
 )
-from src.shared.application.command import Command
-from src.shared.result import Result
+from src.modules.chats.usecases.realtime import join_members_to_chat_room
 
 
-@dataclass(frozen=True, kw_only=True)
-class CreateChatCommand(Command):
-    creator_id: UUID
-    data: ChatCreateData
-
-
-class CreateChatCommandHandler:
+class CreateChatUseCase:
     def __init__(
         self,
         uow: ChatUnitOfWork,
@@ -40,10 +31,7 @@ class CreateChatCommandHandler:
     async def _publish_events(self, chat: Chat) -> None:
         await self._event_bus.publish_many(chat.pull_events())
 
-    async def handle(
-        self, command: CreateChatCommand
-    ) -> Result[Chat, SelfChatForbiddenError]:
-        creator_id, data = command.creator_id, command.data
+    async def __call__(self, *, creator_id: UUID, data: ChatCreateData) -> Chat:
         if data.type == ChatType.private:
             return await self._get_or_create_private_chat(creator_id, data)
         return await self._create_group_chat(creator_id, data)
@@ -52,9 +40,9 @@ class CreateChatCommandHandler:
         self,
         creator_id: UUID,
         data: ChatCreateData,
-    ) -> Result[Chat, SelfChatForbiddenError]:
+    ) -> Chat:
         if creator_id == data.target_user_id:
-            return Result.err(SelfChatForbiddenError())
+            raise SelfChatForbiddenError
 
         assert data.target_user_id
 
@@ -63,7 +51,7 @@ class CreateChatCommandHandler:
             user_b=data.target_user_id,
         )
         if existing_chat:
-            return Result.ok(existing_chat)
+            return existing_chat
 
         chat = await self._uow.chats.create(ChatCreate(type=ChatType.private))
         chat.record_event(ChatCreatedEvent(chat_id=chat.id))
@@ -80,13 +68,13 @@ class CreateChatCommandHandler:
             self._room_membership_updater, chat.id, member_ids
         )
 
-        return Result.ok(chat)
+        return chat
 
     async def _create_group_chat(
         self,
         creator_id: UUID,
         data: ChatCreateData,
-    ) -> Result[Chat, SelfChatForbiddenError]:
+    ) -> Chat:
         chat = await self._uow.chats.create(
             ChatCreate(
                 owner_id=creator_id,
@@ -123,4 +111,4 @@ class CreateChatCommandHandler:
             self._room_membership_updater, chat.id, member_ids
         )
 
-        return Result.ok(chat)
+        return chat

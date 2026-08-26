@@ -3,9 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, status
 
 from src.api.v1.dependencies import MediatorDep, UserIdDep
-from src.modules.chats.application.commands.mark_chat_as_read import (
-    MarkChatAsReadCommand,
-)
+from src.modules.chats.transport.http.dependencies import MarkChatAsReadUseCaseDep
 from src.modules.messages.application.commands.delete_message import (
     DeleteMessageCommand,
 )
@@ -112,6 +110,7 @@ async def list_chat_messages(
     chat_id: UUID,
     user_id: UserIdDep,
     mediator: MediatorDep,
+    mark_chat_as_read_use_case: MarkChatAsReadUseCaseDep,
     limit: int = Query(20, gt=0, le=100),
     before_cursor: str | None = Query(None, max_length=128),
     after_cursor: str | None = Query(None, max_length=128),
@@ -131,17 +130,13 @@ async def list_chat_messages(
     page = result.value
     if page.items:
         # listing a chat's messages auto-advances the caller's
-        # last-read cursor. Reuses chats' own mark-as-read command (best
+        # last-read cursor. Reuses chats' own mark-as-read use case (best
         # effort — a failure here shouldn't fail the read the user asked
         # for) instead of adding new cross-module write plumbing.
         max_seq = max(m.sequence for m in page.items)
-        mark_read_result = await mediator.send(
-            MarkChatAsReadCommand(
-                chat_id=chat_id, user_id=user_id, up_to_sequence=max_seq
-            )
+        await mark_chat_as_read_use_case(
+            chat_id=chat_id, user_id=user_id, up_to_sequence=max_seq
         )
-        if mark_read_result.is_err:
-            raise mark_read_result.error
 
     return ChatMessagePageResponse.model_validate(page)
 

@@ -104,7 +104,7 @@ def test_message_fans_out_to_members(client: TestClient) -> None:
             chat_id = chat_resp.json()["id"]
 
             # Chat creation only joins members' connections to chat_room on
-            # a genuinely fresh create (see CreateChatCommandHandler) — a
+            # a genuinely fresh create (see CreateChatUseCase) — a
             # session-scoped seeded database shared with other test files
             # may already have this exact pair's private chat from an
             # earlier file, in which case this POST just reuses it and

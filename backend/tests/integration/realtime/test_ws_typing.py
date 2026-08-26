@@ -107,7 +107,7 @@ def _create_and_join_chat(client: TestClient) -> str:
 
     Chat creation only joins members' connections the first time a chat
     is actually created (see
-    CreateChatCommandHandler._get_or_create_private_chat's early return
+    CreateChatUseCase._get_or_create_private_chat's early return
     for an already-existing chat) — the seeded test DB persists across
     test runs within a session, so a later test's "create" call usually
     hits that already-exists path instead of a fresh one, leaving that

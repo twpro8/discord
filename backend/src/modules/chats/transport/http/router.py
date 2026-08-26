@@ -2,25 +2,18 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
-from src.api.v1.dependencies import MediatorDep, UserIdDep
-from src.modules.chats.application.commands.add_member import AddMemberCommand
-from src.modules.chats.application.commands.create_chat import CreateChatCommand
-from src.modules.chats.application.commands.leave_chat import LeaveChatCommand
-from src.modules.chats.application.commands.mark_chat_as_read import (
-    MarkChatAsReadCommand,
-)
-from src.modules.chats.application.commands.remove_member import RemoveMemberCommand
-from src.modules.chats.application.commands.update_chat import UpdateChatCommand
-from src.modules.chats.application.queries.get_chat_details import (
-    GetChatDetailsQuery,
-)
-from src.modules.chats.application.queries.get_chats import GetChatsQuery
-from src.modules.chats.application.queries.list_members import ListMembersQuery
-from src.modules.chats.domain.entities.dtos import (
-    ChatCreateData,
-    ChatSummary,
-    ChatSummaryPage,
-    ChatUpdateData,
+from src.api.v1.dependencies import UserIdDep
+from src.modules.chats.domain.entities.dtos import ChatCreateData, ChatUpdateData
+from src.modules.chats.transport.http.dependencies import (
+    AddMemberUseCaseDep,
+    CreateChatUseCaseDep,
+    GetChatDetailsUseCaseDep,
+    GetChatsUseCaseDep,
+    LeaveChatUseCaseDep,
+    ListMembersUseCaseDep,
+    MarkChatAsReadUseCaseDep,
+    RemoveMemberUseCaseDep,
+    UpdateChatUseCaseDep,
 )
 from src.modules.chats.transport.http.schemas import (
     AddMemberRequest,
@@ -34,8 +27,6 @@ from src.modules.chats.transport.http.schemas import (
     MarkAsReadRequest,
 )
 from src.modules.messages.module import get_chat_message_router
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 from src.shared.schemas.bridge import unsettable_from_request
 
 router = APIRouter(prefix="/chats", tags=["Chats"])
@@ -45,111 +36,81 @@ router.include_router(get_chat_message_router(), prefix="/{chat_id}")
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_chat(
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    create_chat_use_case: CreateChatUseCaseDep,
+    get_chat_details_use_case: GetChatDetailsUseCaseDep,
     data: ChatCreateRequest,
 ) -> ChatSummaryResponse:
-    result = await mediator.send(
-        CreateChatCommand(
-            creator_id=current_user_id,
-            data=ChatCreateData(**data.model_dump()),
-        )
+    chat = await create_chat_use_case(
+        creator_id=current_user_id,
+        data=ChatCreateData(**data.model_dump()),
     )
-    if result.is_err:
-        raise result.error
 
-    details: Result[ChatSummary, LumiereError] = await mediator.query(
-        GetChatDetailsQuery(chat_id=result.value.id, user_id=current_user_id)
-    )
-    if details.is_err:
-        raise details.error
-    return ChatSummaryAdapter.validate_python(details.value)
+    details = await get_chat_details_use_case(chat_id=chat.id, user_id=current_user_id)
+    return ChatSummaryAdapter.validate_python(details)
 
 
 @router.get("", status_code=status.HTTP_200_OK)
 async def get_my_chats(
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: GetChatsUseCaseDep,
     limit: int = Query(20, gt=0, le=100),
     cursor: str | None = Query(None, max_length=128),
 ) -> ChatSummaryPageResponse:
-    result: Result[ChatSummaryPage, LumiereError] = await mediator.query(
-        GetChatsQuery(user_id=current_user_id, limit=limit, cursor=cursor)
-    )
-    if result.is_err:
-        raise result.error
-    return ChatSummaryPageResponse.model_validate(result.value)
+    page = await use_case(user_id=current_user_id, limit=limit, cursor=cursor)
+    return ChatSummaryPageResponse.model_validate(page)
 
 
 @router.get("/{chat_id}", status_code=status.HTTP_200_OK)
 async def get_chat_details(
     chat_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: GetChatDetailsUseCaseDep,
 ) -> ChatSummaryResponse:
-    result: Result[ChatSummary, LumiereError] = await mediator.query(
-        GetChatDetailsQuery(chat_id=chat_id, user_id=current_user_id)
-    )
-    if result.is_err:
-        raise result.error
-    return ChatSummaryAdapter.validate_python(result.value)
+    details = await use_case(chat_id=chat_id, user_id=current_user_id)
+    return ChatSummaryAdapter.validate_python(details)
 
 
 @router.patch("/{chat_id}", status_code=status.HTTP_200_OK)
 async def update_chat(
     chat_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    update_chat_use_case: UpdateChatUseCaseDep,
+    get_chat_details_use_case: GetChatDetailsUseCaseDep,
     data: ChatUpdateRequest,
 ) -> ChatSummaryResponse:
-    result = await mediator.send(
-        UpdateChatCommand(
-            chat_id=chat_id,
-            user_id=current_user_id,
-            update_data=unsettable_from_request(data, ChatUpdateData),
-        )
+    await update_chat_use_case(
+        chat_id=chat_id,
+        user_id=current_user_id,
+        update_data=unsettable_from_request(data, ChatUpdateData),
     )
-    if result.is_err:
-        raise result.error
 
-    details: Result[ChatSummary, LumiereError] = await mediator.query(
-        GetChatDetailsQuery(chat_id=chat_id, user_id=current_user_id)
-    )
-    if details.is_err:
-        raise details.error
-    return ChatSummaryAdapter.validate_python(details.value)
+    details = await get_chat_details_use_case(chat_id=chat_id, user_id=current_user_id)
+    return ChatSummaryAdapter.validate_python(details)
 
 
 @router.get("/{chat_id}/members", status_code=status.HTTP_200_OK)
 async def list_members(
     chat_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: ListMembersUseCaseDep,
 ) -> list[ChatMemberResponse]:
-    result = await mediator.query(
-        ListMembersQuery(chat_id=chat_id, user_id=current_user_id)
-    )
-    if result.is_err:
-        raise result.error
-    return [ChatMemberResponse.model_validate(m) for m in result.value]
+    members = await use_case(chat_id=chat_id, user_id=current_user_id)
+    return [ChatMemberResponse.model_validate(m) for m in members]
 
 
 @router.post("/{chat_id}/members", status_code=status.HTTP_200_OK)
 async def add_member(
     chat_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: AddMemberUseCaseDep,
     data: AddMemberRequest,
 ) -> AddMemberResponse:
-    result = await mediator.send(
-        AddMemberCommand(
-            chat_id=chat_id,
-            user_id=current_user_id,
-            user_ids=data.user_ids,
-        )
+    result = await use_case(
+        chat_id=chat_id,
+        user_id=current_user_id,
+        user_ids=data.user_ids,
     )
-    if result.is_err:
-        raise result.error
-    return AddMemberResponse.model_validate(result.value)
+    return AddMemberResponse.model_validate(result)
 
 
 @router.delete(
@@ -159,45 +120,33 @@ async def remove_member(
     chat_id: UUID,
     target_user_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: RemoveMemberUseCaseDep,
 ) -> None:
-    result = await mediator.send(
-        RemoveMemberCommand(
-            chat_id=chat_id,
-            user_id=current_user_id,
-            target_user_id=target_user_id,
-        )
+    await use_case(
+        chat_id=chat_id,
+        user_id=current_user_id,
+        target_user_id=target_user_id,
     )
-    if result.is_err:
-        raise result.error
 
 
 @router.post("/{chat_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
 async def leave_chat(
     chat_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: LeaveChatUseCaseDep,
 ) -> None:
-    result = await mediator.send(
-        LeaveChatCommand(chat_id=chat_id, user_id=current_user_id)
-    )
-    if result.is_err:
-        raise result.error
+    await use_case(chat_id=chat_id, user_id=current_user_id)
 
 
 @router.post("/{chat_id}/read", status_code=status.HTTP_204_NO_CONTENT)
 async def mark_chat_as_read(
     chat_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: MarkChatAsReadUseCaseDep,
     data: MarkAsReadRequest | None = None,
 ) -> None:
-    result = await mediator.send(
-        MarkChatAsReadCommand(
-            chat_id=chat_id,
-            user_id=current_user_id,
-            up_to_sequence=data.up_to_sequence if data else None,
-        )
+    await use_case(
+        chat_id=chat_id,
+        user_id=current_user_id,
+        up_to_sequence=data.up_to_sequence if data else None,
     )
-    if result.is_err:
-        raise result.error

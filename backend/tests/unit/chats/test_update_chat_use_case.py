@@ -1,9 +1,7 @@
 from uuid import uuid4
 
-from src.modules.chats.application.commands.update_chat import (
-    UpdateChatCommand,
-    UpdateChatCommandHandler,
-)
+import pytest
+
 from src.modules.chats.domain.entities.chat import Chat
 from src.modules.chats.domain.entities.dtos import (
     ChatCreate,
@@ -15,6 +13,7 @@ from src.modules.chats.domain.exceptions import (
     CannotModifyPrivateChatError,
     NotChatOwnerError,
 )
+from src.modules.chats.usecases.update_chat import UpdateChatUseCase
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
@@ -37,47 +36,40 @@ async def _make_group_chat(
 async def test_owner_can_rename_group_chat() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
     uow = FakeChatUnitOfWork(chats, members)
-    handler = UpdateChatCommandHandler(uow)
+    use_case = UpdateChatUseCase(uow)
     owner_id = uuid4()
     chat = await _make_group_chat(chats, members, owner_id)
 
-    result = await handler.handle(
-        UpdateChatCommand(
-            chat_id=chat.id,
-            user_id=owner_id,
-            update_data=ChatUpdateData(name="New Name"),
-        )
+    updated = await use_case(
+        chat_id=chat.id,
+        user_id=owner_id,
+        update_data=ChatUpdateData(name="New Name"),
     )
 
-    assert result.is_ok
-    assert result.value.name == "New Name"
+    assert updated.name == "New Name"
     assert uow.committed
 
 
 async def test_non_owner_cannot_update() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
     uow = FakeChatUnitOfWork(chats, members)
-    handler = UpdateChatCommandHandler(uow)
+    use_case = UpdateChatUseCase(uow)
     owner_id, other_id = uuid4(), uuid4()
     chat = await _make_group_chat(chats, members, owner_id)
     await members.add_members([MemberCreate(user_id=other_id, chat_id=chat.id)])
 
-    result = await handler.handle(
-        UpdateChatCommand(
+    with pytest.raises(NotChatOwnerError):
+        await use_case(
             chat_id=chat.id,
             user_id=other_id,
             update_data=ChatUpdateData(name="New Name"),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, NotChatOwnerError)
 
 
 async def test_cannot_update_private_chat() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
     uow = FakeChatUnitOfWork(chats, members)
-    handler = UpdateChatCommandHandler(uow)
+    use_case = UpdateChatUseCase(uow)
     user_a, user_b = uuid4(), uuid4()
     chat = await chats.create(ChatCreate(type=ChatType.private))
     await members.add_members(
@@ -87,13 +79,9 @@ async def test_cannot_update_private_chat() -> None:
         ]
     )
 
-    result = await handler.handle(
-        UpdateChatCommand(
+    with pytest.raises(CannotModifyPrivateChatError):
+        await use_case(
             chat_id=chat.id,
             user_id=user_a,
             update_data=ChatUpdateData(name="New Name"),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, CannotModifyPrivateChatError)

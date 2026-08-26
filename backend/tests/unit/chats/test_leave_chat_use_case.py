@@ -1,13 +1,12 @@
 from uuid import uuid4
 
+import pytest
+
 from src.core.realtime.rooms import chat_room
-from src.modules.chats.application.commands.leave_chat import (
-    LeaveChatCommand,
-    LeaveChatCommandHandler,
-)
 from src.modules.chats.domain.entities.dtos import ChatCreate, MemberCreate
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
 from src.modules.chats.domain.exceptions import CannotLeavePrivateChatError
+from src.modules.chats.usecases.leave_chat import LeaveChatUseCase
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
@@ -20,7 +19,7 @@ async def test_non_owner_member_can_leave() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
     uow = FakeChatUnitOfWork(chats, members)
     room_updater = FakeRoomMembershipUpdater()
-    handler = LeaveChatCommandHandler(uow, room_updater)
+    use_case = LeaveChatUseCase(uow, room_updater)
     owner_id, member_id = uuid4(), uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
@@ -32,9 +31,8 @@ async def test_non_owner_member_can_leave() -> None:
         ]
     )
 
-    result = await handler.handle(LeaveChatCommand(chat_id=chat.id, user_id=member_id))
+    await use_case(chat_id=chat.id, user_id=member_id)
 
-    assert result.is_ok
     assert await members.find_active(chat.id, member_id) is None
     assert chats.chats[chat.id].owner_id == owner_id
     assert chats.chats[chat.id].is_archived is False
@@ -44,7 +42,7 @@ async def test_non_owner_member_can_leave() -> None:
 async def test_owner_leaving_transfers_to_oldest_remaining_member() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
     uow = FakeChatUnitOfWork(chats, members)
-    handler = LeaveChatCommandHandler(uow, FakeRoomMembershipUpdater())
+    use_case = LeaveChatUseCase(uow, FakeRoomMembershipUpdater())
     owner_id, oldest_id, newest_id = uuid4(), uuid4(), uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
@@ -55,9 +53,8 @@ async def test_owner_leaving_transfers_to_oldest_remaining_member() -> None:
     await members.add_members([MemberCreate(user_id=oldest_id, chat_id=chat.id)])
     await members.add_members([MemberCreate(user_id=newest_id, chat_id=chat.id)])
 
-    result = await handler.handle(LeaveChatCommand(chat_id=chat.id, user_id=owner_id))
+    await use_case(chat_id=chat.id, user_id=owner_id)
 
-    assert result.is_ok
     assert await members.find_active(chat.id, owner_id) is None
     assert chats.chats[chat.id].owner_id == oldest_id
     new_owner_membership = await members.find_active(chat.id, oldest_id)
@@ -69,7 +66,7 @@ async def test_owner_leaving_transfers_to_oldest_remaining_member() -> None:
 async def test_owner_leaving_alone_archives_chat() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
     uow = FakeChatUnitOfWork(chats, members)
-    handler = LeaveChatCommandHandler(uow, FakeRoomMembershipUpdater())
+    use_case = LeaveChatUseCase(uow, FakeRoomMembershipUpdater())
     owner_id = uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
@@ -78,9 +75,8 @@ async def test_owner_leaving_alone_archives_chat() -> None:
         [MemberCreate(user_id=owner_id, chat_id=chat.id, role=ChatMemberRole.owner)]
     )
 
-    result = await handler.handle(LeaveChatCommand(chat_id=chat.id, user_id=owner_id))
+    await use_case(chat_id=chat.id, user_id=owner_id)
 
-    assert result.is_ok
     assert await members.find_active(chat.id, owner_id) is None
     assert chats.chats[chat.id].is_archived is True
 
@@ -88,7 +84,7 @@ async def test_owner_leaving_alone_archives_chat() -> None:
 async def test_cannot_leave_private_chat() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
     uow = FakeChatUnitOfWork(chats, members)
-    handler = LeaveChatCommandHandler(uow, FakeRoomMembershipUpdater())
+    use_case = LeaveChatUseCase(uow, FakeRoomMembershipUpdater())
     user_a, user_b = uuid4(), uuid4()
     chat = await chats.create(ChatCreate(type=ChatType.private))
     await members.add_members(
@@ -98,7 +94,5 @@ async def test_cannot_leave_private_chat() -> None:
         ]
     )
 
-    result = await handler.handle(LeaveChatCommand(chat_id=chat.id, user_id=user_a))
-
-    assert result.is_err
-    assert isinstance(result.error, CannotLeavePrivateChatError)
+    with pytest.raises(CannotLeavePrivateChatError):
+        await use_case(chat_id=chat.id, user_id=user_a)

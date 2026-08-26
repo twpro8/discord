@@ -1,10 +1,8 @@
 from uuid import uuid4
 
+import pytest
+
 from src.core.realtime.rooms import chat_room
-from src.modules.chats.application.commands.add_member import (
-    AddMemberCommand,
-    AddMemberCommandHandler,
-)
 from src.modules.chats.domain.entities.dtos import ChatCreate, MemberCreate
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
 from src.modules.chats.domain.exceptions import (
@@ -12,6 +10,7 @@ from src.modules.chats.domain.exceptions import (
     NotChatOwnerError,
     TargetUserNotFoundError,
 )
+from src.modules.chats.usecases.add_member import AddMemberUseCase
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
@@ -38,19 +37,16 @@ async def test_owner_can_add_existing_and_skip_already_members() -> None:
     new_user = make_user()
     users_facade = FakeUsersFacade([new_user, existing_user])
     room_updater = FakeRoomMembershipUpdater()
-    handler = AddMemberCommandHandler(uow, users_facade, room_updater)
+    use_case = AddMemberUseCase(uow, users_facade, room_updater)
 
-    result = await handler.handle(
-        AddMemberCommand(
-            chat_id=chat.id,
-            user_id=owner_id,
-            user_ids=[new_user.id, existing_user.id],
-        )
+    result = await use_case(
+        chat_id=chat.id,
+        user_id=owner_id,
+        user_ids=[new_user.id, existing_user.id],
     )
 
-    assert result.is_ok
-    assert result.value.added == [new_user.id]
-    assert result.value.skipped == [existing_user.id]
+    assert result.added == [new_user.id]
+    assert result.skipped == [existing_user.id]
     assert uow.committed
     # Only the newly-added member is joined — the already-active one is
     # skipped, so its (presumably already-joined) room membership is left
@@ -69,14 +65,10 @@ async def test_rejects_nonexistent_target_user() -> None:
         [MemberCreate(user_id=owner_id, chat_id=chat.id, role=ChatMemberRole.owner)]
     )
     users_facade = FakeUsersFacade([])
-    handler = AddMemberCommandHandler(uow, users_facade, FakeRoomMembershipUpdater())
+    use_case = AddMemberUseCase(uow, users_facade, FakeRoomMembershipUpdater())
 
-    result = await handler.handle(
-        AddMemberCommand(chat_id=chat.id, user_id=owner_id, user_ids=[uuid4()])
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, TargetUserNotFoundError)
+    with pytest.raises(TargetUserNotFoundError):
+        await use_case(chat_id=chat.id, user_id=owner_id, user_ids=[uuid4()])
 
 
 async def test_non_owner_cannot_add_member() -> None:
@@ -93,14 +85,10 @@ async def test_non_owner_cannot_add_member() -> None:
         ]
     )
     users_facade = FakeUsersFacade([])
-    handler = AddMemberCommandHandler(uow, users_facade, FakeRoomMembershipUpdater())
+    use_case = AddMemberUseCase(uow, users_facade, FakeRoomMembershipUpdater())
 
-    result = await handler.handle(
-        AddMemberCommand(chat_id=chat.id, user_id=other_id, user_ids=[uuid4()])
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, NotChatOwnerError)
+    with pytest.raises(NotChatOwnerError):
+        await use_case(chat_id=chat.id, user_id=other_id, user_ids=[uuid4()])
 
 
 async def test_cannot_add_member_to_private_chat() -> None:
@@ -115,11 +103,7 @@ async def test_cannot_add_member_to_private_chat() -> None:
         ]
     )
     users_facade = FakeUsersFacade([])
-    handler = AddMemberCommandHandler(uow, users_facade, FakeRoomMembershipUpdater())
+    use_case = AddMemberUseCase(uow, users_facade, FakeRoomMembershipUpdater())
 
-    result = await handler.handle(
-        AddMemberCommand(chat_id=chat.id, user_id=user_a, user_ids=[uuid4()])
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, CannotModifyPrivateChatError)
+    with pytest.raises(CannotModifyPrivateChatError):
+        await use_case(chat_id=chat.id, user_id=user_a, user_ids=[uuid4()])
