@@ -1,6 +1,5 @@
 import secrets
 import string
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -14,9 +13,6 @@ from src.modules.servers.domain.exceptions import (
     ServerInvitePermissionDeniedError,
 )
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
-from src.shared.application.command import Command
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 
 def _generate_random_code(length: int = 8) -> str:
@@ -24,28 +20,16 @@ def _generate_random_code(length: int = 8) -> str:
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
-@dataclass(frozen=True, kw_only=True)
-class CreateInviteCommand(Command):
-    server_id: UUID
-    user_id: UUID
-    payload: ServerInviteCreateData
-
-
-class CreateInviteCommandHandler:
+class CreateInviteUseCase:
     def __init__(self, uow: ServerUnitOfWork) -> None:
         self._uow = uow
 
-    async def handle(
-        self, command: CreateInviteCommand
-    ) -> Result[ServerInvite, LumiereError]:
-        server_id, user_id, payload = (
-            command.server_id,
-            command.user_id,
-            command.payload,
-        )
+    async def __call__(
+        self, *, server_id: UUID, user_id: UUID, payload: ServerInviteCreateData
+    ) -> ServerInvite:
         server = await self._uow.servers.get_one(id=server_id, owner_id=user_id)
         if not server:
-            return Result.err(ServerInvitePermissionDeniedError())
+            raise ServerInvitePermissionDeniedError
 
         expires_at = None
         if payload.expires_in is not None:
@@ -60,7 +44,7 @@ class CreateInviteCommandHandler:
                 break
 
         if not code:
-            return Result.err(ServerInviteGenerationFailedError())
+            raise ServerInviteGenerationFailedError
 
         db_payload = ServerInviteCreate(
             server_id=server_id,
@@ -72,4 +56,4 @@ class CreateInviteCommandHandler:
 
         invite = await self._uow.invites.create(db_payload)
         await self._uow.commit()
-        return Result.ok(invite)
+        return invite

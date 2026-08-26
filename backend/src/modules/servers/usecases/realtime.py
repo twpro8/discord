@@ -13,9 +13,9 @@ async def join_members_to_server_room(
     member_ids: list[UUID],
 ) -> None:
     """Join each member's already-open connections (if any) to the
-    server's room — mirrors chats.application.realtime.
-    join_members_to_chat_room. Best effort: this is realtime delivery
-    plumbing, not the domain write the caller actually asked for.
+    server's room — mirrors chats' analogous join_members_to_chat_room
+    helper. Best effort: this is realtime delivery plumbing, not the
+    domain write the caller actually asked for.
     """
     room = server_room(server_id)
     for member_id in member_ids:

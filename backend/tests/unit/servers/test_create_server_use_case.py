@@ -1,12 +1,9 @@
 from uuid import uuid4
 
 from src.core.realtime.rooms import server_room
-from src.modules.servers.application.commands.create_server import (
-    CreateServerCommand,
-    CreateServerCommandHandler,
-)
 from src.modules.servers.domain.entities.dtos import ServerCreateData
 from src.modules.servers.domain.enums import ServerMemberRole
+from src.modules.servers.usecases.create_server import CreateServerUseCase
 from tests.unit.servers.fakes import (
     FakeChannelsFacade,
     FakeRoomMembershipUpdater,
@@ -23,18 +20,14 @@ async def test_creates_server_owner_membership_and_default_channel() -> None:
     uow = FakeServerUnitOfWork(servers, members, FakeServerInviteRepository())
     channels_facade = FakeChannelsFacade()
     room_membership_updater = FakeRoomMembershipUpdater()
-    handler = CreateServerCommandHandler(uow, channels_facade, room_membership_updater)
+    use_case = CreateServerUseCase(uow, channels_facade, room_membership_updater)
     owner_id = uuid4()
 
-    result = await handler.handle(
-        CreateServerCommand(
-            server_data=ServerCreateData(name="My Server", description="desc"),
-            owner_id=owner_id,
-        )
+    server = await use_case(
+        server_data=ServerCreateData(name="My Server", description="desc"),
+        owner_id=owner_id,
     )
 
-    assert result.is_ok
-    server = result.value
     assert server.name == "My Server"
     assert server.owner_id == owner_id
 

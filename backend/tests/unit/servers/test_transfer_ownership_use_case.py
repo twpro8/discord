@@ -1,9 +1,7 @@
 from uuid import uuid4
 
-from src.modules.servers.application.commands.transfer_ownership import (
-    TransferServerOwnershipCommand,
-    TransferServerOwnershipCommandHandler,
-)
+import pytest
+
 from src.modules.servers.domain.entities.dtos import ServerCreate, ServerMemberCreate
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import (
@@ -11,6 +9,9 @@ from src.modules.servers.domain.exceptions import (
     MemberNotFoundError,
     ServerNotFoundError,
     YouAreNotOwnerError,
+)
+from src.modules.servers.usecases.transfer_ownership import (
+    TransferServerOwnershipUseCase,
 )
 from tests.unit.servers.fakes import (
     FakeServerInviteRepository,
@@ -31,18 +32,14 @@ def _seeded_uow() -> tuple[
 
 async def test_rejects_unknown_server() -> None:
     uow, _, _ = _seeded_uow()
-    handler = TransferServerOwnershipCommandHandler(uow)
+    use_case = TransferServerOwnershipUseCase(uow)
 
-    result = await handler.handle(
-        TransferServerOwnershipCommand(
+    with pytest.raises(ServerNotFoundError):
+        await use_case(
             server_id=uuid4(),
             current_user_id=uuid4(),
             new_owner_id=uuid4(),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, ServerNotFoundError)
 
 
 async def test_rejects_transfer_to_self() -> None:
@@ -54,18 +51,14 @@ async def test_rejects_transfer_to_self() -> None:
             server_id=server.id, user_id=owner_id, role=ServerMemberRole.owner
         )
     )
-    handler = TransferServerOwnershipCommandHandler(uow)
+    use_case = TransferServerOwnershipUseCase(uow)
 
-    result = await handler.handle(
-        TransferServerOwnershipCommand(
+    with pytest.raises(CannotTransferToSelfError):
+        await use_case(
             server_id=server.id,
             current_user_id=owner_id,
             new_owner_id=owner_id,
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, CannotTransferToSelfError)
 
 
 async def test_rejects_non_owner() -> None:
@@ -77,18 +70,14 @@ async def test_rejects_non_owner() -> None:
             server_id=server.id, user_id=member_id, role=ServerMemberRole.member
         )
     )
-    handler = TransferServerOwnershipCommandHandler(uow)
+    use_case = TransferServerOwnershipUseCase(uow)
 
-    result = await handler.handle(
-        TransferServerOwnershipCommand(
+    with pytest.raises(YouAreNotOwnerError):
+        await use_case(
             server_id=server.id,
             current_user_id=member_id,
             new_owner_id=other_id,
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, YouAreNotOwnerError)
 
 
 async def test_rejects_unknown_new_owner() -> None:
@@ -100,18 +89,14 @@ async def test_rejects_unknown_new_owner() -> None:
             server_id=server.id, user_id=owner_id, role=ServerMemberRole.owner
         )
     )
-    handler = TransferServerOwnershipCommandHandler(uow)
+    use_case = TransferServerOwnershipUseCase(uow)
 
-    result = await handler.handle(
-        TransferServerOwnershipCommand(
+    with pytest.raises(MemberNotFoundError):
+        await use_case(
             server_id=server.id,
             current_user_id=owner_id,
             new_owner_id=uuid4(),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, MemberNotFoundError)
 
 
 async def test_transfers_ownership_and_swaps_roles() -> None:
@@ -128,18 +113,15 @@ async def test_transfers_ownership_and_swaps_roles() -> None:
             server_id=server.id, user_id=new_owner_id, role=ServerMemberRole.member
         )
     )
-    handler = TransferServerOwnershipCommandHandler(uow)
+    use_case = TransferServerOwnershipUseCase(uow)
 
-    result = await handler.handle(
-        TransferServerOwnershipCommand(
-            server_id=server.id,
-            current_user_id=owner_id,
-            new_owner_id=new_owner_id,
-        )
+    updated = await use_case(
+        server_id=server.id,
+        current_user_id=owner_id,
+        new_owner_id=new_owner_id,
     )
 
-    assert result.is_ok
-    assert result.value.owner_id == new_owner_id
+    assert updated.owner_id == new_owner_id
 
     roles = {m.user_id: m.role for m in members.members.values()}
     assert roles[owner_id] == ServerMemberRole.member

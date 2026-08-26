@@ -2,21 +2,18 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
-from src.api.v1.dependencies import MediatorDep, UserIdDep
-from src.modules.servers.application.commands.create_invite import CreateInviteCommand
-from src.modules.servers.application.commands.delete_invite import DeleteInviteCommand
-from src.modules.servers.application.queries.get_invites import GetInvitesQuery
-from src.modules.servers.domain.entities.dtos import (
-    ServerInviteCreateData,
-    ServerInviteWithStatus,
+from src.api.v1.dependencies import UserIdDep
+from src.modules.servers.domain.entities.dtos import ServerInviteCreateData
+from src.modules.servers.transport.http.dependencies import (
+    CreateInviteUseCaseDep,
+    DeleteInviteUseCaseDep,
+    GetInvitesUseCaseDep,
 )
 from src.modules.servers.transport.http.schemas import (
     ServerInviteCreateRequest,
     ServerInviteResponse,
     ServerInviteWithStatusResponse,
 )
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 router = APIRouter(prefix="/invites", tags=["Server Invites"])
 
@@ -28,39 +25,31 @@ async def create_invite(
     server_id: UUID,
     current_user_id: UserIdDep,
     payload: ServerInviteCreateRequest,
-    mediator: MediatorDep,
+    use_case: CreateInviteUseCaseDep,
 ) -> ServerInviteResponse:
-    result = await mediator.send(
-        CreateInviteCommand(
-            server_id=server_id,
-            user_id=current_user_id,
-            payload=ServerInviteCreateData(**payload.model_dump()),
-        )
+    invite = await use_case(
+        server_id=server_id,
+        user_id=current_user_id,
+        payload=ServerInviteCreateData(**payload.model_dump()),
     )
-    if result.is_err:
-        raise result.error
-    return ServerInviteResponse.model_validate(result.value)
+    return ServerInviteResponse.model_validate(invite)
 
 
 @router.get("", response_model=list[ServerInviteWithStatusResponse])
 async def get_invites(
     user_id: UserIdDep,
     server_id: UUID,
-    mediator: MediatorDep,
+    use_case: GetInvitesUseCaseDep,
     limit: int = Query(default=100, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ) -> list[ServerInviteWithStatusResponse]:
-    result: Result[list[ServerInviteWithStatus], LumiereError] = await mediator.query(
-        GetInvitesQuery(
-            user_id=user_id,
-            server_id=server_id,
-            limit=limit,
-            offset=offset,
-        )
+    invites = await use_case(
+        user_id=user_id,
+        server_id=server_id,
+        limit=limit,
+        offset=offset,
     )
-    if result.is_err:
-        raise result.error
-    return [ServerInviteWithStatusResponse.model_validate(i) for i in result.value]
+    return [ServerInviteWithStatusResponse.model_validate(i) for i in invites]
 
 
 @router.delete("/{code}", status_code=status.HTTP_204_NO_CONTENT)
@@ -68,14 +57,10 @@ async def delete_invite(
     server_id: UUID,
     code: str,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: DeleteInviteUseCaseDep,
 ) -> None:
-    result = await mediator.send(
-        DeleteInviteCommand(
-            server_id=server_id,
-            user_id=current_user_id,
-            code=code,
-        )
+    await use_case(
+        server_id=server_id,
+        user_id=current_user_id,
+        code=code,
     )
-    if result.is_err:
-        raise result.error

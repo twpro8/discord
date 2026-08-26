@@ -1,9 +1,7 @@
-from dataclasses import dataclass
 from uuid import UUID
 
 from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.channels.public.facade import ChannelsFacade
-from src.modules.servers.application.realtime import join_members_to_server_room
 from src.modules.servers.domain.entities.dtos import (
     ServerCreate,
     ServerCreateData,
@@ -12,18 +10,10 @@ from src.modules.servers.domain.entities.dtos import (
 from src.modules.servers.domain.entities.server import Server
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
-from src.shared.application.command import Command
-from src.shared.errors import LumiereError
-from src.shared.result import Result
+from src.modules.servers.usecases.realtime import join_members_to_server_room
 
 
-@dataclass(frozen=True, kw_only=True)
-class CreateServerCommand(Command):
-    server_data: ServerCreateData
-    owner_id: UUID
-
-
-class CreateServerCommandHandler:
+class CreateServerUseCase:
     def __init__(
         self,
         uow: ServerUnitOfWork,
@@ -34,10 +24,9 @@ class CreateServerCommandHandler:
         self._channels_facade = channels_facade
         self._room_membership_updater = room_membership_updater
 
-    async def handle(
-        self, command: CreateServerCommand
-    ) -> Result[Server, LumiereError]:
-        server_data, owner_id = command.server_data, command.owner_id
+    async def __call__(
+        self, *, server_data: ServerCreateData, owner_id: UUID
+    ) -> Server:
         _server_data = ServerCreate(
             name=server_data.name,
             description=server_data.description,
@@ -60,4 +49,4 @@ class CreateServerCommandHandler:
             server.id,
             [owner_id],
         )
-        return Result.ok(server)
+        return server

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
@@ -9,9 +8,6 @@ from src.modules.servers.domain.repositories.server_invite_repository import (
     ServerInviteRepository,
 )
 from src.modules.servers.domain.repositories.server_repository import ServerRepository
-from src.shared.application.query import Query
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 
 def _compute_validity_status(
@@ -34,15 +30,7 @@ def _compute_validity_status(
     return "valid"
 
 
-@dataclass(frozen=True, kw_only=True)
-class GetInvitesQuery(Query):
-    user_id: UUID
-    server_id: UUID
-    limit: int = 100
-    offset: int = 0
-
-
-class GetInvitesQueryHandler:
+class GetInvitesUseCase:
     def __init__(
         self,
         server_repository: ServerRepository,
@@ -51,33 +39,29 @@ class GetInvitesQueryHandler:
         self._server_repository = server_repository
         self._server_invite_repository = server_invite_repository
 
-    async def handle(
-        self, query: GetInvitesQuery
-    ) -> Result[list[ServerInviteWithStatus], LumiereError]:
-        server = await self._server_repository.get_one(
-            id=query.server_id, owner_id=query.user_id
-        )
+    async def __call__(
+        self, *, user_id: UUID, server_id: UUID, limit: int = 100, offset: int = 0
+    ) -> list[ServerInviteWithStatus]:
+        server = await self._server_repository.get_one(id=server_id, owner_id=user_id)
         if not server:
-            return Result.ok([])
+            return []
 
         invites = await self._server_invite_repository.get_filtered(
-            server_id=query.server_id,
-            limit=query.limit,
-            offset=query.offset,
+            server_id=server_id,
+            limit=limit,
+            offset=offset,
         )
-        return Result.ok(
-            [
-                ServerInviteWithStatus(
-                    id=invite.id,
-                    server_id=invite.server_id,
-                    code=invite.code,
-                    created_by=invite.created_by,
-                    max_uses=invite.max_uses,
-                    use_count=invite.use_count,
-                    expires_at=invite.expires_at,
-                    created_at=invite.created_at,
-                    validity_status=_compute_validity_status(invite),
-                )
-                for invite in invites
-            ]
-        )
+        return [
+            ServerInviteWithStatus(
+                id=invite.id,
+                server_id=invite.server_id,
+                code=invite.code,
+                created_by=invite.created_by,
+                max_uses=invite.max_uses,
+                use_count=invite.use_count,
+                expires_at=invite.expires_at,
+                created_at=invite.created_at,
+                validity_status=_compute_validity_status(invite),
+            )
+            for invite in invites
+        ]

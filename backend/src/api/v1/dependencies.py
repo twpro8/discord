@@ -14,10 +14,11 @@ from src.core.database import get_session
 from src.core.event_bus import EventBus
 from src.core.jobs import JobDispatcher
 from src.core.realtime.membership import DistributedRoomMembershipUpdater
-from src.core.realtime.notifier import RedisRealtimeNotifier
+from src.core.realtime.notifier import RealtimeNotifier, RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.security.jwt import decode_access_token
 from src.core.storage import Storage
+from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.modules.chats.composition import register_chat_handlers
@@ -25,7 +26,6 @@ from src.modules.email.public.facade import build_email_facade
 from src.modules.friends.public.facade import build_friends_facade
 from src.modules.messages.composition import register_message_handlers
 from src.modules.presence.composition import register_presence_handlers
-from src.modules.servers.composition import register_server_handlers
 from src.modules.servers.public.facade import build_servers_facade
 from src.modules.users.public.facade import build_users_facade
 from src.shared.application.in_process_mediator import InProcessMediator
@@ -80,6 +80,34 @@ def get_current_user_id(access_token: AccessTokenDep) -> UUID:
 
 
 UserIdDep = Annotated[UUID, Depends(get_current_user_id)]
+
+
+def get_realtime_notifier(
+    redis_subscription_manager: RedisSubscriptionManagerDep,
+) -> RealtimeNotifier:
+    """Redis-backed: reaches every instance's local connections, not just
+    this process's — every connection already auto-joins its own
+    user:{user_id} room on connect (see api/v1/ws.py), and
+    RedisSubscriptionManager is already subscribed wherever this instance
+    has a local subscriber (see main.py's lifespan)."""
+    return RedisRealtimeNotifier(redis_subscription_manager)
+
+
+RealtimeNotifierDep = Annotated[RealtimeNotifier, Depends(get_realtime_notifier)]
+
+
+def get_room_membership_updater(
+    redis_subscription_manager: RedisSubscriptionManagerDep,
+) -> RoomMembershipUpdater:
+    """Cross-instance too: a user's connection open on a different
+    instance than this request is handled on still needs to learn about a
+    new/revoked room (see DistributedRoomMembershipUpdater)."""
+    return DistributedRoomMembershipUpdater(redis_subscription_manager)
+
+
+RoomMembershipUpdaterDep = Annotated[
+    RoomMembershipUpdater, Depends(get_room_membership_updater)
+]
 
 
 async def get_mediator(
@@ -139,9 +167,6 @@ async def get_mediator(
         )
         await register_presence_handlers(
             mediator, redis, friends_facade, servers_facade
-        )
-        await register_server_handlers(
-            mediator, session, stack, room_membership_updater
         )
         yield mediator
 

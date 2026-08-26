@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.servers.domain.entities.dtos import ServerMemberUpdate, ServerUpdate
@@ -11,45 +10,33 @@ from src.modules.servers.domain.exceptions import (
     YouAreNotOwnerError,
 )
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
-from src.shared.application.command import Command
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 
-@dataclass(frozen=True, kw_only=True)
-class TransferServerOwnershipCommand(Command):
-    server_id: UUID
-    current_user_id: UUID
-    new_owner_id: UUID
-
-
-class TransferServerOwnershipCommandHandler:
+class TransferServerOwnershipUseCase:
     def __init__(self, uow: ServerUnitOfWork) -> None:
         self._uow = uow
 
-    async def handle(
-        self, command: TransferServerOwnershipCommand
-    ) -> Result[Server, LumiereError]:
-        server = await self._uow.servers.get_one(id=command.server_id)
+    async def __call__(
+        self, *, server_id: UUID, current_user_id: UUID, new_owner_id: UUID
+    ) -> Server:
+        server = await self._uow.servers.get_one(id=server_id)
         if not server:
-            return Result.err(ServerNotFoundError())
+            raise ServerNotFoundError
 
         current_user = await self._uow.server_members.get_one(
             server_id=server.id,
-            user_id=command.current_user_id,
+            user_id=current_user_id,
             left_at=None,
         )
 
         if not current_user:
-            return Result.err(MemberNotFoundError())
+            raise MemberNotFoundError
 
-        new_owner_id = command.new_owner_id
-
-        if command.current_user_id == new_owner_id:
-            return Result.err(CannotTransferToSelfError())
+        if current_user_id == new_owner_id:
+            raise CannotTransferToSelfError
 
         if current_user.role != ServerMemberRole.owner:
-            return Result.err(YouAreNotOwnerError())
+            raise YouAreNotOwnerError
 
         new_owner = await self._uow.server_members.get_one(
             server_id=server.id,
@@ -58,7 +45,7 @@ class TransferServerOwnershipCommandHandler:
         )
 
         if not new_owner:
-            return Result.err(MemberNotFoundError())
+            raise MemberNotFoundError
 
         await self._uow.server_members.update(
             current_user.id, ServerMemberUpdate(role=ServerMemberRole.member)
@@ -73,4 +60,4 @@ class TransferServerOwnershipCommandHandler:
         new_server = await self._uow.servers.update(server.id, update_server_schema)
 
         await self._uow.commit()
-        return Result.ok(new_server)
+        return new_server
