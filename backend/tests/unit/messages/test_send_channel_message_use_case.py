@@ -1,12 +1,13 @@
 from uuid import uuid4
 
+import pytest
+
 from src.modules.channels.domain.entities.dtos import ChannelCreate
-from src.modules.messages.application.commands.send_channel_message import (
-    SendChannelMessageCommand,
-    SendChannelMessageCommandHandler,
-)
 from src.modules.messages.domain.entities.dtos import MessageCreateData
 from src.modules.messages.domain.exceptions import ChannelNotFoundError
+from src.modules.messages.usecases.send_channel_message import (
+    SendChannelMessageUseCase,
+)
 from src.modules.servers.domain.entities.dtos import ServerMemberCreate
 from src.modules.servers.domain.exceptions import NotServerMemberError
 from tests.unit.channels.fakes import FakeChannelRepository
@@ -19,8 +20,8 @@ from tests.unit.servers.fakes import (
 )
 
 
-def _handler() -> tuple[
-    SendChannelMessageCommandHandler, FakeChannelRepository, FakeServerMemberRepository
+def _use_case() -> tuple[
+    SendChannelMessageUseCase, FakeChannelRepository, FakeServerMemberRepository
 ]:
     channels = FakeChannelRepository()
     server_members = FakeServerMemberRepository()
@@ -31,47 +32,39 @@ def _handler() -> tuple[
     )
     servers_facade = FakeServersFacade(server_members, FakeServerRepository())
     return (
-        SendChannelMessageCommandHandler(uow, servers_facade),
+        SendChannelMessageUseCase(uow, servers_facade),
         channels,
         server_members,
     )
 
 
 async def test_rejects_unknown_channel() -> None:
-    handler, _, _ = _handler()
+    use_case, _, _ = _use_case()
 
-    result = await handler.handle(
-        SendChannelMessageCommand(
+    with pytest.raises(ChannelNotFoundError):
+        await use_case(
             channel_id=uuid4(),
             sender_id=uuid4(),
             data=MessageCreateData(body="hello"),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, ChannelNotFoundError)
 
 
 async def test_rejects_non_server_member() -> None:
-    handler, channels, _ = _handler()
+    use_case, channels, _ = _use_case()
     channel = await channels.create(
         ChannelCreate(server_id=uuid4(), name="general", topic=None)
     )
 
-    result = await handler.handle(
-        SendChannelMessageCommand(
+    with pytest.raises(NotServerMemberError):
+        await use_case(
             channel_id=channel.id,
             sender_id=uuid4(),
             data=MessageCreateData(body="hello"),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, NotServerMemberError)
 
 
 async def test_success() -> None:
-    handler, channels, server_members = _handler()
+    use_case, channels, server_members = _use_case()
     server_id = uuid4()
     sender_id = uuid4()
     channel = await channels.create(
@@ -81,16 +74,12 @@ async def test_success() -> None:
         ServerMemberCreate(server_id=server_id, user_id=sender_id)
     )
 
-    result = await handler.handle(
-        SendChannelMessageCommand(
-            channel_id=channel.id,
-            sender_id=sender_id,
-            data=MessageCreateData(body="hello"),
-        )
+    message = await use_case(
+        channel_id=channel.id,
+        sender_id=sender_id,
+        data=MessageCreateData(body="hello"),
     )
 
-    assert result.is_ok
-    message = result.value
     assert message.body == "hello"
     assert message.channel_id == channel.id
     assert message.sequence == 1

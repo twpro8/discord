@@ -1,14 +1,13 @@
 from uuid import uuid4
 
+import pytest
+
 from src.modules.channels.domain.entities.dtos import ChannelCreate
 from src.modules.chats.domain.entities.dtos import ChatCreate, MemberCreate
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
-from src.modules.messages.application.commands.delete_message import (
-    DeleteMessageCommand,
-    DeleteMessageCommandHandler,
-)
 from src.modules.messages.domain.entities.dtos import MessageCreate
 from src.modules.messages.domain.exceptions import MessageDeletePermissionError
+from src.modules.messages.usecases.delete_message import DeleteMessageUseCase
 from src.modules.servers.domain.entities.dtos import ServerCreate, ServerMemberCreate
 from src.modules.servers.domain.enums import ServerMemberRole
 from tests.unit.channels.fakes import FakeChannelRepository
@@ -32,7 +31,7 @@ async def test_sender_can_delete_own_chat_message() -> None:
     servers_facade = FakeServersFacade(
         FakeServerMemberRepository(), FakeServerRepository()
     )
-    handler = DeleteMessageCommandHandler(uow, chats_facade, servers_facade)
+    use_case = DeleteMessageUseCase(uow, chats_facade, servers_facade)
 
     sender_id = uuid4()
     chat = await chats.create(ChatCreate(type=ChatType.private))
@@ -42,13 +41,10 @@ async def test_sender_can_delete_own_chat_message() -> None:
         )
     )
 
-    result = await handler.handle(
-        DeleteMessageCommand(message_id=message.id, user_id=sender_id)
-    )
+    deleted = await use_case(message_id=message.id, user_id=sender_id)
 
-    assert result.is_ok
-    assert result.value.is_deleted is True
-    assert result.value.body is None
+    assert deleted.is_deleted is True
+    assert deleted.body is None
     assert uow.committed
 
 
@@ -59,7 +55,7 @@ async def test_chat_owner_can_delete_others_message() -> None:
     servers_facade = FakeServersFacade(
         FakeServerMemberRepository(), FakeServerRepository()
     )
-    handler = DeleteMessageCommandHandler(uow, chats_facade, servers_facade)
+    use_case = DeleteMessageUseCase(uow, chats_facade, servers_facade)
 
     owner_id, sender_id = uuid4(), uuid4()
     chat = await chats.create(
@@ -77,12 +73,9 @@ async def test_chat_owner_can_delete_others_message() -> None:
         )
     )
 
-    result = await handler.handle(
-        DeleteMessageCommand(message_id=message.id, user_id=owner_id)
-    )
+    deleted = await use_case(message_id=message.id, user_id=owner_id)
 
-    assert result.is_ok
-    assert result.value.is_deleted is True
+    assert deleted.is_deleted is True
 
 
 async def test_non_sender_non_owner_cannot_delete_chat_message() -> None:
@@ -92,7 +85,7 @@ async def test_non_sender_non_owner_cannot_delete_chat_message() -> None:
     servers_facade = FakeServersFacade(
         FakeServerMemberRepository(), FakeServerRepository()
     )
-    handler = DeleteMessageCommandHandler(uow, chats_facade, servers_facade)
+    use_case = DeleteMessageUseCase(uow, chats_facade, servers_facade)
 
     owner_id, sender_id, other_id = uuid4(), uuid4(), uuid4()
     chat = await chats.create(
@@ -111,12 +104,8 @@ async def test_non_sender_non_owner_cannot_delete_chat_message() -> None:
         )
     )
 
-    result = await handler.handle(
-        DeleteMessageCommand(message_id=message.id, user_id=other_id)
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, MessageDeletePermissionError)
+    with pytest.raises(MessageDeletePermissionError):
+        await use_case(message_id=message.id, user_id=other_id)
 
 
 async def test_server_owner_can_delete_channel_message() -> None:
@@ -125,7 +114,7 @@ async def test_server_owner_can_delete_channel_message() -> None:
     server_members, servers = FakeServerMemberRepository(), FakeServerRepository()
     chats_facade = FakeChatsFacade(FakeChatRepository(), FakeChatMemberRepository())
     servers_facade = FakeServersFacade(server_members, servers)
-    handler = DeleteMessageCommandHandler(uow, chats_facade, servers_facade)
+    use_case = DeleteMessageUseCase(uow, chats_facade, servers_facade)
 
     owner_id, sender_id = uuid4(), uuid4()
     await servers.create(ServerCreate(name="S", owner_id=owner_id))
@@ -148,9 +137,6 @@ async def test_server_owner_can_delete_channel_message() -> None:
         )
     )
 
-    result = await handler.handle(
-        DeleteMessageCommand(message_id=message.id, user_id=owner_id)
-    )
+    deleted = await use_case(message_id=message.id, user_id=owner_id)
 
-    assert result.is_ok
-    assert result.value.is_deleted is True
+    assert deleted.is_deleted is True

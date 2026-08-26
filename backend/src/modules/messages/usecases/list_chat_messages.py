@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from uuid import UUID
 
 from src.core.logging import get_logger
@@ -10,23 +9,11 @@ from src.modules.messages.domain.entities.dtos import ChatMessagePage
 from src.modules.messages.domain.repositories.message_repository import (
     MessageRepository,
 )
-from src.shared.application.query import Query
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 logger = get_logger(__name__)
 
 
-@dataclass(frozen=True, kw_only=True)
-class ListChatMessagesQuery(Query):
-    chat_id: UUID
-    user_id: UUID
-    limit: int
-    before_cursor: str | None = None
-    after_cursor: str | None = None
-
-
-class ListChatMessagesQueryHandler:
+class ListChatMessagesUseCase:
     def __init__(
         self,
         message_repository: MessageRepository,
@@ -37,23 +24,23 @@ class ListChatMessagesQueryHandler:
         self._chats_facade = chats_facade
         self._room_membership_updater = room_membership_updater
 
-    async def handle(
-        self, query: ListChatMessagesQuery
-    ) -> Result[ChatMessagePage, LumiereError]:
-        try:
-            await self._chats_facade.assert_is_chat_member(query.user_id, query.chat_id)
-        except LumiereError as error:
-            return Result.err(error)
+    async def __call__(
+        self,
+        *,
+        chat_id: UUID,
+        user_id: UUID,
+        limit: int,
+        before_cursor: str | None = None,
+        after_cursor: str | None = None,
+    ) -> ChatMessagePage:
+        await self._chats_facade.assert_is_chat_member(user_id, chat_id)
 
-        await self._join_viewer_to_room(query.user_id, query.chat_id)
+        await self._join_viewer_to_room(user_id, chat_id)
 
-        before = decode_cursor(query.before_cursor) if query.before_cursor else None
-        after = decode_cursor(query.after_cursor) if query.after_cursor else None
+        before = decode_cursor(before_cursor) if before_cursor else None
+        after = decode_cursor(after_cursor) if after_cursor else None
 
-        page = await self._messages.list_for_chat(
-            query.chat_id, query.limit, before, after
-        )
-        return Result.ok(page)
+        return await self._messages.list_for_chat(chat_id, limit, before, after)
 
     async def _join_viewer_to_room(self, user_id: UUID, chat_id: UUID) -> None:
         """Lazily joins this viewer's open connection(s) to the chat's

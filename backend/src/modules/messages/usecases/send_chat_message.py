@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from uuid import UUID
 
 from src.core.logging import get_logger
@@ -15,21 +15,11 @@ from src.modules.messages.domain.entities.dtos import (
 from src.modules.messages.domain.repositories.message_unit_of_work import (
     MessageUnitOfWork,
 )
-from src.shared.application.command import Command
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 logger = get_logger(__name__)
 
 
-@dataclass(frozen=True, kw_only=True)
-class SendChatMessageCommand(Command):
-    chat_id: UUID
-    sender_id: UUID
-    data: MessageCreateData
-
-
-class SendChatMessageCommandHandler:
+class SendChatMessageUseCase:
     def __init__(
         self,
         uow: MessageUnitOfWork,
@@ -40,37 +30,33 @@ class SendChatMessageCommandHandler:
         self._chats_facade = chats_facade
         self._realtime = realtime_notifier
 
-    async def handle(
-        self, command: SendChatMessageCommand
-    ) -> Result[ChatMessage, LumiereError]:
-        chat_id, sender_id, data = command.chat_id, command.sender_id, command.data
-        try:
-            await self._chats_facade.assert_is_chat_member(sender_id, chat_id)
-            sequence = await self._uow.chats.increment_sequence(chat_id)
-            message = await self._uow.messages.create(
-                MessageCreate(
-                    chat_id=chat_id,
-                    sender_id=sender_id,
-                    sequence=sequence,
-                    body=data.body,
-                    parent_id=data.parent_id,
-                )
+    async def __call__(
+        self, *, chat_id: UUID, sender_id: UUID, data: MessageCreateData
+    ) -> ChatMessage:
+        await self._chats_facade.assert_is_chat_member(sender_id, chat_id)
+        sequence = await self._uow.chats.increment_sequence(chat_id)
+        message = await self._uow.messages.create(
+            MessageCreate(
+                chat_id=chat_id,
+                sender_id=sender_id,
+                sequence=sequence,
+                body=data.body,
+                parent_id=data.parent_id,
             )
-        except LumiereError as error:
-            return Result.err(error)
+        )
 
         await self._uow.commit()
         chat_message = chat_message_from_message(message)
         await self._notify(chat_id, chat_message)
-        return Result.ok(chat_message)
+        return chat_message
 
     async def _notify(self, chat_id: UUID, message: ChatMessage) -> None:
         """Fan the new message out to everyone in the chat's room.
 
         A single publish, not one per member: every member's connection
         is joined to the chat's room either dynamically (at chat
-        creation/membership-add time, see chats' Create/AddMember command
-        handlers) or at connect time for pre-existing memberships (see
+        creation/membership-add time, see chats' Create/AddMember use
+        cases) or at connect time for pre-existing memberships (see
         api/v1/ws.py).
 
         Best effort: a realtime delivery failure must not fail the send the

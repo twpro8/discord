@@ -23,7 +23,6 @@ from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.modules.email.public.facade import build_email_facade
 from src.modules.friends.public.facade import build_friends_facade
-from src.modules.messages.composition import register_message_handlers
 from src.modules.presence.composition import register_presence_handlers
 from src.modules.servers.public.facade import build_servers_facade
 from src.modules.users.public.facade import build_users_facade
@@ -114,7 +113,6 @@ async def get_mediator(
     event_bus: EventBusDep,
     cache: CacheDep,
     redis: RedisDep,
-    redis_subscription_manager: RedisSubscriptionManagerDep,
     job_dispatcher: JobDispatcherDep,
 ) -> AsyncGenerator[Mediator]:
     async with AsyncExitStack() as stack:
@@ -142,24 +140,8 @@ async def get_mediator(
         email_facade = await stack.enter_async_context(
             asynccontextmanager(build_email_facade)(session, job_dispatcher)
         )
-        # Redis-backed: reaches every instance's local connections, not
-        # just this process's — every connection already auto-joins its
-        # own user:{user_id} room on connect (see api/v1/ws.py), and
-        # RedisSubscriptionManager is already subscribed wherever this
-        # instance has a local subscriber (see main.py's lifespan).
-        realtime_notifier = RedisRealtimeNotifier(redis_subscription_manager)
-        # Cross-instance too: a user's connection open on a different
-        # instance than this request is handled on still needs to learn
-        # about a new/revoked chat room (see DistributedRoomMembershipUpdater).
-        room_membership_updater = DistributedRoomMembershipUpdater(
-            redis_subscription_manager
-        )
-
         await register_auth_handlers(
             mediator, session, stack, users_facade, email_facade
-        )
-        await register_message_handlers(
-            mediator, session, stack, realtime_notifier, room_membership_updater
         )
         await register_presence_handlers(
             mediator, redis, friends_facade, servers_facade

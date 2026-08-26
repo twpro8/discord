@@ -1,16 +1,15 @@
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from src.modules.messages.application.commands.edit_message import (
-    EditMessageCommand,
-    EditMessageCommandHandler,
-)
+import pytest
+
 from src.modules.messages.domain.entities.dtos import MessageCreate, MessageEditData
 from src.modules.messages.domain.exceptions import (
     MessageEditWindowExpiredError,
     MessageNotFoundError,
     NotMessageSenderError,
 )
+from src.modules.messages.usecases.edit_message import EditMessageUseCase
 from tests.unit.channels.fakes import FakeChannelRepository
 from tests.unit.chats.fakes import FakeChatRepository
 from tests.unit.messages.fakes import FakeMessageRepository, FakeMessageUnitOfWork
@@ -24,7 +23,7 @@ def _uow() -> FakeMessageUnitOfWork:
 
 async def test_sender_can_edit_within_window() -> None:
     uow = _uow()
-    handler = EditMessageCommandHandler(uow)
+    use_case = EditMessageUseCase(uow)
     sender_id, chat_id = uuid4(), uuid4()
     message = await uow.messages.create(
         MessageCreate(
@@ -36,37 +35,30 @@ async def test_sender_can_edit_within_window() -> None:
         )
     )
 
-    result = await handler.handle(
-        EditMessageCommand(
-            message_id=message.id,
-            sender_id=sender_id,
-            data=MessageEditData(body="edited"),
-        )
+    updated = await use_case(
+        message_id=message.id,
+        sender_id=sender_id,
+        data=MessageEditData(body="edited"),
     )
 
-    assert result.is_ok
-    assert result.value.body == "edited"
-    assert result.value.is_edited is True
+    assert updated.body == "edited"
+    assert updated.is_edited is True
     assert uow.committed
 
 
 async def test_rejects_missing_message() -> None:
     uow = _uow()
-    handler = EditMessageCommandHandler(uow)
+    use_case = EditMessageUseCase(uow)
 
-    result = await handler.handle(
-        EditMessageCommand(
+    with pytest.raises(MessageNotFoundError):
+        await use_case(
             message_id=uuid4(), sender_id=uuid4(), data=MessageEditData(body="edited")
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, MessageNotFoundError)
 
 
 async def test_rejects_non_sender() -> None:
     uow = _uow()
-    handler = EditMessageCommandHandler(uow)
+    use_case = EditMessageUseCase(uow)
     sender_id, chat_id = uuid4(), uuid4()
     message = await uow.messages.create(
         MessageCreate(
@@ -78,21 +70,17 @@ async def test_rejects_non_sender() -> None:
         )
     )
 
-    result = await handler.handle(
-        EditMessageCommand(
+    with pytest.raises(NotMessageSenderError):
+        await use_case(
             message_id=message.id,
             sender_id=uuid4(),
             data=MessageEditData(body="edited"),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, NotMessageSenderError)
 
 
 async def test_rejects_expired_edit_window() -> None:
     uow = _uow()
-    handler = EditMessageCommandHandler(uow)
+    use_case = EditMessageUseCase(uow)
     sender_id, chat_id = uuid4(), uuid4()
     message = await uow.messages.create(
         MessageCreate(
@@ -105,13 +93,9 @@ async def test_rejects_expired_edit_window() -> None:
     )
     message.created_at = datetime.now(UTC) - timedelta(hours=25)
 
-    result = await handler.handle(
-        EditMessageCommand(
+    with pytest.raises(MessageEditWindowExpiredError):
+        await use_case(
             message_id=message.id,
             sender_id=sender_id,
             data=MessageEditData(body="edited"),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, MessageEditWindowExpiredError)

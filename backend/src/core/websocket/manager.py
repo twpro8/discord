@@ -219,8 +219,8 @@ class ConnectionManager:
         """Local-only, synchronous membership check, used by TypingService
         to authorize a client-supplied chat_id without a DB round trip: a
         connection only ever ends up in `chat_room(chat_id)` via a
-        DB-verified path (chats' AddMember command handler, or
-        ListChatMessagesQueryHandler after assert_is_chat_member succeeds
+        DB-verified path (chats' AddMemberUseCase, or
+        ListChatMessagesUseCase after assert_is_chat_member succeeds
         — see chat_room's docstring), and EventType.JOIN/LEAVE are
         internal control-plane only, so a client can never fabricate
         membership in a room it doesn't belong to. Fails closed: an

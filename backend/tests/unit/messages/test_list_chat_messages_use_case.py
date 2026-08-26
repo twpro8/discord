@@ -1,14 +1,13 @@
 from uuid import uuid4
 
+import pytest
+
 from src.core.realtime.rooms import chat_room
 from src.modules.chats.domain.entities.dtos import ChatCreate, MemberCreate
 from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.domain.exceptions import NotChatMemberError
-from src.modules.messages.application.queries.list_chat_messages import (
-    ListChatMessagesQuery,
-    ListChatMessagesQueryHandler,
-)
 from src.modules.messages.domain.entities.dtos import MessageCreate
+from src.modules.messages.usecases.list_chat_messages import ListChatMessagesUseCase
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
@@ -23,9 +22,7 @@ async def test_returns_messages_in_ascending_order() -> None:
     messages = FakeMessageRepository()
     chats_facade = FakeChatsFacade(chats, chat_members)
     room_membership_updater = FakeRoomMembershipUpdater()
-    handler = ListChatMessagesQueryHandler(
-        messages, chats_facade, room_membership_updater
-    )
+    use_case = ListChatMessagesUseCase(messages, chats_facade, room_membership_updater)
 
     user_id = uuid4()
     chat = await chats.create(ChatCreate(type=ChatType.private))
@@ -41,12 +38,9 @@ async def test_returns_messages_in_ascending_order() -> None:
             )
         )
 
-    result = await handler.handle(
-        ListChatMessagesQuery(chat_id=chat.id, user_id=user_id, limit=20)
-    )
+    page = await use_case(chat_id=chat.id, user_id=user_id, limit=20)
 
-    assert result.is_ok
-    assert [m.sequence for m in result.value.items] == [1, 2, 3]
+    assert [m.sequence for m in page.items] == [1, 2, 3]
     assert room_membership_updater.joined == [(user_id, chat_room(chat.id))]
 
 
@@ -55,19 +49,14 @@ async def test_rejects_non_member() -> None:
     messages = FakeMessageRepository()
     chats_facade = FakeChatsFacade(chats, chat_members)
     room_membership_updater = FakeRoomMembershipUpdater()
-    handler = ListChatMessagesQueryHandler(
-        messages, chats_facade, room_membership_updater
-    )
+    use_case = ListChatMessagesUseCase(messages, chats_facade, room_membership_updater)
 
     owner_id = uuid4()
     chat = await chats.create(ChatCreate(type=ChatType.private))
     await chat_members.add_members([MemberCreate(user_id=owner_id, chat_id=chat.id)])
 
-    result = await handler.handle(
-        ListChatMessagesQuery(chat_id=chat.id, user_id=uuid4(), limit=20)
-    )
+    with pytest.raises(NotChatMemberError):
+        await use_case(chat_id=chat.id, user_id=uuid4(), limit=20)
 
-    assert result.is_err
-    assert isinstance(result.error, NotChatMemberError)
     # Non-members are rejected before the join-side-effect runs.
     assert room_membership_updater.joined == []
