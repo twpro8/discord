@@ -35,14 +35,14 @@ class LoginCommandHandler:
         self._email_facade = email_facade
 
     async def handle(self, command: LoginCommand) -> Result[TokenPair, LumiereError]:
-        result = await self._users_facade.verify_credentials(
-            username=command.username,
-            plain_password=command.password,
-        )
-        if result.is_err:
-            return Result.err(result.error)
+        try:
+            user = await self._users_facade.verify_credentials(
+                username=command.username,
+                plain_password=command.password,
+            )
+        except LumiereError as error:
+            return Result.err(error)
 
-        user = result.value
         tokens = await issue_tokens(self._uow, user.id)
         await self._uow.commit()
 
@@ -54,20 +54,21 @@ class LoginCommandHandler:
         # rapid re-logins (token refresh flows, multiple tabs) doesn't spam
         # the inbox.
         today = datetime.now(UTC).date().isoformat()
-        send_result = await self._email_facade.send_email(
-            to=user.email,
-            template=EmailTemplateName.GENERIC_NOTIFICATION,
-            context={
-                "recipient_name": user.name,
-                "message": "You just logged in to your Lumiere account.",
-            },
-            idempotency_key=f"login-notification:{user.id}:{today}",
-        )
-        if send_result.is_err:
+        try:
+            await self._email_facade.send_email(
+                to=user.email,
+                template=EmailTemplateName.GENERIC_NOTIFICATION,
+                context={
+                    "recipient_name": user.name,
+                    "message": "You just logged in to your Lumiere account.",
+                },
+                idempotency_key=f"login-notification:{user.id}:{today}",
+            )
+        except LumiereError as error:
             logger.warning(
                 "auth.login_notification_failed",
                 user_id=str(user.id),
-                error=str(send_result.error),
+                error=str(error),
             )
 
         return Result.ok(tokens)

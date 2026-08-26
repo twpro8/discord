@@ -29,8 +29,7 @@ from src.modules.messages.composition import register_message_handlers
 from src.modules.presence.composition import register_presence_handlers
 from src.modules.servers.composition import register_server_handlers
 from src.modules.servers.public.facade import build_servers_facade
-from src.modules.users.composition import register_user_handlers
-from src.modules.users.public.facade import MediatorUsersFacade
+from src.modules.users.public.facade import build_users_facade
 from src.shared.application.in_process_mediator import InProcessMediator
 from src.shared.application.mediator import Mediator
 
@@ -92,18 +91,20 @@ async def get_mediator(
     redis: RedisDep,
     redis_subscription_manager: RedisSubscriptionManagerDep,
     job_dispatcher: JobDispatcherDep,
-    storage: StorageDep,
 ) -> AsyncGenerator[Mediator]:
     async with AsyncExitStack() as stack:
         mediator = InProcessMediator()
-        # Facades only close over `mediator`, not any handler yet registered
-        # on it — safe to build before the modules they wrap are registered
-        # below, since dispatch never happens before this generator yields.
-        users_facade = MediatorUsersFacade(mediator)
-        # Session-backed, unlike users_facade above — friends/servers have
-        # no command handlers of their own for presence to dispatch
-        # through, so these read straight off the request's session
-        # instead (same shape as chats_facade/channels_facade elsewhere).
+        # Use-case-backed, same shape as email_facade below — users has its
+        # own router, but other modules (auth, friends, chats) still reach
+        # it only through this facade, never the mediator (see
+        # modules/users/public/facade.py).
+        users_facade = await stack.enter_async_context(
+            asynccontextmanager(build_users_facade)(session, cache, event_bus)
+        )
+        # Session-backed — friends/servers have no command handlers of
+        # their own for presence to dispatch through, so these read
+        # straight off the request's session instead (same shape as
+        # chats_facade/channels_facade elsewhere).
         friends_facade = build_friends_facade(session)
         servers_facade = build_servers_facade(session)
         # Use-case-backed, same shape as channels_facade — email has no
@@ -145,9 +146,6 @@ async def get_mediator(
         )
         await register_server_handlers(
             mediator, session, stack, room_membership_updater
-        )
-        await register_user_handlers(
-            mediator, session, stack, event_bus, cache, storage
         )
         yield mediator
 

@@ -19,9 +19,13 @@ class RegisterCommandHandler:
 
     async def handle(self, command: RegisterCommand) -> Result[UserDTO, LumiereError]:
         data = command.data
-        return await self._users_facade.create_user(
-            name=data.name,
-            username=data.username,
-            email=data.email,
-            plain_password=data.password,
-        )
+        try:
+            user = await self._users_facade.create_user(
+                name=data.name,
+                username=data.username,
+                email=data.email,
+                plain_password=data.password,
+            )
+        except LumiereError as error:
+            return Result.err(error)
+        return Result.ok(user)
