@@ -20,7 +20,6 @@ from src.core.security.jwt import decode_access_token
 from src.core.storage import Storage
 from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
-from src.modules.channels.composition import register_channel_handlers
 from src.modules.chats.composition import register_chat_handlers
 from src.modules.email.public.facade import build_email_facade
 from src.modules.friends.public.facade import build_friends_facade
@@ -132,7 +131,6 @@ async def get_mediator(
         await register_auth_handlers(
             mediator, session, stack, users_facade, email_facade
         )
-        await register_channel_handlers(mediator, session, stack, servers_facade)
         await register_chat_handlers(
             mediator, session, stack, event_bus, users_facade, room_membership_updater
         )

@@ -1,14 +1,13 @@
 from uuid import UUID, uuid4
 
-from src.modules.channels.application.commands.delete_channel import (
-    DeleteChannelCommand,
-    DeleteChannelCommandHandler,
-)
+import pytest
+
 from src.modules.channels.domain.entities.dtos import ChannelCreate
 from src.modules.channels.domain.exceptions import (
     ChannelNotFoundError,
     OnlyChannelDeletionError,
 )
+from src.modules.channels.usecases.delete_channel import DeleteChannelUseCase
 from src.modules.servers.domain.entities.dtos import ServerCreate, ServerMemberCreate
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import (
@@ -39,14 +38,14 @@ async def _make_owned_server(
     return server.id
 
 
-def _handler(
+def _use_case(
     channels: FakeChannelRepository,
     server_members: FakeServerMemberRepository,
     servers: FakeServerRepository,
-) -> tuple[DeleteChannelCommandHandler, FakeChannelUnitOfWork]:
+) -> tuple[DeleteChannelUseCase, FakeChannelUnitOfWork]:
     uow = FakeChannelUnitOfWork(channels)
     servers_facade = FakeServersFacade(server_members, servers)
-    return DeleteChannelCommandHandler(uow, servers_facade), uow
+    return DeleteChannelUseCase(uow, servers_facade), uow
 
 
 async def test_owner_can_delete_extra_channel_and_commit() -> None:
@@ -55,7 +54,7 @@ async def test_owner_can_delete_extra_channel_and_commit() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, uow = _handler(channels, server_members, servers)
+    use_case, uow = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     channel = await channels.create(
@@ -63,13 +62,8 @@ async def test_owner_can_delete_extra_channel_and_commit() -> None:
     )
     await channels.create(ChannelCreate(server_id=server_id, name="extra", topic=None))
 
-    result = await handler.handle(
-        DeleteChannelCommand(
-            channel_id=channel.id, user_id=owner_id, server_id=server_id
-        )
-    )
+    await use_case(channel_id=channel.id, user_id=owner_id, server_id=server_id)
 
-    assert result.is_ok
     assert await channels.find_by_id(channel.id) is None
     assert uow.committed
 
@@ -80,21 +74,16 @@ async def test_deleting_only_channel_is_rejected() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, uow = _handler(channels, server_members, servers)
+    use_case, uow = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     channel = await channels.create(
         ChannelCreate(server_id=server_id, name="general", topic=None)
     )
 
-    result = await handler.handle(
-        DeleteChannelCommand(
-            channel_id=channel.id, user_id=owner_id, server_id=server_id
-        )
-    )
+    with pytest.raises(OnlyChannelDeletionError):
+        await use_case(channel_id=channel.id, user_id=owner_id, server_id=server_id)
 
-    assert result.is_err
-    assert isinstance(result.error, OnlyChannelDeletionError)
     assert await channels.find_by_id(channel.id) is not None
     assert not uow.committed
 
@@ -105,16 +94,13 @@ async def test_channel_not_found() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, uow = _handler(channels, server_members, servers)
+    use_case, uow = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
 
-    result = await handler.handle(
-        DeleteChannelCommand(channel_id=uuid4(), user_id=owner_id, server_id=server_id)
-    )
+    with pytest.raises(ChannelNotFoundError):
+        await use_case(channel_id=uuid4(), user_id=owner_id, server_id=server_id)
 
-    assert result.is_err
-    assert isinstance(result.error, ChannelNotFoundError)
     assert not uow.committed
 
 
@@ -124,7 +110,7 @@ async def test_server_mismatch_is_not_found() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     channel = await channels.create(
@@ -132,12 +118,9 @@ async def test_server_mismatch_is_not_found() -> None:
     )
     await channels.create(ChannelCreate(server_id=server_id, name="extra", topic=None))
 
-    result = await handler.handle(
-        DeleteChannelCommand(channel_id=channel.id, user_id=owner_id, server_id=uuid4())
-    )
+    with pytest.raises(ChannelNotFoundError):
+        await use_case(channel_id=channel.id, user_id=owner_id, server_id=uuid4())
 
-    assert result.is_err
-    assert isinstance(result.error, ChannelNotFoundError)
     assert await channels.find_by_id(channel.id) is not None
 
 
@@ -147,7 +130,7 @@ async def test_non_owner_member_cannot_delete() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id, member_id = uuid4(), uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     await server_members.create(
@@ -158,14 +141,9 @@ async def test_non_owner_member_cannot_delete() -> None:
     )
     await channels.create(ChannelCreate(server_id=server_id, name="extra", topic=None))
 
-    result = await handler.handle(
-        DeleteChannelCommand(
-            channel_id=channel.id, user_id=member_id, server_id=server_id
-        )
-    )
+    with pytest.raises(NotServerOwnerError):
+        await use_case(channel_id=channel.id, user_id=member_id, server_id=server_id)
 
-    assert result.is_err
-    assert isinstance(result.error, NotServerOwnerError)
     assert await channels.find_by_id(channel.id) is not None
 
 
@@ -175,7 +153,7 @@ async def test_non_member_cannot_delete() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id, outsider_id = uuid4(), uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     channel = await channels.create(
@@ -183,12 +161,7 @@ async def test_non_member_cannot_delete() -> None:
     )
     await channels.create(ChannelCreate(server_id=server_id, name="extra", topic=None))
 
-    result = await handler.handle(
-        DeleteChannelCommand(
-            channel_id=channel.id, user_id=outsider_id, server_id=server_id
-        )
-    )
+    with pytest.raises(NotServerMemberError):
+        await use_case(channel_id=channel.id, user_id=outsider_id, server_id=server_id)
 
-    assert result.is_err
-    assert isinstance(result.error, NotServerMemberError)
     assert await channels.find_by_id(channel.id) is not None

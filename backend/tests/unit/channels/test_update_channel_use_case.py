@@ -1,15 +1,18 @@
 from uuid import UUID, uuid4
 
-from src.modules.channels.application.commands.update_channel import (
-    UpdateChannelCommand,
-    UpdateChannelCommandHandler,
-)
+import pytest
+
 from src.modules.channels.domain.entities.channel import Channel
-from src.modules.channels.domain.entities.dtos import ChannelCreate, ChannelUpdateData
+from src.modules.channels.domain.entities.dtos import (
+    ChannelCreate,
+    ChannelUpdate,
+    ChannelUpdateData,
+)
 from src.modules.channels.domain.exceptions import (
     ChannelConflictError,
     ChannelNotFoundError,
 )
+from src.modules.channels.usecases.update_channel import UpdateChannelUseCase
 from src.modules.servers.domain.entities.dtos import ServerCreate, ServerMemberCreate
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import (
@@ -45,14 +48,14 @@ async def _make_owned_channel(
     return channel, server.id
 
 
-def _handler(
+def _use_case(
     channels: FakeChannelRepository,
     server_members: FakeServerMemberRepository,
     servers: FakeServerRepository,
-) -> tuple[UpdateChannelCommandHandler, FakeChannelUnitOfWork]:
+) -> tuple[UpdateChannelUseCase, FakeChannelUnitOfWork]:
     uow = FakeChannelUnitOfWork(channels)
     servers_facade = FakeServersFacade(server_members, servers)
-    return UpdateChannelCommandHandler(uow, servers_facade), uow
+    return UpdateChannelUseCase(uow, servers_facade), uow
 
 
 async def test_owner_can_rename_channel_and_commit() -> None:
@@ -61,24 +64,21 @@ async def test_owner_can_rename_channel_and_commit() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, uow = _handler(channels, server_members, servers)
+    use_case, uow = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
     )
 
-    result = await handler.handle(
-        UpdateChannelCommand(
-            channel_id=channel.id,
-            user_id=owner_id,
-            server_id=server_id,
-            update_data=ChannelUpdateData(name="renamed", topic="new topic"),
-        )
+    updated = await use_case(
+        channel_id=channel.id,
+        user_id=owner_id,
+        server_id=server_id,
+        update_data=ChannelUpdateData(name="renamed", topic="new topic"),
     )
 
-    assert result.is_ok
-    assert result.value.name == "renamed"
-    assert result.value.topic == "new topic"
+    assert updated.name == "renamed"
+    assert updated.topic == "new topic"
     assert uow.committed
 
 
@@ -88,24 +88,21 @@ async def test_partial_update_leaves_other_fields_untouched() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, uow = _handler(channels, server_members, servers)
+    use_case, uow = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id, name="general"
     )
 
-    result = await handler.handle(
-        UpdateChannelCommand(
-            channel_id=channel.id,
-            user_id=owner_id,
-            server_id=server_id,
-            update_data=ChannelUpdateData(topic="only topic"),
-        )
+    updated = await use_case(
+        channel_id=channel.id,
+        user_id=owner_id,
+        server_id=server_id,
+        update_data=ChannelUpdateData(topic="only topic"),
     )
 
-    assert result.is_ok
-    assert result.value.name == "general"
-    assert result.value.topic == "only topic"
+    assert updated.name == "general"
+    assert updated.topic == "only topic"
 
 
 async def test_empty_topic_clears_field() -> None:
@@ -114,24 +111,21 @@ async def test_empty_topic_clears_field() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
     )
-    await channels.update(channel.id, ChannelUpdateData(topic="some topic"))
+    await channels.update(channel.id, ChannelUpdate(topic="some topic"))
 
-    result = await handler.handle(
-        UpdateChannelCommand(
-            channel_id=channel.id,
-            user_id=owner_id,
-            server_id=server_id,
-            update_data=ChannelUpdateData(topic=""),
-        )
+    updated = await use_case(
+        channel_id=channel.id,
+        user_id=owner_id,
+        server_id=server_id,
+        update_data=ChannelUpdateData(topic=""),
     )
 
-    assert result.is_ok
-    assert result.value.topic is None
+    assert updated.topic is None
 
 
 async def test_position_updated() -> None:
@@ -140,23 +134,20 @@ async def test_position_updated() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
     )
 
-    result = await handler.handle(
-        UpdateChannelCommand(
-            channel_id=channel.id,
-            user_id=owner_id,
-            server_id=server_id,
-            update_data=ChannelUpdateData(position=5),
-        )
+    updated = await use_case(
+        channel_id=channel.id,
+        user_id=owner_id,
+        server_id=server_id,
+        update_data=ChannelUpdateData(position=5),
     )
 
-    assert result.is_ok
-    assert result.value.position == 5
+    assert updated.position == 5
 
 
 async def test_renaming_to_same_name_is_allowed() -> None:
@@ -165,22 +156,18 @@ async def test_renaming_to_same_name_is_allowed() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
     )
 
-    result = await handler.handle(
-        UpdateChannelCommand(
-            channel_id=channel.id,
-            user_id=owner_id,
-            server_id=server_id,
-            update_data=ChannelUpdateData(name="general"),
-        )
+    await use_case(
+        channel_id=channel.id,
+        user_id=owner_id,
+        server_id=server_id,
+        update_data=ChannelUpdateData(name="general"),
     )
-
-    assert result.is_ok
 
 
 async def test_duplicate_name_within_server_conflicts() -> None:
@@ -189,24 +176,21 @@ async def test_duplicate_name_within_server_conflicts() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, uow = _handler(channels, server_members, servers)
+    use_case, uow = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id, name="general"
     )
     await channels.create(ChannelCreate(server_id=server_id, name="taken"))
 
-    result = await handler.handle(
-        UpdateChannelCommand(
+    with pytest.raises(ChannelConflictError):
+        await use_case(
             channel_id=channel.id,
             user_id=owner_id,
             server_id=server_id,
             update_data=ChannelUpdateData(name="taken"),
         )
-    )
 
-    assert result.is_err
-    assert isinstance(result.error, ChannelConflictError)
     assert not uow.committed
 
 
@@ -216,7 +200,7 @@ async def test_same_name_in_another_server_does_not_conflict() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id, name="general"
@@ -224,17 +208,14 @@ async def test_same_name_in_another_server_does_not_conflict() -> None:
     other_server_id = uuid4()
     await channels.create(ChannelCreate(server_id=other_server_id, name="renamed"))
 
-    result = await handler.handle(
-        UpdateChannelCommand(
-            channel_id=channel.id,
-            user_id=owner_id,
-            server_id=server_id,
-            update_data=ChannelUpdateData(name="renamed"),
-        )
+    updated = await use_case(
+        channel_id=channel.id,
+        user_id=owner_id,
+        server_id=server_id,
+        update_data=ChannelUpdateData(name="renamed"),
     )
 
-    assert result.is_ok
-    assert result.value.name == "renamed"
+    assert updated.name == "renamed"
 
 
 async def test_channel_not_found() -> None:
@@ -243,23 +224,20 @@ async def test_channel_not_found() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, uow = _handler(channels, server_members, servers)
+    use_case, uow = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     _, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
     )
 
-    result = await handler.handle(
-        UpdateChannelCommand(
+    with pytest.raises(ChannelNotFoundError):
+        await use_case(
             channel_id=uuid4(),
             user_id=owner_id,
             server_id=server_id,
             update_data=ChannelUpdateData(name="renamed"),
         )
-    )
 
-    assert result.is_err
-    assert isinstance(result.error, ChannelNotFoundError)
     assert not uow.committed
 
 
@@ -269,21 +247,17 @@ async def test_server_mismatch_is_not_found() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, _ = await _make_owned_channel(channels, server_members, servers, owner_id)
 
-    result = await handler.handle(
-        UpdateChannelCommand(
+    with pytest.raises(ChannelNotFoundError):
+        await use_case(
             channel_id=channel.id,
             user_id=owner_id,
             server_id=uuid4(),
             update_data=ChannelUpdateData(name="renamed"),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, ChannelNotFoundError)
 
 
 async def test_non_owner_member_cannot_update() -> None:
@@ -292,7 +266,7 @@ async def test_non_owner_member_cannot_update() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id, member_id = uuid4(), uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
@@ -301,17 +275,13 @@ async def test_non_owner_member_cannot_update() -> None:
         ServerMemberCreate(server_id=server_id, user_id=member_id)
     )
 
-    result = await handler.handle(
-        UpdateChannelCommand(
+    with pytest.raises(NotServerOwnerError):
+        await use_case(
             channel_id=channel.id,
             user_id=member_id,
             server_id=server_id,
             update_data=ChannelUpdateData(name="renamed"),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, NotServerOwnerError)
 
 
 async def test_non_member_cannot_update() -> None:
@@ -320,20 +290,16 @@ async def test_non_member_cannot_update() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    handler, _ = _handler(channels, server_members, servers)
+    use_case, _ = _use_case(channels, server_members, servers)
     owner_id, outsider_id = uuid4(), uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
     )
 
-    result = await handler.handle(
-        UpdateChannelCommand(
+    with pytest.raises(NotServerMemberError):
+        await use_case(
             channel_id=channel.id,
             user_id=outsider_id,
             server_id=server_id,
             update_data=ChannelUpdateData(name="renamed"),
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, NotServerMemberError)

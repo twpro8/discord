@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.channels.domain.entities.channel import Channel
@@ -11,42 +10,30 @@ from src.modules.channels.domain.repositories.channel_unit_of_work import (
     ChannelUnitOfWork,
 )
 from src.modules.servers.public.facade import ServersFacade
-from src.shared.application.command import Command
 from src.shared.domain.unset import UNSET
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 
-@dataclass(frozen=True, kw_only=True)
-class UpdateChannelCommand(Command):
-    channel_id: UUID
-    user_id: UUID
-    server_id: UUID
-    update_data: ChannelUpdateData
-
-
-class UpdateChannelCommandHandler:
+class UpdateChannelUseCase:
     def __init__(self, uow: ChannelUnitOfWork, servers_facade: ServersFacade) -> None:
         self._uow = uow
         self._servers_facade = servers_facade
 
-    async def handle(
-        self, command: UpdateChannelCommand
-    ) -> Result[Channel, LumiereError]:
-        channel = await self._uow.channels.find_by_id(command.channel_id)
+    async def __call__(
+        self,
+        *,
+        channel_id: UUID,
+        user_id: UUID,
+        server_id: UUID,
+        update_data: ChannelUpdateData,
+    ) -> Channel:
+        channel = await self._uow.channels.find_by_id(channel_id)
         if channel is None:
-            return Result.err(ChannelNotFoundError())
-        if channel.server_id != command.server_id:
-            return Result.err(ChannelNotFoundError())
+            raise ChannelNotFoundError
+        if channel.server_id != server_id:
+            raise ChannelNotFoundError
 
-        try:
-            await self._servers_facade.assert_is_server_owner(
-                command.user_id, channel.server_id
-            )
-        except LumiereError as error:
-            return Result.err(error)
+        await self._servers_facade.assert_is_server_owner(user_id, channel.server_id)
 
-        update_data = command.update_data
         name = update_data.name
         if name is not UNSET and name != channel.name:
             assert isinstance(name, str)
@@ -54,7 +41,7 @@ class UpdateChannelCommandHandler:
                 await self._uow.channels.find_by_name(channel.server_id, name)
                 is not None
             ):
-                return Result.err(ChannelConflictError())
+                raise ChannelConflictError
 
         topic = update_data.topic
         if topic is not UNSET and topic == "":
@@ -70,4 +57,4 @@ class UpdateChannelCommandHandler:
         )
 
         await self._uow.commit()
-        return Result.ok(updated)
+        return updated
