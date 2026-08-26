@@ -2,36 +2,23 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from src.api.v1.dependencies import MediatorDep, UserIdDep
-from src.modules.friends.application.commands.accept_request import (
-    AcceptFriendRequestCommand,
-)
-from src.modules.friends.application.commands.delete_request import (
-    DeleteFriendRequestCommand,
-)
-from src.modules.friends.application.commands.remove_friend import RemoveFriendCommand
-from src.modules.friends.application.commands.send_request import (
-    SendFriendRequestCommand,
-)
-from src.modules.friends.application.queries.get_friends import GetFriendsQuery
-from src.modules.friends.application.queries.get_requests import (
-    GetFriendRequestsQuery,
-)
-from src.modules.friends.application.queries.get_sent_requests import (
-    GetSentFriendRequestsQuery,
-)
-from src.modules.friends.domain.entities.dtos import (
-    FriendRequestWithUser,
-    SendFriendRequestData,
-)
+from src.api.v1.dependencies import UserIdDep
+from src.modules.friends.domain.entities.dtos import SendFriendRequestData
 from src.modules.friends.domain.enums import FriendStatus
+from src.modules.friends.transport.http.dependencies import (
+    AcceptFriendRequestUseCaseDep,
+    DeleteFriendRequestUseCaseDep,
+    GetFriendRequestsUseCaseDep,
+    GetFriendsUseCaseDep,
+    GetSentFriendRequestsUseCaseDep,
+    RemoveFriendUseCaseDep,
+    SendFriendRequestUseCaseDep,
+)
 from src.modules.friends.transport.http.schemas import (
     FriendRequestResponse,
     FriendRequestWithUserResponse,
     SendFriendRequest,
 )
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 router = APIRouter(prefix="/friends", tags=["Friends"])
 
@@ -45,17 +32,13 @@ router = APIRouter(prefix="/friends", tags=["Friends"])
 async def send_friend_request(
     current_user_id: UserIdDep,
     data: SendFriendRequest,
-    mediator: MediatorDep,
+    use_case: SendFriendRequestUseCaseDep,
 ) -> FriendRequestResponse:
-    result = await mediator.send(
-        SendFriendRequestCommand(
-            sender_id=current_user_id,
-            data=SendFriendRequestData(username=data.username),
-        )
+    request = await use_case(
+        sender_id=current_user_id,
+        data=SendFriendRequestData(username=data.username),
     )
-    if result.is_err:
-        raise result.error
-    return FriendRequestResponse.model_validate(result.value)
+    return FriendRequestResponse.model_validate(request)
 
 
 @router.get(
@@ -65,15 +48,11 @@ async def send_friend_request(
 )
 async def get_friend_requests(
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: GetFriendRequestsUseCaseDep,
     status: FriendStatus = FriendStatus.PENDING,
 ) -> list[FriendRequestWithUserResponse]:
-    result: Result[list[FriendRequestWithUser], LumiereError] = await mediator.query(
-        GetFriendRequestsQuery(user_id=current_user_id, status=status)
-    )
-    if result.is_err:
-        raise result.error
-    return [FriendRequestWithUserResponse.model_validate(r) for r in result.value]
+    requests = await use_case(user_id=current_user_id, status=status)
+    return [FriendRequestWithUserResponse.model_validate(r) for r in requests]
 
 
 @router.get(
@@ -83,15 +62,11 @@ async def get_friend_requests(
 )
 async def get_user_sent_requests(
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: GetSentFriendRequestsUseCaseDep,
     status: FriendStatus = FriendStatus.PENDING,
 ) -> list[FriendRequestWithUserResponse]:
-    result: Result[list[FriendRequestWithUser], LumiereError] = await mediator.query(
-        GetSentFriendRequestsQuery(user_id=current_user_id, status=status)
-    )
-    if result.is_err:
-        raise result.error
-    return [FriendRequestWithUserResponse.model_validate(r) for r in result.value]
+    requests = await use_case(user_id=current_user_id, status=status)
+    return [FriendRequestWithUserResponse.model_validate(r) for r in requests]
 
 
 @router.get(
@@ -101,14 +76,10 @@ async def get_user_sent_requests(
 )
 async def get_friends(
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: GetFriendsUseCaseDep,
 ) -> list[FriendRequestWithUserResponse]:
-    result: Result[list[FriendRequestWithUser], LumiereError] = await mediator.query(
-        GetFriendsQuery(user_id=current_user_id)
-    )
-    if result.is_err:
-        raise result.error
-    return [FriendRequestWithUserResponse.model_validate(r) for r in result.value]
+    friends = await use_case(user_id=current_user_id)
+    return [FriendRequestWithUserResponse.model_validate(r) for r in friends]
 
 
 @router.patch(
@@ -119,16 +90,10 @@ async def get_friends(
 async def accept_friend_request(
     current_user_id: UserIdDep,
     request_id: UUID,
-    mediator: MediatorDep,
+    use_case: AcceptFriendRequestUseCaseDep,
 ) -> FriendRequestResponse:
-    result = await mediator.send(
-        AcceptFriendRequestCommand(
-            current_user_id=current_user_id, request_id=request_id
-        )
-    )
-    if result.is_err:
-        raise result.error
-    return FriendRequestResponse.model_validate(result.value)
+    request = await use_case(current_user_id=current_user_id, request_id=request_id)
+    return FriendRequestResponse.model_validate(request)
 
 
 @router.delete(
@@ -139,15 +104,9 @@ async def accept_friend_request(
 async def delete_friend_request(
     current_user_id: UserIdDep,
     request_id: UUID,
-    mediator: MediatorDep,
+    use_case: DeleteFriendRequestUseCaseDep,
 ) -> None:
-    result = await mediator.send(
-        DeleteFriendRequestCommand(
-            current_user_id=current_user_id, request_id=request_id
-        )
-    )
-    if result.is_err:
-        raise result.error
+    await use_case(current_user_id=current_user_id, request_id=request_id)
 
 
 @router.delete(
@@ -158,12 +117,6 @@ async def delete_friend_request(
 async def remove_friend(
     current_user_id: UserIdDep,
     relationship_id: UUID,
-    mediator: MediatorDep,
+    use_case: RemoveFriendUseCaseDep,
 ) -> None:
-    result = await mediator.send(
-        RemoveFriendCommand(
-            current_user_id=current_user_id, relationship_id=relationship_id
-        )
-    )
-    if result.is_err:
-        raise result.error
+    await use_case(current_user_id=current_user_id, relationship_id=relationship_id)

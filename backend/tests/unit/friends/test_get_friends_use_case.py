@@ -1,16 +1,13 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from src.modules.friends.application.queries.get_friends import (
-    GetFriendsQuery,
-    GetFriendsQueryHandler,
-)
 from src.modules.friends.domain.entities.dtos import FriendRequestWithUser
 from src.modules.friends.domain.enums import FriendStatus
+from src.modules.friends.usecases.get_friends import GetFriendsUseCase
 from tests.unit.friends.fakes import FakeFriendRepository
 
 
-async def test_returns_repository_friends_wrapped_in_ok() -> None:
+async def test_returns_repository_friends() -> None:
     friends = FakeFriendRepository()
     now = datetime.now(UTC)
     friends.friends_list = [
@@ -25,9 +22,8 @@ async def test_returns_repository_friends_wrapped_in_ok() -> None:
             avatar_url=None,
         )
     ]
-    handler = GetFriendsQueryHandler(friends)
+    use_case = GetFriendsUseCase(friends)
 
-    result = await handler.handle(GetFriendsQuery(user_id=uuid4()))
+    result = await use_case(user_id=uuid4())
 
-    assert result.is_ok
-    assert result.value is friends.friends_list
+    assert result is friends.friends_list
