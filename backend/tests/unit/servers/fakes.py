@@ -251,7 +251,7 @@ class FakeServerUnitOfWork(ServerUnitOfWork):
 
 
 class FakeChannelsFacade:
-    """Stand-in for channels' ChannelsFacade — CreateServerCommandHandler
+    """Stand-in for channels' ChannelsFacade — CreateServerUseCase
     calls .create_default_channel() and never inspects the return value."""
 
     def __init__(self) -> None:
