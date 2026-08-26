@@ -1,14 +1,14 @@
-from src.modules.email.application.commands.send_email import (
-    SendEmailCommand,
-    SendEmailCommandHandler,
-)
+import pytest
+
 from src.modules.email.domain.enums import EmailStatus, EmailTemplateName
+from src.modules.email.domain.exceptions import InvalidEmailAddress
+from src.modules.email.usecases.send_email import SendEmailUseCase
 from tests.dependency_overrides.job_dispatcher import FakeJobDispatcher
 from tests.unit.email.fakes import FakeEmailMessageRepository, FakeEmailUnitOfWork
 
 
-def _handler() -> tuple[
-    SendEmailCommandHandler,
+def _use_case() -> tuple[
+    SendEmailUseCase,
     FakeEmailUnitOfWork,
     FakeEmailMessageRepository,
     FakeJobDispatcher,
@@ -16,22 +16,18 @@ def _handler() -> tuple[
     repository = FakeEmailMessageRepository()
     uow = FakeEmailUnitOfWork(repository)
     dispatcher = FakeJobDispatcher()
-    return SendEmailCommandHandler(uow, dispatcher), uow, repository, dispatcher
+    return SendEmailUseCase(uow, dispatcher), uow, repository, dispatcher
 
 
 async def test_creates_pending_message_commits_and_enqueues_delivery() -> None:
-    handler, uow, _repository, dispatcher = _handler()
+    use_case, uow, _repository, dispatcher = _use_case()
 
-    result = await handler.handle(
-        SendEmailCommand(
-            to="User@Example.com",
-            template=EmailTemplateName.GENERIC_NOTIFICATION,
-            context={"recipient_name": "User", "message": "hi"},
-        )
+    message = await use_case(
+        to="User@Example.com",
+        template=EmailTemplateName.GENERIC_NOTIFICATION,
+        context={"recipient_name": "User", "message": "hi"},
     )
 
-    assert result.is_ok
-    message = result.value
     assert message.to == "user@example.com"
     assert message.status == EmailStatus.PENDING
     assert uow.committed
@@ -45,35 +41,34 @@ async def test_creates_pending_message_commits_and_enqueues_delivery() -> None:
     assert queue == "default"
 
 
-async def test_invalid_email_address_returns_err_without_enqueuing() -> None:
-    handler, uow, _repository, dispatcher = _handler()
+async def test_invalid_email_address_raises_without_enqueuing() -> None:
+    use_case, uow, _repository, dispatcher = _use_case()
 
-    result = await handler.handle(
-        SendEmailCommand(
+    with pytest.raises(InvalidEmailAddress):
+        await use_case(
             to="not-an-email",
             template=EmailTemplateName.GENERIC_NOTIFICATION,
             context={},
         )
-    )
 
-    assert result.is_err
     assert not uow.committed
     assert dispatcher.calls == []
 
 
 async def test_idempotency_key_returns_existing_without_duplicate_enqueue() -> None:
-    handler, _uow, repository, dispatcher = _handler()
-    command = SendEmailCommand(
-        to="user@example.com",
-        template=EmailTemplateName.GENERIC_NOTIFICATION,
-        context={"recipient_name": "User", "message": "hi"},
-        idempotency_key="welcome-email:123",
+    use_case, _uow, repository, dispatcher = _use_case()
+    to = "user@example.com"
+    template = EmailTemplateName.GENERIC_NOTIFICATION
+    context = {"recipient_name": "User", "message": "hi"}
+    idempotency_key = "welcome-email:123"
+
+    first = await use_case(
+        to=to, template=template, context=context, idempotency_key=idempotency_key
+    )
+    second = await use_case(
+        to=to, template=template, context=context, idempotency_key=idempotency_key
     )
 
-    first = await handler.handle(command)
-    second = await handler.handle(command)
-
-    assert first.is_ok and second.is_ok
-    assert first.value.id == second.value.id
+    assert first.id == second.id
     assert len(repository.messages) == 1
     assert len(dispatcher.calls) == 1

@@ -3,7 +3,7 @@ from src.core.jobs import (
 )
 from src.core.jobs.celery_app import build_celery_app, celery_app
 from src.core.jobs.dispatcher import CeleryJobDispatcher, JobDispatcher
-from src.core.jobs.runner import handle_result, run_async
+from src.core.jobs.runner import handle_task_error, run_async
 from src.core.jobs.task_names import JobTaskName
 
 __all__ = [
@@ -13,5 +13,5 @@ __all__ = [
     "CeleryJobDispatcher",
     "JobTaskName",
     "run_async",
-    "handle_result",
+    "handle_task_error",
 ]

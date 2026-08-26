@@ -6,7 +6,6 @@ from celery import Task
 
 from src.core.logging import get_logger
 from src.shared.errors import LumiereError, TransientError
-from src.shared.result import Result
 
 logger = get_logger(__name__)
 
@@ -23,30 +22,26 @@ def run_async[T](coro: Coroutine[Any, Any, T]) -> T:
     return asyncio.run(coro)
 
 
-def handle_result(result: Result[Any, LumiereError], *, task: Task) -> None:
-    """Classify a dispatched Command's Result for Celery retry purposes.
+def handle_task_error(error: LumiereError, *, task: Task) -> None:
+    """Classify a use case's raised error for Celery retry purposes.
 
     Every `LumiereError` is a permanent failure by default — retrying a
     `NotFoundError`/`ConflictError`/`ValidationError` burns cycles for
     nothing and risks duplicate side effects on a non-idempotent task.
-    Only `TransientError`, raised deliberately by a handler talking to
+    Only `TransientError`, raised deliberately by a use case talking to
     flaky infrastructure, triggers a Celery retry.
     """
-    if result.is_err:
-        error = result.error
-        if isinstance(error, TransientError):
-            logger.warning(
-                "task.transient_failure",
-                task_name=task.name,
-                task_id=task.request.id,
-                error=str(error),
-            )
-            raise task.retry(exc=error)
-        logger.error(
-            "task.permanent_failure",
+    if isinstance(error, TransientError):
+        logger.warning(
+            "task.transient_failure",
             task_name=task.name,
             task_id=task.request.id,
             error=str(error),
         )
-        return
-    logger.info("task.succeeded", task_name=task.name, task_id=task.request.id)
+        raise task.retry(exc=error)
+    logger.error(
+        "task.permanent_failure",
+        task_name=task.name,
+        task_id=task.request.id,
+        error=str(error),
+    )

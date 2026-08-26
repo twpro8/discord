@@ -1,5 +1,5 @@
 from collections.abc import AsyncGenerator
-from contextlib import AsyncExitStack
+from contextlib import AsyncExitStack, asynccontextmanager
 from typing import Annotated, cast
 from uuid import UUID
 
@@ -22,7 +22,6 @@ from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.modules.channels.composition import register_channel_handlers
 from src.modules.chats.composition import register_chat_handlers
-from src.modules.email.composition import register_email_handlers
 from src.modules.email.public.facade import build_email_facade
 from src.modules.friends.composition import register_friend_handlers
 from src.modules.friends.public.facade import build_friends_facade
@@ -107,11 +106,16 @@ async def get_mediator(
         # instead (same shape as chats_facade/channels_facade elsewhere).
         friends_facade = build_friends_facade(session)
         servers_facade = build_servers_facade(session)
-        # Handler-backed, same shape as channels_facade — email has no
-        # command handlers registered anywhere else for another module to
-        # dispatch through, so this wraps its own SendEmailCommandHandler
-        # directly (see modules/email/public/facade.py).
-        email_facade = await build_email_facade(session, stack, job_dispatcher)
+        # Use-case-backed, same shape as channels_facade — email has no
+        # router of its own for another module to dispatch through, so
+        # this wraps its own SendEmailUseCase directly (see
+        # modules/email/public/facade.py). build_email_facade is an async
+        # generator (a plain FastAPI-shaped yield dependency, not yet
+        # wired through Depends() here mid-migration), so it's driven
+        # manually via asynccontextmanager + the shared exit stack.
+        email_facade = await stack.enter_async_context(
+            asynccontextmanager(build_email_facade)(session, job_dispatcher)
+        )
         # Redis-backed: reaches every instance's local connections, not
         # just this process's — every connection already auto-joins its
         # own user:{user_id} room on connect (see api/v1/ws.py), and
@@ -132,7 +136,6 @@ async def get_mediator(
         await register_chat_handlers(
             mediator, session, stack, event_bus, users_facade, room_membership_updater
         )
-        await register_email_handlers(mediator, session, stack, job_dispatcher)
         await register_friend_handlers(mediator, session, stack, users_facade)
         await register_message_handlers(
             mediator, session, stack, realtime_notifier, room_membership_updater

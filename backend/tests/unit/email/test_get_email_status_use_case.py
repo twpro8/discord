@@ -1,12 +1,11 @@
 from uuid import uuid4
 
-from src.modules.email.application.queries.get_email_status import (
-    GetEmailStatusQuery,
-    GetEmailStatusQueryHandler,
-)
+import pytest
+
 from src.modules.email.domain.entities.dtos import EmailMessageCreate
 from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.domain.exceptions import EmailMessageNotFoundError
+from src.modules.email.usecases.get_email_status import GetEmailStatusUseCase
 from tests.unit.email.fakes import FakeEmailMessageRepository
 
 
@@ -20,18 +19,15 @@ async def test_returns_dto_for_existing_message() -> None:
             context={},
         )
     )
-    handler = GetEmailStatusQueryHandler(repository)
+    use_case = GetEmailStatusUseCase(repository)
 
-    result = await handler.handle(GetEmailStatusQuery(message_id=message.id))
+    dto = await use_case(message_id=message.id)
 
-    assert result.is_ok
-    assert result.value.id == message.id
+    assert dto.id == message.id
 
 
-async def test_returns_err_for_missing_message() -> None:
-    handler = GetEmailStatusQueryHandler(FakeEmailMessageRepository())
+async def test_raises_for_missing_message() -> None:
+    use_case = GetEmailStatusUseCase(FakeEmailMessageRepository())
 
-    result = await handler.handle(GetEmailStatusQuery(message_id=uuid4()))
-
-    assert result.is_err
-    assert isinstance(result.error, EmailMessageNotFoundError)
+    with pytest.raises(EmailMessageNotFoundError):
+        await use_case(message_id=uuid4())

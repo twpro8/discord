@@ -2,10 +2,8 @@ from collections.abc import Mapping
 from typing import Any
 from uuid import UUID, uuid4
 
-from src.modules.email.application.commands.deliver_email import (
-    DeliverEmailCommand,
-    DeliverEmailCommandHandler,
-)
+import pytest
+
 from src.modules.email.domain.entities.dtos import EmailMessageCreate
 from src.modules.email.domain.enums import EmailStatus, EmailTemplateName
 from src.modules.email.domain.exceptions import (
@@ -13,6 +11,7 @@ from src.modules.email.domain.exceptions import (
     EmailMessageNotFoundError,
     TemplateRenderError,
 )
+from src.modules.email.usecases.deliver_email import DeliverEmailUseCase
 from src.shared.errors import TransientError
 from tests.unit.email.fakes import (
     FakeEmailMessageRepository,
@@ -43,20 +42,17 @@ async def test_delivers_successfully_and_marks_sent() -> None:
     provider = FakeEmailProvider()
     renderer = FakeTemplateRenderer()
     message_id = await _pending_message_id(repository)
-    handler = DeliverEmailCommandHandler(uow, renderer, provider)
+    use_case = DeliverEmailUseCase(uow, renderer, provider)
 
-    result = await handler.handle(
-        DeliverEmailCommand(
-            message_id=message_id,
-            to="user@example.com",
-            template=_TEMPLATE,
-            context=_CONTEXT,
-        )
+    dto = await use_case(
+        message_id=message_id,
+        to="user@example.com",
+        template=_TEMPLATE,
+        context=_CONTEXT,
     )
 
-    assert result.is_ok
-    assert result.value.status == EmailStatus.SENT
-    assert result.value.provider_message_id == "provider-message-id"
+    assert dto.status == EmailStatus.SENT
+    assert dto.provider_message_id == "provider-message-id"
     assert uow.committed
     assert len(provider.sent) == 1
     assert provider.sent[0].to == "user@example.com"
@@ -69,40 +65,31 @@ async def test_already_sent_message_is_a_safe_noop() -> None:
     renderer = FakeTemplateRenderer()
     message_id = await _pending_message_id(repository)
     await repository.mark_sent(message_id, provider_message_id="already-sent")
-    handler = DeliverEmailCommandHandler(uow, renderer, provider)
+    use_case = DeliverEmailUseCase(uow, renderer, provider)
 
-    result = await handler.handle(
-        DeliverEmailCommand(
-            message_id=message_id,
-            to="user@example.com",
-            template=_TEMPLATE,
-            context=_CONTEXT,
-        )
+    dto = await use_case(
+        message_id=message_id,
+        to="user@example.com",
+        template=_TEMPLATE,
+        context=_CONTEXT,
     )
 
-    assert result.is_ok
-    assert result.value.status == EmailStatus.SENT
+    assert dto.status == EmailStatus.SENT
     assert provider.sent == []  # never re-sent
     assert not uow.committed  # no write needed for a redelivered no-op
 
 
-async def test_message_not_found_returns_err() -> None:
+async def test_message_not_found_raises() -> None:
     uow = FakeEmailUnitOfWork(FakeEmailMessageRepository())
-    handler = DeliverEmailCommandHandler(
-        uow, FakeTemplateRenderer(), FakeEmailProvider()
-    )
+    use_case = DeliverEmailUseCase(uow, FakeTemplateRenderer(), FakeEmailProvider())
 
-    result = await handler.handle(
-        DeliverEmailCommand(
+    with pytest.raises(EmailMessageNotFoundError):
+        await use_case(
             message_id=uuid4(),
             to="user@example.com",
             template=_TEMPLATE,
             context=_CONTEXT,
         )
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, EmailMessageNotFoundError)
 
 
 class _RaisingTemplateRenderer(FakeTemplateRenderer):
@@ -116,21 +103,16 @@ async def test_template_render_error_marks_failed_not_retrying() -> None:
     repository = FakeEmailMessageRepository()
     uow = FakeEmailUnitOfWork(repository)
     message_id = await _pending_message_id(repository)
-    handler = DeliverEmailCommandHandler(
-        uow, _RaisingTemplateRenderer(), FakeEmailProvider()
-    )
+    use_case = DeliverEmailUseCase(uow, _RaisingTemplateRenderer(), FakeEmailProvider())
 
-    result = await handler.handle(
-        DeliverEmailCommand(
+    with pytest.raises(TemplateRenderError):
+        await use_case(
             message_id=message_id,
             to="user@example.com",
             template=_TEMPLATE,
             context=_CONTEXT,
         )
-    )
 
-    assert result.is_err
-    assert isinstance(result.error, TemplateRenderError)
     assert repository.messages[message_id].status == EmailStatus.FAILED
 
 
@@ -139,19 +121,16 @@ async def test_transient_provider_error_marks_retrying() -> None:
     uow = FakeEmailUnitOfWork(repository)
     message_id = await _pending_message_id(repository)
     provider = FakeEmailProvider(error=TransientError("SMTP connection refused"))
-    handler = DeliverEmailCommandHandler(uow, FakeTemplateRenderer(), provider)
+    use_case = DeliverEmailUseCase(uow, FakeTemplateRenderer(), provider)
 
-    result = await handler.handle(
-        DeliverEmailCommand(
+    with pytest.raises(TransientError):
+        await use_case(
             message_id=message_id,
             to="user@example.com",
             template=_TEMPLATE,
             context=_CONTEXT,
         )
-    )
 
-    assert result.is_err
-    assert isinstance(result.error, TransientError)
     assert repository.messages[message_id].status == EmailStatus.RETRYING
 
 
@@ -160,17 +139,14 @@ async def test_permanent_provider_error_marks_failed() -> None:
     uow = FakeEmailUnitOfWork(repository)
     message_id = await _pending_message_id(repository)
     provider = FakeEmailProvider(error=EmailDeliveryFailed("hard bounce"))
-    handler = DeliverEmailCommandHandler(uow, FakeTemplateRenderer(), provider)
+    use_case = DeliverEmailUseCase(uow, FakeTemplateRenderer(), provider)
 
-    result = await handler.handle(
-        DeliverEmailCommand(
+    with pytest.raises(EmailDeliveryFailed):
+        await use_case(
             message_id=message_id,
             to="user@example.com",
             template=_TEMPLATE,
             context=_CONTEXT,
         )
-    )
 
-    assert result.is_err
-    assert isinstance(result.error, EmailDeliveryFailed)
     assert repository.messages[message_id].status == EmailStatus.FAILED
