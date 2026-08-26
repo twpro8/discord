@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-from contextlib import AsyncExitStack, asynccontextmanager
 from typing import Annotated, cast
 from uuid import UUID
 
@@ -19,13 +18,10 @@ from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.security.jwt import decode_access_token
 from src.core.storage import Storage
 from src.core.websocket.manager import RoomMembershipUpdater
-from src.modules.auth.composition import register_auth_handlers
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
-from src.modules.email.public.facade import build_email_facade
 from src.modules.friends.public.facade import build_friends_facade
 from src.modules.presence.composition import register_presence_handlers
 from src.modules.servers.public.facade import build_servers_facade
-from src.modules.users.public.facade import build_users_facade
 from src.shared.application.in_process_mediator import InProcessMediator
 from src.shared.application.mediator import Mediator
 
@@ -110,43 +106,22 @@ RoomMembershipUpdaterDep = Annotated[
 
 async def get_mediator(
     session: SessionDep,
-    event_bus: EventBusDep,
-    cache: CacheDep,
     redis: RedisDep,
-    job_dispatcher: JobDispatcherDep,
 ) -> AsyncGenerator[Mediator]:
-    async with AsyncExitStack() as stack:
-        mediator = InProcessMediator()
-        # Use-case-backed, same shape as email_facade below — users has its
-        # own router, but other modules (auth, friends, chats) still reach
-        # it only through this facade, never the mediator (see
-        # modules/users/public/facade.py).
-        users_facade = await stack.enter_async_context(
-            asynccontextmanager(build_users_facade)(session, cache, event_bus)
-        )
-        # Session-backed — friends/servers have no command handlers of
-        # their own for presence to dispatch through, so these read
-        # straight off the request's session instead (same shape as
-        # chats_facade/channels_facade elsewhere).
-        friends_facade = build_friends_facade(session)
-        servers_facade = build_servers_facade(session)
-        # Use-case-backed, same shape as channels_facade — email has no
-        # router of its own for another module to dispatch through, so
-        # this wraps its own SendEmailUseCase directly (see
-        # modules/email/public/facade.py). build_email_facade is an async
-        # generator (a plain FastAPI-shaped yield dependency, not yet
-        # wired through Depends() here mid-migration), so it's driven
-        # manually via asynccontextmanager + the shared exit stack.
-        email_facade = await stack.enter_async_context(
-            asynccontextmanager(build_email_facade)(session, job_dispatcher)
-        )
-        await register_auth_handlers(
-            mediator, session, stack, users_facade, email_facade
-        )
-        await register_presence_handlers(
-            mediator, redis, friends_facade, servers_facade
-        )
-        yield mediator
+    """The mediator now only carries presence's two read-side queries —
+    every other module has moved to native FastAPI DI (see each module's
+    transport/http/dependencies.py). Presence's write side
+    (connect/disconnect/heartbeat) is PresenceService, built once at app
+    startup in main.py's lifespan and never touches this mediator either;
+    see its own docstring for why."""
+    mediator = InProcessMediator()
+    # Session-backed — friends/servers have no command handlers of their
+    # own for presence to dispatch through, so these read straight off
+    # the request's session instead.
+    friends_facade = build_friends_facade(session)
+    servers_facade = build_servers_facade(session)
+    await register_presence_handlers(mediator, redis, friends_facade, servers_facade)
+    yield mediator
 
 
 MediatorDep = Annotated[Mediator, Depends(get_mediator)]

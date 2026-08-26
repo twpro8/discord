@@ -2,15 +2,14 @@ from fastapi import APIRouter, status
 from fastapi.requests import Request
 from fastapi.responses import Response
 
-from src.api.v1.dependencies import MediatorDep
-from src.modules.auth.application.commands.login import LoginCommand
-from src.modules.auth.application.commands.logout import LogoutCommand
-from src.modules.auth.application.commands.refresh import RefreshCommand
-from src.modules.auth.application.commands.register import RegisterCommand
 from src.modules.auth.domain.entities.dtos import RegisterData
 from src.modules.auth.transport.http.dependencies import (
+    LoginUseCaseDep,
+    LogoutUseCaseDep,
     OptionalRefreshTokenDep,
     RefreshTokenDep,
+    RefreshUseCaseDep,
+    RegisterUseCaseDep,
 )
 from src.modules.auth.transport.http.schemas import LoginForm, RegisterForm
 from src.modules.auth.transport.http.utils import (
@@ -29,15 +28,10 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 )
 async def authenticate(
     form_data: LoginForm,
-    mediator: MediatorDep,
+    use_case: LoginUseCaseDep,
     response: Response,
 ) -> SuccessResponse:
-    result = await mediator.send(
-        LoginCommand(username=form_data.username, password=form_data.password)
-    )
-    if result.is_err:
-        raise result.error
-    tokens = result.value
+    tokens = await use_case(username=form_data.username, password=form_data.password)
     set_token_cookies(response, tokens.access_token, tokens.refresh_token)
     return SuccessResponse()
 
@@ -48,16 +42,11 @@ async def authenticate(
 )
 async def register(
     form_data: RegisterForm,
-    mediator: MediatorDep,
+    use_case: RegisterUseCaseDep,
     request: Request,
     response: Response,
 ) -> UserResponse:
-    result = await mediator.send(
-        RegisterCommand(data=RegisterData(**form_data.model_dump()))
-    )
-    if result.is_err:
-        raise result.error
-    user = result.value
+    user = await use_case(data=RegisterData(**form_data.model_dump()))
     response.headers["location"] = f"{request.url.path}/{user.id}"
     return UserResponse.model_validate(user)
 
@@ -65,13 +54,10 @@ async def register(
 @router.post("/refresh", status_code=status.HTTP_200_OK)
 async def refresh(
     refresh_token: RefreshTokenDep,
-    mediator: MediatorDep,
+    use_case: RefreshUseCaseDep,
     response: Response,
 ) -> SuccessResponse:
-    result = await mediator.send(RefreshCommand(refresh_token=refresh_token))
-    if result.is_err:
-        raise result.error
-    tokens = result.value
+    tokens = await use_case(refresh_token=refresh_token)
     set_token_cookies(response, tokens.access_token, tokens.refresh_token)
     return SuccessResponse()
 
@@ -79,12 +65,10 @@ async def refresh(
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
     refresh_token: OptionalRefreshTokenDep,
-    mediator: MediatorDep,
+    use_case: LogoutUseCaseDep,
     response: Response,
 ) -> None:
     delete_token_cookies(response)
     if refresh_token is None:
         return
-    result = await mediator.send(LogoutCommand(refresh_token=refresh_token))
-    if result.is_err:
-        raise result.error
+    await use_case(refresh_token=refresh_token)

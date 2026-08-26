@@ -1,29 +1,20 @@
-from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from src.core.logging import get_logger
-from src.modules.auth.application.token_helper import issue_tokens
 from src.modules.auth.domain.entities.dtos import TokenPair
 from src.modules.auth.domain.repositories.auth_unit_of_work import (
     AuthUnitOfWork,
 )
+from src.modules.auth.usecases.token_helper import issue_tokens
 from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.public.facade import EmailFacade
 from src.modules.users.public.facade import UsersFacade
-from src.shared.application.command import Command
 from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 logger = get_logger(__name__)
 
 
-@dataclass(frozen=True, kw_only=True)
-class LoginCommand(Command):
-    username: str
-    password: str
-
-
-class LoginCommandHandler:
+class LoginUseCase:
     def __init__(
         self,
         uow: AuthUnitOfWork,
@@ -34,25 +25,21 @@ class LoginCommandHandler:
         self._users_facade = users_facade
         self._email_facade = email_facade
 
-    async def handle(self, command: LoginCommand) -> Result[TokenPair, LumiereError]:
-        try:
-            user = await self._users_facade.verify_credentials(
-                username=command.username,
-                plain_password=command.password,
-            )
-        except LumiereError as error:
-            return Result.err(error)
+    async def __call__(self, *, username: str, password: str) -> TokenPair:
+        user = await self._users_facade.verify_credentials(
+            username=username,
+            plain_password=password,
+        )
 
         tokens = await issue_tokens(self._uow, user.id)
         await self._uow.commit()
 
         # Best-effort notification: a failed/slow email must never block a
-        # successful login, so its Result is logged, not propagated. See
-        # EmailFacade.send_email — this only records the message and
-        # enqueues async delivery, it doesn't wait for SMTP. idempotency_key
-        # caps this at one notification per user per day, so a burst of
-        # rapid re-logins (token refresh flows, multiple tabs) doesn't spam
-        # the inbox.
+        # successful login. See EmailFacade.send_email — this only
+        # records the message and enqueues async delivery, it doesn't
+        # wait for SMTP. idempotency_key caps this at one notification
+        # per user per day, so a burst of rapid re-logins (token refresh
+        # flows, multiple tabs) doesn't spam the inbox.
         today = datetime.now(UTC).date().isoformat()
         try:
             await self._email_facade.send_email(
@@ -71,4 +58,4 @@ class LoginCommandHandler:
                 error=str(error),
             )
 
-        return Result.ok(tokens)
+        return tokens

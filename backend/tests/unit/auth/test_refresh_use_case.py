@@ -1,33 +1,30 @@
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from src.modules.auth.application.commands.refresh import (
-    RefreshCommand,
-    RefreshCommandHandler,
-)
+import pytest
+
 from src.modules.auth.domain.entities.dtos import RefreshTokenCreate
 from src.modules.auth.domain.exceptions import InvalidRefreshTokenError
 from src.modules.auth.infrastructure.security import hash_refresh_token
+from src.modules.auth.usecases.refresh import RefreshUseCase
 from tests.unit.auth.fakes import FakeAuthUnitOfWork, FakeRefreshTokenRepository
 
 
-def _handler() -> tuple[RefreshCommandHandler, FakeRefreshTokenRepository]:
+def _use_case() -> tuple[RefreshUseCase, FakeRefreshTokenRepository]:
     refresh_tokens = FakeRefreshTokenRepository()
     uow = FakeAuthUnitOfWork(refresh_tokens)
-    return RefreshCommandHandler(uow), refresh_tokens
+    return RefreshUseCase(uow), refresh_tokens
 
 
 async def test_rejects_unknown_token() -> None:
-    handler, _ = _handler()
+    use_case, _ = _use_case()
 
-    result = await handler.handle(RefreshCommand(refresh_token="unknown-token"))
-
-    assert result.is_err
-    assert isinstance(result.error, InvalidRefreshTokenError)
+    with pytest.raises(InvalidRefreshTokenError):
+        await use_case(refresh_token="unknown-token")
 
 
 async def test_rejects_expired_token() -> None:
-    handler, refresh_tokens = _handler()
+    use_case, refresh_tokens = _use_case()
     raw_token = "expired-token"
     await refresh_tokens.create(
         RefreshTokenCreate(
@@ -37,14 +34,12 @@ async def test_rejects_expired_token() -> None:
         )
     )
 
-    result = await handler.handle(RefreshCommand(refresh_token=raw_token))
-
-    assert result.is_err
-    assert isinstance(result.error, InvalidRefreshTokenError)
+    with pytest.raises(InvalidRefreshTokenError):
+        await use_case(refresh_token=raw_token)
 
 
 async def test_rejects_and_revokes_all_on_reused_revoked_token() -> None:
-    handler, refresh_tokens = _handler()
+    use_case, refresh_tokens = _use_case()
     user_id = uuid4()
     raw_token = "revoked-token"
     token = await refresh_tokens.create(
@@ -56,14 +51,12 @@ async def test_rejects_and_revokes_all_on_reused_revoked_token() -> None:
     )
     await refresh_tokens.revoke(token.id)
 
-    result = await handler.handle(RefreshCommand(refresh_token=raw_token))
-
-    assert result.is_err
-    assert isinstance(result.error, InvalidRefreshTokenError)
+    with pytest.raises(InvalidRefreshTokenError):
+        await use_case(refresh_token=raw_token)
 
 
 async def test_success_rotates_refresh_token() -> None:
-    handler, refresh_tokens = _handler()
+    use_case, refresh_tokens = _use_case()
     user_id = uuid4()
     raw_token = "valid-token"
     old_token = await refresh_tokens.create(
@@ -74,10 +67,9 @@ async def test_success_rotates_refresh_token() -> None:
         )
     )
 
-    result = await handler.handle(RefreshCommand(refresh_token=raw_token))
+    tokens = await use_case(refresh_token=raw_token)
 
-    assert result.is_ok
-    assert result.value.access_token
-    assert result.value.refresh_token
+    assert tokens.access_token
+    assert tokens.refresh_token
     assert refresh_tokens.tokens[old_token.id].is_revoked
     assert len(refresh_tokens.tokens) == 2
