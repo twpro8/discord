@@ -43,10 +43,11 @@ JOHN_ID = UUID("c08386e7-bbab-43b4-8427-d296390a3e1e")
 
 @contextmanager
 def _without_override(dependency: Callable[..., object]) -> Iterator[None]:
-    """conftest.py's global override hands get_mediator a fresh, throwaway
-    RedisSubscriptionManager per call — these tests need the single real
-    instance the lifespan creates on app.state, shared between the WS
-    connections and the HTTP request that triggers delivery to them."""
+    """conftest.py's global override hands get_realtime_notifier/
+    get_room_membership_updater a fresh, throwaway RedisSubscriptionManager
+    per call — these tests need the single real instance the lifespan
+    creates on app.state, shared between the WS connections and the HTTP
+    request that triggers delivery to them."""
     previous = app.dependency_overrides.pop(dependency, None)
     try:
         yield

@@ -1,11 +1,10 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from src.modules.presence.application.queries.get_friends_presence import (
-    GetFriendsPresenceQuery,
-    GetFriendsPresenceQueryHandler,
-)
 from src.modules.presence.domain.entities.dtos import PresenceDTO, PresenceStatus
+from src.modules.presence.usecases.get_friends_presence import (
+    GetFriendsPresenceUseCase,
+)
 from tests.unit.friends.fakes import FakeFriendsFacade
 from tests.unit.presence.fakes import FakePresenceRepository
 
@@ -18,23 +17,21 @@ async def test_returns_presence_only_for_friends() -> None:
         friend_id: PresenceDTO(user_id=friend_id, status=PresenceStatus.ONLINE),
         stranger_id: PresenceDTO(user_id=stranger_id, status=PresenceStatus.ONLINE),
     }
-    handler = GetFriendsPresenceQueryHandler(presence, friends_facade)
+    use_case = GetFriendsPresenceUseCase(presence, friends_facade)
 
-    result = await handler.handle(GetFriendsPresenceQuery(user_id=user_id))
+    result = await use_case(user_id=user_id)
 
-    assert result.is_ok
-    assert [dto.user_id for dto in result.value] == [friend_id]
+    assert [dto.user_id for dto in result] == [friend_id]
 
 
 async def test_no_friends_returns_empty_list() -> None:
     presence = FakePresenceRepository()
     friends_facade = FakeFriendsFacade()
-    handler = GetFriendsPresenceQueryHandler(presence, friends_facade)
+    use_case = GetFriendsPresenceUseCase(presence, friends_facade)
 
-    result = await handler.handle(GetFriendsPresenceQuery(user_id=uuid4()))
+    result = await use_case(user_id=uuid4())
 
-    assert result.is_ok
-    assert result.value == []
+    assert result == []
 
 
 async def test_includes_last_seen_for_offline_friends() -> None:
@@ -47,9 +44,8 @@ async def test_includes_last_seen_for_offline_friends() -> None:
             user_id=friend_id, status=PresenceStatus.OFFLINE, last_seen_at=last_seen
         )
     }
-    handler = GetFriendsPresenceQueryHandler(presence, friends_facade)
+    use_case = GetFriendsPresenceUseCase(presence, friends_facade)
 
-    result = await handler.handle(GetFriendsPresenceQuery(user_id=user_id))
+    result = await use_case(user_id=user_id)
 
-    assert result.is_ok
-    assert result.value[0].last_seen_at == last_seen
+    assert result[0].last_seen_at == last_seen

@@ -1,10 +1,9 @@
 from uuid import uuid4
 
-from src.modules.presence.application.queries.get_server_presence import (
-    GetServerPresenceQuery,
-    GetServerPresenceQueryHandler,
-)
+import pytest
+
 from src.modules.presence.domain.entities.dtos import PresenceDTO, PresenceStatus
+from src.modules.presence.usecases.get_server_presence import GetServerPresenceUseCase
 from src.modules.servers.domain.entities.dtos import ServerMemberCreate
 from src.modules.servers.domain.enums import ServerMemberRole
 from src.modules.servers.domain.exceptions import NotServerMemberError
@@ -21,14 +20,10 @@ async def test_rejects_non_members() -> None:
     servers_facade = FakeServersFacade(
         FakeServerMemberRepository(), FakeServerRepository()
     )
-    handler = GetServerPresenceQueryHandler(presence, servers_facade)
+    use_case = GetServerPresenceUseCase(presence, servers_facade)
 
-    result = await handler.handle(
-        GetServerPresenceQuery(server_id=uuid4(), requesting_user_id=uuid4())
-    )
-
-    assert result.is_err
-    assert isinstance(result.error, NotServerMemberError)
+    with pytest.raises(NotServerMemberError):
+        await use_case(server_id=uuid4(), requesting_user_id=uuid4())
 
 
 async def test_returns_presence_for_all_server_members() -> None:
@@ -53,12 +48,9 @@ async def test_returns_presence_for_all_server_members() -> None:
             user_id=other_member_id, status=PresenceStatus.AWAY
         ),
     }
-    handler = GetServerPresenceQueryHandler(presence, servers_facade)
+    use_case = GetServerPresenceUseCase(presence, servers_facade)
 
-    result = await handler.handle(
-        GetServerPresenceQuery(server_id=server_id, requesting_user_id=requester_id)
-    )
+    result = await use_case(server_id=server_id, requesting_user_id=requester_id)
 
-    assert result.is_ok
-    returned_ids = {dto.user_id for dto in result.value}
+    returned_ids = {dto.user_id for dto in result}
     assert returned_ids == {requester_id, other_member_id}

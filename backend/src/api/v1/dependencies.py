@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from typing import Annotated, cast
 from uuid import UUID
 
@@ -19,11 +18,6 @@ from src.core.security.jwt import decode_access_token
 from src.core.storage import Storage
 from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
-from src.modules.friends.public.facade import build_friends_facade
-from src.modules.presence.composition import register_presence_handlers
-from src.modules.servers.public.facade import build_servers_facade
-from src.shared.application.in_process_mediator import InProcessMediator
-from src.shared.application.mediator import Mediator
 
 access_cookie_scheme = APIKeyCookie(name="access_token")
 
@@ -102,26 +96,3 @@ def get_room_membership_updater(
 RoomMembershipUpdaterDep = Annotated[
     RoomMembershipUpdater, Depends(get_room_membership_updater)
 ]
-
-
-async def get_mediator(
-    session: SessionDep,
-    redis: RedisDep,
-) -> AsyncGenerator[Mediator]:
-    """The mediator now only carries presence's two read-side queries —
-    every other module has moved to native FastAPI DI (see each module's
-    transport/http/dependencies.py). Presence's write side
-    (connect/disconnect/heartbeat) is PresenceService, built once at app
-    startup in main.py's lifespan and never touches this mediator either;
-    see its own docstring for why."""
-    mediator = InProcessMediator()
-    # Session-backed — friends/servers have no command handlers of their
-    # own for presence to dispatch through, so these read straight off
-    # the request's session instead.
-    friends_facade = build_friends_facade(session)
-    servers_facade = build_servers_facade(session)
-    await register_presence_handlers(mediator, redis, friends_facade, servers_facade)
-    yield mediator
-
-
-MediatorDep = Annotated[Mediator, Depends(get_mediator)]
