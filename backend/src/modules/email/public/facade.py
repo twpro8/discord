@@ -4,9 +4,6 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.jobs import JobDispatcher
-from src.modules.email.adapters.email_unit_of_work_impl import (
-    EmailUnitOfWorkImpl,
-)
 from src.modules.email.adapters.persistence.email_message_repository_impl import (
     EmailMessageRepositoryImpl,
 )
@@ -15,6 +12,7 @@ from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.domain.exceptions import EmailMessageNotFoundError
 from src.modules.email.usecases.get_email_status import GetEmailStatusUseCase
 from src.modules.email.usecases.send_email import SendEmailUseCase
+from src.shared.data.transaction import SqlAlchemyTransaction
 
 
 class EmailFacade(Protocol):
@@ -77,11 +75,8 @@ def build_email_facade(
     job_dispatcher: JobDispatcher,
 ) -> EmailFacade:
     email_message_repository = EmailMessageRepositoryImpl(session)
-    uow = EmailUnitOfWorkImpl(
-        session=session,
-        email_message_repository=email_message_repository,
-    )
+    tx = SqlAlchemyTransaction(session)
     return UseCaseBackedEmailFacade(
-        SendEmailUseCase(uow, job_dispatcher),
+        SendEmailUseCase(tx, email_message_repository, job_dispatcher),
         GetEmailStatusUseCase(email_message_repository),
     )

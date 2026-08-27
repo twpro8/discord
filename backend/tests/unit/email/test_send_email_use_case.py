@@ -4,23 +4,24 @@ from src.modules.email.domain.enums import EmailStatus, EmailTemplateName
 from src.modules.email.domain.exceptions import InvalidEmailAddress
 from src.modules.email.usecases.send_email import SendEmailUseCase
 from tests.dependency_overrides.job_dispatcher import FakeJobDispatcher
-from tests.unit.email.fakes import FakeEmailMessageRepository, FakeEmailUnitOfWork
+from tests.unit.email.fakes import FakeEmailMessageRepository
+from tests.unit.fakes import FakeTransaction
 
 
 def _use_case() -> tuple[
     SendEmailUseCase,
-    FakeEmailUnitOfWork,
+    FakeTransaction,
     FakeEmailMessageRepository,
     FakeJobDispatcher,
 ]:
     repository = FakeEmailMessageRepository()
-    uow = FakeEmailUnitOfWork(repository)
+    tx = FakeTransaction()
     dispatcher = FakeJobDispatcher()
-    return SendEmailUseCase(uow, dispatcher), uow, repository, dispatcher
+    return SendEmailUseCase(tx, repository, dispatcher), tx, repository, dispatcher
 
 
 async def test_creates_pending_message_commits_and_enqueues_delivery() -> None:
-    use_case, uow, _repository, dispatcher = _use_case()
+    use_case, tx, _repository, dispatcher = _use_case()
 
     message = await use_case(
         to="User@Example.com",
@@ -30,7 +31,7 @@ async def test_creates_pending_message_commits_and_enqueues_delivery() -> None:
 
     assert message.to == "user@example.com"
     assert message.status == EmailStatus.PENDING
-    assert uow.committed
+    assert tx.committed
 
     assert len(dispatcher.calls) == 1
     task_name, payload, queue = dispatcher.calls[0]
@@ -42,7 +43,7 @@ async def test_creates_pending_message_commits_and_enqueues_delivery() -> None:
 
 
 async def test_invalid_email_address_raises_without_enqueuing() -> None:
-    use_case, uow, _repository, dispatcher = _use_case()
+    use_case, tx, _repository, dispatcher = _use_case()
 
     with pytest.raises(InvalidEmailAddress):
         await use_case(
@@ -51,12 +52,12 @@ async def test_invalid_email_address_raises_without_enqueuing() -> None:
             context={},
         )
 
-    assert not uow.committed
+    assert not tx.committed
     assert dispatcher.calls == []
 
 
 async def test_idempotency_key_returns_existing_without_duplicate_enqueue() -> None:
-    use_case, _uow, repository, dispatcher = _use_case()
+    use_case, _tx, repository, dispatcher = _use_case()
     to = "user@example.com"
     template = EmailTemplateName.GENERIC_NOTIFICATION
     context = {"recipient_name": "User", "message": "hi"}
