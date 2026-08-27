@@ -8,7 +8,6 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.api.errors import register_exception_handlers
 from src.api.v1.router import build_api_v1_router
-from src.composition.container import build_container
 from src.core.cache import RedisCache
 from src.core.config import settings
 from src.core.database.session import get_session_factory
@@ -176,9 +175,7 @@ def create_app() -> FastAPI:
         app
     ).expose(app, include_in_schema=False, tags=["Meta"])
 
-    container = build_container()
-    app.state.container = container
-    app.include_router(build_api_v1_router(container))
+    app.include_router(build_api_v1_router())
 
     return app
 

@@ -1,3 +1,13 @@
+"""`messages` has no top-level router of its own, unlike the other 6 HTTP
+modules: its HTTP surface is a sub-resource of chats/channels (POST
+/chats/{chat_id}/messages, /channels/{channel_id}/messages), so
+`api/v1/router.py` never mounts it directly — `chats`' and `channels`' own
+routers import `chat_message_router`/`channel_message_router` from here and
+pull them in via `router.include_router(..., prefix="/{chat_id}" |
+"/{channel_id}")`. Use-case DI wiring is unaffected:
+`messages/transport/http/dependencies.py` builds its own use cases the same
+way every other module does."""
+
 from uuid import UUID
 
 from fastapi import APIRouter, Query, status

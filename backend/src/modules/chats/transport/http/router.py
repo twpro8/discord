@@ -26,11 +26,11 @@ from src.modules.chats.transport.http.schemas import (
     ChatUpdateRequest,
     MarkAsReadRequest,
 )
-from src.modules.messages.module import get_chat_message_router
+from src.modules.messages.transport.http.router import chat_message_router
 from src.shared.schemas.bridge import unsettable_from_request
 
 router = APIRouter(prefix="/chats", tags=["Chats"])
-router.include_router(get_chat_message_router(), prefix="/{chat_id}")
+router.include_router(chat_message_router, prefix="/{chat_id}")
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
