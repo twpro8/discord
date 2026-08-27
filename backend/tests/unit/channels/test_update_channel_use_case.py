@@ -19,7 +19,7 @@ from src.modules.servers.domain.exceptions import (
     NotServerMemberError,
     NotServerOwnerError,
 )
-from tests.unit.channels.fakes import FakeChannelRepository, FakeChannelUnitOfWork
+from tests.unit.channels.fakes import FakeChannelRepository
 from tests.unit.servers.fakes import (
     FakeServerMemberRepository,
     FakeServerRepository,
@@ -52,19 +52,18 @@ def _use_case(
     channels: FakeChannelRepository,
     server_members: FakeServerMemberRepository,
     servers: FakeServerRepository,
-) -> tuple[UpdateChannelUseCase, FakeChannelUnitOfWork]:
-    uow = FakeChannelUnitOfWork(channels)
+) -> UpdateChannelUseCase:
     servers_facade = FakeServersFacade(server_members, servers)
-    return UpdateChannelUseCase(uow, servers_facade), uow
+    return UpdateChannelUseCase(channels, servers_facade)
 
 
-async def test_owner_can_rename_channel_and_commit() -> None:
+async def test_owner_can_rename_channel() -> None:
     channels, server_members, servers = (
         FakeChannelRepository(),
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, uow = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
@@ -79,7 +78,6 @@ async def test_owner_can_rename_channel_and_commit() -> None:
 
     assert updated.name == "renamed"
     assert updated.topic == "new topic"
-    assert uow.committed
 
 
 async def test_partial_update_leaves_other_fields_untouched() -> None:
@@ -88,7 +86,7 @@ async def test_partial_update_leaves_other_fields_untouched() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, uow = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id, name="general"
@@ -111,7 +109,7 @@ async def test_empty_topic_clears_field() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
@@ -134,7 +132,7 @@ async def test_position_updated() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
@@ -156,7 +154,7 @@ async def test_renaming_to_same_name_is_allowed() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
@@ -176,7 +174,7 @@ async def test_duplicate_name_within_server_conflicts() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, uow = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id, name="general"
@@ -191,8 +189,6 @@ async def test_duplicate_name_within_server_conflicts() -> None:
             update_data=ChannelUpdateData(name="taken"),
         )
 
-    assert not uow.committed
-
 
 async def test_same_name_in_another_server_does_not_conflict() -> None:
     channels, server_members, servers = (
@@ -200,7 +196,7 @@ async def test_same_name_in_another_server_does_not_conflict() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id, name="general"
@@ -224,7 +220,7 @@ async def test_channel_not_found() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, uow = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     _, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
@@ -238,8 +234,6 @@ async def test_channel_not_found() -> None:
             update_data=ChannelUpdateData(name="renamed"),
         )
 
-    assert not uow.committed
-
 
 async def test_server_mismatch_is_not_found() -> None:
     channels, server_members, servers = (
@@ -247,7 +241,7 @@ async def test_server_mismatch_is_not_found() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     channel, _ = await _make_owned_channel(channels, server_members, servers, owner_id)
 
@@ -266,7 +260,7 @@ async def test_non_owner_member_cannot_update() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id, member_id = uuid4(), uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
@@ -290,7 +284,7 @@ async def test_non_member_cannot_update() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id, outsider_id = uuid4(), uuid4()
     channel, server_id = await _make_owned_channel(
         channels, server_members, servers, owner_id
