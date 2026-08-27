@@ -14,7 +14,6 @@ from src.modules.chats.domain.entities.dtos import (
     MemberCreate,
 )
 from src.modules.chats.domain.enums import ChatMemberRole
-from src.modules.chats.domain.repositories.chat_unit_of_work import ChatUnitOfWork
 from src.shared.domain.domain_event import DomainEvent
 from src.shared.domain.unset import set_fields
 
@@ -170,24 +169,6 @@ class FakeChatMemberRepository:
             if member.chat_id == chat_id and member.user_id == user_id:
                 member.last_read_seq = max(member.last_read_seq, up_to_seq)
                 return
-
-
-class FakeChatUnitOfWork(ChatUnitOfWork):
-    def __init__(
-        self,
-        chats: FakeChatRepository,
-        members: FakeChatMemberRepository,
-    ) -> None:
-        self.chats = chats
-        self.members = members
-        self.committed = False
-        self.rolled_back = False
-
-    async def commit(self) -> None:
-        self.committed = True
-
-    async def rollback(self) -> None:
-        self.rolled_back = True
 
 
 class FakeChatsFacade:

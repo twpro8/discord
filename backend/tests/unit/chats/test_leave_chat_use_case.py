@@ -10,16 +10,15 @@ from src.modules.chats.usecases.leave_chat import LeaveChatUseCase
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
-    FakeChatUnitOfWork,
     FakeRoomMembershipUpdater,
 )
+from tests.unit.fakes import FakeTransaction
 
 
 async def test_non_owner_member_can_leave() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
     room_updater = FakeRoomMembershipUpdater()
-    use_case = LeaveChatUseCase(uow, room_updater)
+    use_case = LeaveChatUseCase(FakeTransaction(), chats, members, room_updater)
     owner_id, member_id = uuid4(), uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
@@ -41,8 +40,9 @@ async def test_non_owner_member_can_leave() -> None:
 
 async def test_owner_leaving_transfers_to_oldest_remaining_member() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = LeaveChatUseCase(uow, FakeRoomMembershipUpdater())
+    use_case = LeaveChatUseCase(
+        FakeTransaction(), chats, members, FakeRoomMembershipUpdater()
+    )
     owner_id, oldest_id, newest_id = uuid4(), uuid4(), uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
@@ -65,8 +65,9 @@ async def test_owner_leaving_transfers_to_oldest_remaining_member() -> None:
 
 async def test_owner_leaving_alone_archives_chat() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = LeaveChatUseCase(uow, FakeRoomMembershipUpdater())
+    use_case = LeaveChatUseCase(
+        FakeTransaction(), chats, members, FakeRoomMembershipUpdater()
+    )
     owner_id = uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
@@ -83,8 +84,9 @@ async def test_owner_leaving_alone_archives_chat() -> None:
 
 async def test_cannot_leave_private_chat() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = LeaveChatUseCase(uow, FakeRoomMembershipUpdater())
+    use_case = LeaveChatUseCase(
+        FakeTransaction(), chats, members, FakeRoomMembershipUpdater()
+    )
     user_a, user_b = uuid4(), uuid4()
     chat = await chats.create(ChatCreate(type=ChatType.private))
     await members.add_members(

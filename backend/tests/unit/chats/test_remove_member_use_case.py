@@ -14,16 +14,16 @@ from src.modules.chats.usecases.remove_member import RemoveMemberUseCase
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
-    FakeChatUnitOfWork,
     FakeRoomMembershipUpdater,
 )
+from tests.unit.fakes import FakeTransaction
 
 
 async def test_owner_can_remove_member() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
+    tx = FakeTransaction()
     room_updater = FakeRoomMembershipUpdater()
-    use_case = RemoveMemberUseCase(uow, room_updater)
+    use_case = RemoveMemberUseCase(tx, chats, members, room_updater)
     owner_id, target_id = uuid4(), uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
@@ -38,14 +38,15 @@ async def test_owner_can_remove_member() -> None:
     await use_case(chat_id=chat.id, user_id=owner_id, target_user_id=target_id)
 
     assert await members.find_active(chat.id, target_id) is None
-    assert uow.committed
+    assert tx.committed
     assert room_updater.left == [(target_id, chat_room(chat.id))]
 
 
 async def test_owner_cannot_remove_self() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = RemoveMemberUseCase(uow, FakeRoomMembershipUpdater())
+    use_case = RemoveMemberUseCase(
+        FakeTransaction(), chats, members, FakeRoomMembershipUpdater()
+    )
     owner_id = uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
@@ -60,8 +61,9 @@ async def test_owner_cannot_remove_self() -> None:
 
 async def test_removing_nonmember_fails() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = RemoveMemberUseCase(uow, FakeRoomMembershipUpdater())
+    use_case = RemoveMemberUseCase(
+        FakeTransaction(), chats, members, FakeRoomMembershipUpdater()
+    )
     owner_id = uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
@@ -76,8 +78,9 @@ async def test_removing_nonmember_fails() -> None:
 
 async def test_non_owner_cannot_remove_member() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = RemoveMemberUseCase(uow, FakeRoomMembershipUpdater())
+    use_case = RemoveMemberUseCase(
+        FakeTransaction(), chats, members, FakeRoomMembershipUpdater()
+    )
     owner_id, other_id, target_id = uuid4(), uuid4(), uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")
