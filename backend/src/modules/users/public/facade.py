@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from typing import Protocol
 from uuid import UUID
 
@@ -104,14 +103,14 @@ class UseCaseBackedUsersFacade:
         return user_to_dto(user)
 
 
-async def build_users_facade(
+def build_users_facade(
     session: AsyncSession, cache: Cache, event_bus: EventBus
-) -> AsyncGenerator[UsersFacade]:
+) -> UsersFacade:
     user_repository = UserRepositoryImpl(session)
-    async with UserUnitOfWorkImpl(session, user_repository) as uow:
-        yield UseCaseBackedUsersFacade(
-            GetUserByIDUseCase(uow.users, cache),
-            GetUserByUsernameUseCase(uow.users),
-            VerifyCredentialsUseCase(uow.users),
-            CreateUserUseCase(uow, event_bus),
-        )
+    uow = UserUnitOfWorkImpl(session, user_repository)
+    return UseCaseBackedUsersFacade(
+        GetUserByIDUseCase(uow.users, cache),
+        GetUserByUsernameUseCase(uow.users),
+        VerifyCredentialsUseCase(uow.users),
+        CreateUserUseCase(uow, event_bus),
+    )

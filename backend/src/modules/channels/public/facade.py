@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from typing import Protocol
 from uuid import UUID
 
@@ -41,11 +40,7 @@ class UseCaseBackedChannelsFacade:
         return channel_to_dto(channel)
 
 
-async def build_channels_facade(
-    session: AsyncSession,
-) -> AsyncGenerator[ChannelsFacade]:
+def build_channels_facade(session: AsyncSession) -> ChannelsFacade:
     channel_repository = ChannelRepositoryImpl(session)
-    async with ChannelUnitOfWorkImpl(
-        session=session, channel_repository=channel_repository
-    ) as uow:
-        yield UseCaseBackedChannelsFacade(CreateChannelUseCase(uow))
+    uow = ChannelUnitOfWorkImpl(session=session, channel_repository=channel_repository)
+    return UseCaseBackedChannelsFacade(CreateChannelUseCase(uow))

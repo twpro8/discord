@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-from contextlib import aclosing
 from typing import Annotated
 
 from fastapi import Depends
@@ -38,20 +37,16 @@ async def get_auth_unit_of_work(session: SessionDep) -> AsyncGenerator[AuthUnitO
         yield uow
 
 
-async def get_users_facade(
+def get_users_facade(
     session: SessionDep, cache: CacheDep, event_bus: EventBusDep
-) -> AsyncGenerator[UsersFacade]:
-    async with aclosing(build_users_facade(session, cache, event_bus)) as facades:
-        async for facade in facades:
-            yield facade
+) -> UsersFacade:
+    return build_users_facade(session, cache, event_bus)
 
 
-async def get_email_facade(
+def get_email_facade(
     session: SessionDep, job_dispatcher: JobDispatcherDep
-) -> AsyncGenerator[EmailFacade]:
-    async with aclosing(build_email_facade(session, job_dispatcher)) as facades:
-        async for facade in facades:
-            yield facade
+) -> EmailFacade:
+    return build_email_facade(session, job_dispatcher)
 
 
 AuthUnitOfWorkDep = Annotated[AuthUnitOfWork, Depends(get_auth_unit_of_work)]

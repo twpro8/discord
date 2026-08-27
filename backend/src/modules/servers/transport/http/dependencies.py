@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-from contextlib import aclosing
 from typing import Annotated
 
 from fastapi import Depends
@@ -53,12 +52,10 @@ async def get_server_unit_of_work(
         yield uow
 
 
-async def get_channels_facade(session: SessionDep) -> AsyncGenerator[ChannelsFacade]:
+def get_channels_facade(session: SessionDep) -> ChannelsFacade:
     # CreateServerUseCase delegates default-channel creation to channels as
     # part of its own atomic operation, so it needs a same-session facade.
-    async with aclosing(build_channels_facade(session)) as facades:
-        async for facade in facades:
-            yield facade
+    return build_channels_facade(session)
 
 
 ServerUnitOfWorkDep = Annotated[ServerUnitOfWork, Depends(get_server_unit_of_work)]

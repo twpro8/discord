@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-from contextlib import aclosing
 from typing import Annotated
 
 from fastapi import Depends
@@ -41,12 +40,10 @@ async def get_chat_unit_of_work(session: SessionDep) -> AsyncGenerator[ChatUnitO
         yield uow
 
 
-async def get_users_facade(
+def get_users_facade(
     session: SessionDep, cache: CacheDep, event_bus: EventBusDep
-) -> AsyncGenerator[UsersFacade]:
-    async with aclosing(build_users_facade(session, cache, event_bus)) as facades:
-        async for facade in facades:
-            yield facade
+) -> UsersFacade:
+    return build_users_facade(session, cache, event_bus)
 
 
 ChatUnitOfWorkDep = Annotated[ChatUnitOfWork, Depends(get_chat_unit_of_work)]

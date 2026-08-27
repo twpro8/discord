@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from typing import Any, Protocol
 from uuid import UUID
 
@@ -73,16 +72,16 @@ class UseCaseBackedEmailFacade:
             return None
 
 
-async def build_email_facade(
+def build_email_facade(
     session: AsyncSession,
     job_dispatcher: JobDispatcher,
-) -> AsyncGenerator[EmailFacade]:
+) -> EmailFacade:
     email_message_repository = EmailMessageRepositoryImpl(session)
-    async with EmailUnitOfWorkImpl(
+    uow = EmailUnitOfWorkImpl(
         session=session,
         email_message_repository=email_message_repository,
-    ) as uow:
-        yield UseCaseBackedEmailFacade(
-            SendEmailUseCase(uow, job_dispatcher),
-            GetEmailStatusUseCase(email_message_repository),
-        )
+    )
+    return UseCaseBackedEmailFacade(
+        SendEmailUseCase(uow, job_dispatcher),
+        GetEmailStatusUseCase(email_message_repository),
+    )
