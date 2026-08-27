@@ -10,13 +10,12 @@ from src.modules.friends.domain.exceptions import (
     NotParticipantError,
 )
 from src.modules.friends.usecases.accept_request import AcceptFriendRequestUseCase
-from tests.unit.friends.fakes import FakeFriendRepository, FakeFriendUnitOfWork
+from tests.unit.friends.fakes import FakeFriendRepository
 
 
 def _use_case() -> tuple[AcceptFriendRequestUseCase, FakeFriendRepository]:
     friends = FakeFriendRepository()
-    uow = FakeFriendUnitOfWork(friends)
-    return AcceptFriendRequestUseCase(uow), friends
+    return AcceptFriendRequestUseCase(friends), friends
 
 
 async def test_rejects_unknown_request() -> None:

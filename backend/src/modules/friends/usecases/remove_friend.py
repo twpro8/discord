@@ -6,17 +6,17 @@ from src.modules.friends.domain.exceptions import (
     FriendRequestNotPendingError,
     NotParticipantError,
 )
-from src.modules.friends.domain.repositories.friend_unit_of_work import (
-    FriendUnitOfWork,
+from src.modules.friends.domain.repositories.friend_repository import (
+    FriendRepository,
 )
 
 
 class RemoveFriendUseCase:
-    def __init__(self, uow: FriendUnitOfWork) -> None:
-        self._uow = uow
+    def __init__(self, friend_repository: FriendRepository) -> None:
+        self._friends = friend_repository
 
     async def __call__(self, *, current_user_id: UUID, relationship_id: UUID) -> None:
-        request = await self._uow.friends.get_by_id(relationship_id)
+        request = await self._friends.get_by_id(relationship_id)
         if request is None:
             raise FriendRequestNotFoundError
 
@@ -29,5 +29,4 @@ class RemoveFriendUseCase:
         if request.status != FriendStatus.FRIENDS:
             raise FriendRequestNotPendingError
 
-        await self._uow.friends.delete(relationship_id)
-        await self._uow.commit()
+        await self._friends.delete(relationship_id)
