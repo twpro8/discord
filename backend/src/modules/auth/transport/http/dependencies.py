@@ -1,16 +1,22 @@
-from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends
 from fastapi.security import APIKeyCookie
 
-from src.api.v1.dependencies import CacheDep, EventBusDep, JobDispatcherDep, SessionDep
-from src.modules.auth.adapters.auth_unit_of_work_impl import AuthUnitOfWorkImpl
+from src.api.v1.dependencies import (
+    CacheDep,
+    EventBusDep,
+    JobDispatcherDep,
+    SessionDep,
+    TransactionDep,
+)
 from src.modules.auth.adapters.persistence.refresh_token_repository_impl import (
     RefreshTokenRepositoryImpl,
 )
 from src.modules.auth.domain.exceptions import AuthenticationError
-from src.modules.auth.domain.repositories.auth_unit_of_work import AuthUnitOfWork
+from src.modules.auth.domain.repositories.refresh_token_repository import (
+    RefreshTokenRepository,
+)
 from src.modules.auth.usecases.login import LoginUseCase
 from src.modules.auth.usecases.logout import LogoutUseCase
 from src.modules.auth.usecases.refresh import RefreshUseCase
@@ -31,10 +37,8 @@ OptionalRefreshTokenDep = Annotated[str | None, Depends(refresh_cookie_scheme)]
 RefreshTokenDep = Annotated[str, Depends(get_refresh_token_cookie)]
 
 
-async def get_auth_unit_of_work(session: SessionDep) -> AsyncGenerator[AuthUnitOfWork]:
-    refresh_token_repository = RefreshTokenRepositoryImpl(session)
-    async with AuthUnitOfWorkImpl(session, refresh_token_repository) as uow:
-        yield uow
+def get_refresh_token_repository(session: SessionDep) -> RefreshTokenRepository:
+    return RefreshTokenRepositoryImpl(session)
 
 
 def get_users_facade(
@@ -49,27 +53,36 @@ def get_email_facade(
     return build_email_facade(session, job_dispatcher)
 
 
-AuthUnitOfWorkDep = Annotated[AuthUnitOfWork, Depends(get_auth_unit_of_work)]
+RefreshTokenRepositoryDep = Annotated[
+    RefreshTokenRepository, Depends(get_refresh_token_repository)
+]
 UsersFacadeDep = Annotated[UsersFacade, Depends(get_users_facade)]
 EmailFacadeDep = Annotated[EmailFacade, Depends(get_email_facade)]
 
 
 async def get_login_use_case(
-    uow: AuthUnitOfWorkDep, users_facade: UsersFacadeDep, email_facade: EmailFacadeDep
+    tx: TransactionDep,
+    refresh_token_repository: RefreshTokenRepositoryDep,
+    users_facade: UsersFacadeDep,
+    email_facade: EmailFacadeDep,
 ) -> LoginUseCase:
-    return LoginUseCase(uow, users_facade, email_facade)
+    return LoginUseCase(tx, refresh_token_repository, users_facade, email_facade)
 
 
 async def get_register_use_case(users_facade: UsersFacadeDep) -> RegisterUseCase:
     return RegisterUseCase(users_facade)
 
 
-async def get_refresh_use_case(uow: AuthUnitOfWorkDep) -> RefreshUseCase:
-    return RefreshUseCase(uow)
+async def get_refresh_use_case(
+    tx: TransactionDep, refresh_token_repository: RefreshTokenRepositoryDep
+) -> RefreshUseCase:
+    return RefreshUseCase(tx, refresh_token_repository)
 
 
-async def get_logout_use_case(uow: AuthUnitOfWorkDep) -> LogoutUseCase:
-    return LogoutUseCase(uow)
+async def get_logout_use_case(
+    tx: TransactionDep, refresh_token_repository: RefreshTokenRepositoryDep
+) -> LogoutUseCase:
+    return LogoutUseCase(tx, refresh_token_repository)
 
 
 LoginUseCaseDep = Annotated[LoginUseCase, Depends(get_login_use_case)]

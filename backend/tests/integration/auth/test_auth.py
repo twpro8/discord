@@ -1,7 +1,11 @@
 """Integration tests for authentication."""
 
 from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.auth.adapters.persistence.models import RefreshTokenOrm
+from src.modules.auth.adapters.security import hash_refresh_token
 from src.modules.users.domain.entities.user import User
 
 
@@ -109,6 +113,52 @@ class TestRefresh:
         response = await ac.post("/api/v1/auth/refresh")
         assert response.status_code == 401
         assert response.json()["detail"] == "Invalid refresh token"
+
+    async def test_reused_revoked_token_revokes_all_and_persists(
+        self,
+        ac: AsyncClient,
+        current_user: User,
+        session: AsyncSession,
+    ) -> None:
+        """get_valid_refresh_token commits explicitly before raising on a
+        reused (already-revoked) token, specifically because a raised
+        exception skips the request's normal auto-commit (see
+        api/v1/dependencies.py::get_transaction) — without that explicit
+        commit, the revoke_all write below would be silently discarded.
+        Reads back through the separate `session` fixture, so a dropped
+        commit would show up as unrevoked tokens here, not a client-visible
+        symptom."""
+        await ac.post(
+            "/api/v1/auth/login",
+            json={"username": str(current_user.username), "password": "12345678"},
+        )
+        stale_token = ac.cookies.get("refresh_token")
+        assert stale_token is not None
+
+        # Rotates: revokes stale_token, issues a new one.
+        await ac.post("/api/v1/auth/refresh")
+        rotated_token = ac.cookies.get("refresh_token")
+        assert rotated_token is not None
+        assert rotated_token != stale_token
+
+        # Replay the now-revoked token.
+        ac.cookies.set("refresh_token", stale_token)
+        response = await ac.post("/api/v1/auth/refresh")
+        assert response.status_code == 401
+
+        # The DB is not rolled back between tests in this session (see
+        # tests/integration/conftest.py), so look up these two specific
+        # tokens by hash rather than counting the user's tokens overall.
+        result = await session.execute(
+            select(RefreshTokenOrm).where(
+                RefreshTokenOrm.token_hash.in_(
+                    [hash_refresh_token(stale_token), hash_refresh_token(rotated_token)]
+                )
+            )
+        )
+        tokens = result.scalars().all()
+        assert len(tokens) == 2
+        assert all(token.is_revoked for token in tokens)
 
 
 class TestLogout:

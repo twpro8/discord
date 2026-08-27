@@ -2,13 +2,14 @@ from datetime import UTC, datetime
 
 from src.core.logging import get_logger
 from src.modules.auth.domain.entities.dtos import TokenPair
-from src.modules.auth.domain.repositories.auth_unit_of_work import (
-    AuthUnitOfWork,
+from src.modules.auth.domain.repositories.refresh_token_repository import (
+    RefreshTokenRepository,
 )
 from src.modules.auth.usecases.token_helper import issue_tokens
 from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.public.facade import EmailFacade
 from src.modules.users.public.facade import UsersFacade
+from src.shared.domain.transaction import Transaction
 from src.shared.errors import LumiereError
 
 logger = get_logger(__name__)
@@ -17,11 +18,13 @@ logger = get_logger(__name__)
 class LoginUseCase:
     def __init__(
         self,
-        uow: AuthUnitOfWork,
+        tx: Transaction,
+        refresh_token_repository: RefreshTokenRepository,
         users_facade: UsersFacade,
         email_facade: EmailFacade,
     ) -> None:
-        self._uow = uow
+        self._tx = tx
+        self._refresh_tokens = refresh_token_repository
         self._users_facade = users_facade
         self._email_facade = email_facade
 
@@ -31,8 +34,8 @@ class LoginUseCase:
             plain_password=password,
         )
 
-        tokens = await issue_tokens(self._uow, user.id)
-        await self._uow.commit()
+        tokens = await issue_tokens(self._refresh_tokens, user.id)
+        await self._tx.commit()
 
         # Best-effort notification: a failed/slow email must never block a
         # successful login. See EmailFacade.send_email — this only
