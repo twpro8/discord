@@ -1,7 +1,7 @@
 """Integration tests for the realtime WebSocket fan-out.
 
 Message delivery goes through RedisRealtimeNotifier -> chat_room(chat_id)
-(see api/v1/dependencies.py::get_mediator); room membership itself is
+(see api/v1/dependencies.py::get_realtime_notifier); room membership itself is
 kept current by DistributedRoomMembershipUpdater, published to
 user_room(user_id) so every instance with a local connection for that
 user — including this one — picks it up the same way (see
@@ -31,11 +31,12 @@ BOB_ID = UUID("1df5569d-c4bf-488e-9f0f-30946a7067c9")
 
 @contextmanager
 def _without_override(dependency: Callable[..., object]) -> Iterator[None]:
-    """conftest.py's global override hands get_mediator a fresh, throwaway
-    RedisSubscriptionManager per call — fine for tests that only need
-    get_mediator to resolve, but these tests need the single real
-    instance the lifespan creates on app.state, shared between the WS
-    connections and the HTTP request that triggers delivery to them."""
+    """conftest.py's global override hands get_realtime_notifier/
+    get_room_membership_updater a fresh, throwaway RedisSubscriptionManager
+    per call — fine for tests that only need those to resolve, but these
+    tests need the single real instance the lifespan creates on
+    app.state, shared between the WS connections and the HTTP request
+    that triggers delivery to them."""
     previous = app.dependency_overrides.pop(dependency, None)
     try:
         yield
@@ -104,7 +105,7 @@ def test_message_fans_out_to_members(client: TestClient) -> None:
             chat_id = chat_resp.json()["id"]
 
             # Chat creation only joins members' connections to chat_room on
-            # a genuinely fresh create (see CreateChatCommandHandler) — a
+            # a genuinely fresh create (see CreateChatUseCase) — a
             # session-scoped seeded database shared with other test files
             # may already have this exact pair's private chat from an
             # earlier file, in which case this POST just reuses it and

@@ -2,28 +2,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from src.api.v1.dependencies import MediatorDep, UserIdDep
-from src.modules.servers.application.commands.create_server import CreateServerCommand
-from src.modules.servers.application.commands.delete_server import DeleteServerCommand
-from src.modules.servers.application.commands.join_server import JoinServerCommand
-from src.modules.servers.application.commands.transfer_ownership import (
-    TransferServerOwnershipCommand,
-)
-from src.modules.servers.application.commands.update_server import UpdateServerCommand
-from src.modules.servers.application.queries.get_server_members import (
-    GetServerMembersQuery,
-)
-from src.modules.servers.application.queries.get_server_where_user_member import (
-    GetServerWhereUserMemberQuery,
-)
-from src.modules.servers.application.queries.get_servers_where_user_member import (
-    GetServersWhereUserMemberQuery,
-)
-from src.modules.servers.domain.entities.dtos import (
-    ServerCreateData,
-    ServerMemberWithUser,
-    ServerUpdateData,
-    ServerUserSummary,
+from src.api.v1.dependencies import UserIdDep
+from src.modules.servers.domain.entities.dtos import ServerCreateData, ServerUpdateData
+from src.modules.servers.transport.http.dependencies import (
+    CreateServerUseCaseDep,
+    DeleteServerUseCaseDep,
+    GetServerMembersUseCaseDep,
+    GetServersWhereUserMemberUseCaseDep,
+    GetServerWhereUserMemberUseCaseDep,
+    JoinServerUseCaseDep,
+    TransferServerOwnershipUseCaseDep,
+    UpdateServerUseCaseDep,
 )
 from src.modules.servers.transport.http.invites import router as invite_router
 from src.modules.servers.transport.http.schemas import (
@@ -36,8 +25,6 @@ from src.modules.servers.transport.http.schemas import (
     ServerUserSummaryResponse,
     UpdateOwnerID,
 )
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 from src.shared.schemas.bridge import unsettable_from_request
 
 router = APIRouter(prefix="/servers", tags=["Servers"])
@@ -48,91 +35,67 @@ router.include_router(invite_router, prefix="/{server_id}")
 async def create_server(
     current_user_id: UserIdDep,
     server_data: ServerCreateRequest,
-    mediator: MediatorDep,
+    use_case: CreateServerUseCaseDep,
 ) -> ServerResponse:
-    result = await mediator.send(
-        CreateServerCommand(
-            server_data=ServerCreateData(**server_data.model_dump()),
-            owner_id=current_user_id,
-        )
+    server = await use_case(
+        server_data=ServerCreateData(**server_data.model_dump()),
+        owner_id=current_user_id,
     )
-    if result.is_err:
-        raise result.error
-    return ServerResponse.model_validate(result.value)
+    return ServerResponse.model_validate(server)
 
 
 @router.post("/join", status_code=status.HTTP_201_CREATED)
 async def join_server(
     current_user_id: UserIdDep,
     code: ServerInviteCode,
-    mediator: MediatorDep,
+    use_case: JoinServerUseCaseDep,
 ) -> ServerMemberResponse:
-    result = await mediator.send(
-        JoinServerCommand(user_id=current_user_id, code=code.code)
-    )
-    if result.is_err:
-        raise result.error
-    return ServerMemberResponse.model_validate(result.value)
+    member = await use_case(user_id=current_user_id, code=code.code)
+    return ServerMemberResponse.model_validate(member)
 
 
 @router.post("/{server_id}/transfer", status_code=status.HTTP_200_OK)
 async def transfer_ownership(
     server_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: TransferServerOwnershipUseCaseDep,
     owner_id: UpdateOwnerID,
 ) -> ServerResponse:
-    result = await mediator.send(
-        TransferServerOwnershipCommand(
-            server_id=server_id,
-            current_user_id=current_user_id,
-            new_owner_id=owner_id.owner_id,
-        )
+    server = await use_case(
+        server_id=server_id,
+        current_user_id=current_user_id,
+        new_owner_id=owner_id.owner_id,
     )
-    if result.is_err:
-        raise result.error
-    return ServerResponse.model_validate(result.value)
+    return ServerResponse.model_validate(server)
 
 
 @router.get("", response_model=list[ServerUserSummaryResponse])
 async def get_my_servers(
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: GetServersWhereUserMemberUseCaseDep,
 ) -> list[ServerUserSummaryResponse]:
-    result: Result[list[ServerUserSummary], LumiereError] = await mediator.query(
-        GetServersWhereUserMemberQuery(user_id=current_user_id)
-    )
-    if result.is_err:
-        raise result.error
-    return [ServerUserSummaryResponse.model_validate(s) for s in result.value]
+    servers = await use_case(user_id=current_user_id)
+    return [ServerUserSummaryResponse.model_validate(s) for s in servers]
 
 
 @router.get("/{server_id}", response_model=ServerResponse)
 async def get_my_server(
     current_user_id: UserIdDep,
     server_id: UUID,
-    mediator: MediatorDep,
+    use_case: GetServerWhereUserMemberUseCaseDep,
 ) -> ServerResponse:
-    result = await mediator.query(
-        GetServerWhereUserMemberQuery(user_id=current_user_id, server_id=server_id)
-    )
-    if result.is_err:
-        raise result.error
-    return ServerResponse.model_validate(result.value)
+    server = await use_case(user_id=current_user_id, server_id=server_id)
+    return ServerResponse.model_validate(server)
 
 
 @router.get("/{server_id}/members", response_model=list[ServerMemberWithUserResponse])
 async def get_server_members(
     server_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: GetServerMembersUseCaseDep,
 ) -> list[ServerMemberWithUserResponse]:
-    result: Result[list[ServerMemberWithUser], LumiereError] = await mediator.query(
-        GetServerMembersQuery(server_id=server_id, requesting_user_id=current_user_id)
-    )
-    if result.is_err:
-        raise result.error
-    return [ServerMemberWithUserResponse.model_validate(m) for m in result.value]
+    members = await use_case(server_id=server_id, requesting_user_id=current_user_id)
+    return [ServerMemberWithUserResponse.model_validate(m) for m in members]
 
 
 @router.patch("/{server_id}")
@@ -140,28 +103,20 @@ async def update_server(
     server_id: UUID,
     current_user_id: UserIdDep,
     update_data: ServerUpdateRequest,
-    mediator: MediatorDep,
+    use_case: UpdateServerUseCaseDep,
 ) -> ServerResponse:
-    result = await mediator.send(
-        UpdateServerCommand(
-            update_data=unsettable_from_request(update_data, ServerUpdateData),
-            server_id=server_id,
-            owner_id=current_user_id,
-        )
+    server = await use_case(
+        update_data=unsettable_from_request(update_data, ServerUpdateData),
+        server_id=server_id,
+        owner_id=current_user_id,
     )
-    if result.is_err:
-        raise result.error
-    return ServerResponse.model_validate(result.value)
+    return ServerResponse.model_validate(server)
 
 
 @router.delete("/{server_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_server(
     server_id: UUID,
     current_user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: DeleteServerUseCaseDep,
 ) -> None:
-    result = await mediator.send(
-        DeleteServerCommand(server_id=server_id, owner_id=current_user_id)
-    )
-    if result.is_err:
-        raise result.error
+    await use_case(server_id=server_id, owner_id=current_user_id)

@@ -2,17 +2,15 @@ from uuid import UUID
 
 from fastapi import APIRouter, File, UploadFile, status
 
-from src.api.v1.dependencies import MediatorDep, UserIdDep
-from src.modules.users.application.commands.change_password import (
-    ChangePasswordCommand,
-)
-from src.modules.users.application.commands.delete_user import DeleteUserCommand
-from src.modules.users.application.commands.update_avatar import (
-    UpdateAvatarCommand,
-)
-from src.modules.users.application.commands.update_user import UpdateUserCommand
-from src.modules.users.application.queries.get_user_by_id import GetUserByIDQuery
+from src.api.v1.dependencies import UserIdDep
 from src.modules.users.domain.entities.dtos import UserUpdate
+from src.modules.users.transport.http.dependencies import (
+    ChangePasswordUseCaseDep,
+    DeleteUserUseCaseDep,
+    GetUserByIDUseCaseDep,
+    UpdateAvatarUseCaseDep,
+    UpdateUserUseCaseDep,
+)
 from src.modules.users.transport.http.schemas import (
     ChangePasswordRequest,
     UserResponse,
@@ -30,12 +28,10 @@ router = APIRouter(prefix="/users", tags=["Users"])
 )
 async def get_current_user(
     user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: GetUserByIDUseCaseDep,
 ) -> UserResponse:
-    result = await mediator.query(GetUserByIDQuery(user_id=user_id))
-    if result.is_err:
-        raise result.error
-    return UserResponse.model_validate(result.value)
+    user = await use_case(user_id=user_id)
+    return UserResponse.model_validate(user)
 
 
 @router.get(
@@ -46,12 +42,10 @@ async def get_current_user(
 async def get_user_by_id(
     _: UserIdDep,
     user_id: UUID,
-    mediator: MediatorDep,
+    use_case: GetUserByIDUseCaseDep,
 ) -> UserResponse:
-    result = await mediator.query(GetUserByIDQuery(user_id=user_id))
-    if result.is_err:
-        raise result.error
-    return UserResponse.model_validate(result.value)
+    user = await use_case(user_id=user_id)
+    return UserResponse.model_validate(user)
 
 
 @router.patch(
@@ -62,13 +56,11 @@ async def get_user_by_id(
 async def update_user(
     user_id: UserIdDep,
     data: UserUpdateRequest,
-    mediator: MediatorDep,
+    use_case: UpdateUserUseCaseDep,
 ) -> UserResponse:
     update_data = unsettable_from_request(data, UserUpdate)
-    result = await mediator.send(UpdateUserCommand(user_id=user_id, data=update_data))
-    if result.is_err:
-        raise result.error
-    return UserResponse.model_validate(result.value)
+    user = await use_case(user_id=user_id, data=update_data)
+    return UserResponse.model_validate(user)
 
 
 @router.put(
@@ -78,21 +70,13 @@ async def update_user(
 )
 async def update_avatar(
     user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: UpdateAvatarUseCaseDep,
     file: UploadFile = File(...),
 ) -> UserResponse:
     content = await file.read()
     content_type = file.content_type or ""
-    result = await mediator.send(
-        UpdateAvatarCommand(
-            user_id=user_id,
-            content=content,
-            content_type=content_type,
-        )
-    )
-    if result.is_err:
-        raise result.error
-    return UserResponse.model_validate(result.value)
+    user = await use_case(user_id=user_id, content=content, content_type=content_type)
+    return UserResponse.model_validate(user)
 
 
 @router.post(
@@ -103,24 +87,18 @@ async def update_avatar(
 async def change_password(
     user_id: UserIdDep,
     data: ChangePasswordRequest,
-    mediator: MediatorDep,
+    use_case: ChangePasswordUseCaseDep,
 ) -> None:
-    result = await mediator.send(
-        ChangePasswordCommand(
-            user_id=user_id,
-            current_password=data.current_password,
-            new_password=data.new_password,
-        )
+    await use_case(
+        user_id=user_id,
+        current_password=data.current_password,
+        new_password=data.new_password,
     )
-    if result.is_err:
-        raise result.error
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: UserIdDep,
-    mediator: MediatorDep,
+    use_case: DeleteUserUseCaseDep,
 ) -> None:
-    result = await mediator.send(DeleteUserCommand(user_id=user_id))
-    if result.is_err:
-        raise result.error
+    await use_case(user_id=user_id)

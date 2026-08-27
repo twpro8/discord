@@ -79,8 +79,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     app.state.redis_subscription_manager = redis_subscription_manager
 
     # Presence: built once here, not per-request — see PresenceService's
-    # own docstring for why connect/disconnect/heartbeat bypass the
-    # mediator entirely. `lookup_presence_fan_out_targets` gives it its own
+    # own docstring for why connect/disconnect/heartbeat bypass per-request
+    # DI entirely. `lookup_presence_fan_out_targets` gives it its own
     # short-lived session for the friend/server lookups a transition needs,
     # sharing the same process-wide pool as ordinary HTTP traffic
     # (deliberate: this only runs on actual transitions, not every

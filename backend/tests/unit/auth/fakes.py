@@ -19,7 +19,6 @@ from src.modules.users.domain.exceptions import (
 from src.modules.users.domain.value_objects.email import Email
 from src.modules.users.domain.value_objects.username import Username
 from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 
 def make_user(
@@ -58,7 +57,7 @@ class FakeUsersFacade:
 
     async def create_user(
         self, *, name: str, username: str, email: str, plain_password: str
-    ) -> Result[UserDTO, LumiereError]:
+    ) -> UserDTO:
         now = datetime.now(UTC)
         user = User(
             id=uuid4(),
@@ -72,19 +71,19 @@ class FakeUsersFacade:
             updated_at=now,
         )
         self.users[user.id] = user
-        return Result.ok(user_to_dto(user))
+        return user_to_dto(user)
 
     async def verify_credentials(
         self, *, username: str, plain_password: str
-    ) -> Result[UserDTO, LumiereError]:
+    ) -> UserDTO:
         user = next(
             (u for u in self.users.values() if str(u.username) == username), None
         )
         if user is None or not user.is_active:
-            return Result.err(UserNotFoundError())
+            raise UserNotFoundError
         if not verify_password(plain_password, user.password_hash):
-            return Result.err(IncorrectPasswordError())
-        return Result.ok(user_to_dto(user))
+            raise IncorrectPasswordError
+        return user_to_dto(user)
 
 
 class FakeEmailFacade:
@@ -102,7 +101,7 @@ class FakeEmailFacade:
         template: EmailTemplateName,
         context: dict[str, Any],
         idempotency_key: str | None = None,
-    ) -> Result[EmailMessageDTO, LumiereError]:
+    ) -> EmailMessageDTO:
         self.calls.append(
             {
                 "to": to,
@@ -112,21 +111,19 @@ class FakeEmailFacade:
             }
         )
         if self.error is not None:
-            return Result.err(self.error)
+            raise self.error
         now = datetime.now(UTC)
-        return Result.ok(
-            EmailMessageDTO(
-                id=uuid4(),
-                to=to,
-                template=template,
-                status=EmailStatus.PENDING,
-                attempts=0,
-                error_message=None,
-                provider_message_id=None,
-                created_at=now,
-                updated_at=now,
-                sent_at=None,
-            )
+        return EmailMessageDTO(
+            id=uuid4(),
+            to=to,
+            template=template,
+            status=EmailStatus.PENDING,
+            attempts=0,
+            error_message=None,
+            provider_message_id=None,
+            created_at=now,
+            updated_at=now,
+            sent_at=None,
         )
 
     async def get_email_status(self, message_id: UUID) -> EmailMessageDTO | None:

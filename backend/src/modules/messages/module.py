@@ -10,9 +10,9 @@ from src.modules.messages.transport.http.router import (
 # channels (POST /chats/{chat_id}/messages, /channels/{channel_id}/messages),
 # so composition/container.py never mounts it directly — chats' and
 # channels' own routers pull these in via router.include_router(...,
-# prefix="/{chat_id}" | "/{channel_id}"). Command/query handler registration
-# is unaffected: register_message_handlers is still called like every other
-# module's from api/v1/dependencies.py::get_mediator.
+# prefix="/{chat_id}" | "/{channel_id}"). Use-case DI wiring is unaffected:
+# messages/transport/http/dependencies.py builds its own use cases the same
+# way every other module does.
 
 
 def get_chat_message_router() -> APIRouter:

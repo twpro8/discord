@@ -1,24 +1,26 @@
+from collections.abc import AsyncGenerator
 from typing import Protocol
 from uuid import UUID
 
-from src.modules.users.application.commands.create_user import CreateUserCommand
-from src.modules.users.application.queries.get_user_by_id import GetUserByIDQuery
-from src.modules.users.application.queries.get_user_by_username import (
-    GetUserByUsernameQuery,
-)
-from src.modules.users.application.queries.verify_credentials import (
-    VerifyCredentialsQuery,
-)
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.core.cache import Cache
+from src.core.event_bus import EventBus
 from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
-from src.modules.users.domain.entities.user import User
-from src.shared.application.mediator import Mediator
-from src.shared.errors import LumiereError
-from src.shared.result import Result
+from src.modules.users.domain.exceptions import UserNotFoundError
+from src.modules.users.infrastructure.persistence.user_repository_impl import (
+    UserRepositoryImpl,
+)
+from src.modules.users.infrastructure.user_unit_of_work_impl import UserUnitOfWorkImpl
+from src.modules.users.usecases.create_user import CreateUserUseCase
+from src.modules.users.usecases.get_user_by_id import GetUserByIDUseCase
+from src.modules.users.usecases.get_user_by_username import GetUserByUsernameUseCase
+from src.modules.users.usecases.verify_credentials import VerifyCredentialsUseCase
 
 
 class UsersFacade(Protocol):
-    """The only way other modules may reach `users`. Exposes DTOs/Results,
-    never the User entity or password_hash."""
+    """The only way other modules may reach `users`. Exposes DTOs, never
+    the User entity or password_hash."""
 
     async def get_user(self, user_id: UUID) -> UserDTO | None: ...
 
@@ -33,35 +35,46 @@ class UsersFacade(Protocol):
         username: str,
         email: str,
         plain_password: str,
-    ) -> Result[UserDTO, LumiereError]: ...
+    ) -> UserDTO: ...
 
     async def verify_credentials(
         self,
         *,
         username: str,
         plain_password: str,
-    ) -> Result[UserDTO, LumiereError]: ...
+    ) -> UserDTO: ...
 
 
-class MediatorUsersFacade:
-    def __init__(self, mediator: Mediator) -> None:
-        self._mediator = mediator
+class UseCaseBackedUsersFacade:
+    """Wraps use cases built against the *same* session as the caller —
+    same reasoning as `channels.public.facade.UseCaseBackedChannelsFacade`.
+    `get_user`/`get_user_by_username` translate a not-found into `None`
+    locally; `create_user`/`verify_credentials` let their errors raise."""
+
+    def __init__(
+        self,
+        get_user_by_id_use_case: GetUserByIDUseCase,
+        get_user_by_username_use_case: GetUserByUsernameUseCase,
+        verify_credentials_use_case: VerifyCredentialsUseCase,
+        create_user_use_case: CreateUserUseCase,
+    ) -> None:
+        self._get_user_by_id = get_user_by_id_use_case
+        self._get_user_by_username = get_user_by_username_use_case
+        self._verify_credentials = verify_credentials_use_case
+        self._create_user = create_user_use_case
 
     async def get_user(self, user_id: UUID) -> UserDTO | None:
-        result: Result[UserDTO, LumiereError] = await self._mediator.query(
-            GetUserByIDQuery(user_id=user_id)
-        )
-        if result.is_err:
+        try:
+            return await self._get_user_by_id(user_id=user_id)
+        except UserNotFoundError:
             return None
-        return result.value
 
     async def get_user_by_username(self, username: str) -> UserDTO | None:
-        result: Result[User, LumiereError] = await self._mediator.query(
-            GetUserByUsernameQuery(username=username)
-        )
-        if result.is_err:
+        try:
+            user = await self._get_user_by_username(username=username)
+        except UserNotFoundError:
             return None
-        return user_to_dto(result.value)
+        return user_to_dto(user)
 
     async def user_exists(self, user_id: UUID) -> bool:
         return await self.get_user(user_id) is not None
@@ -73,28 +86,32 @@ class MediatorUsersFacade:
         username: str,
         email: str,
         plain_password: str,
-    ) -> Result[UserDTO, LumiereError]:
-        result: Result[User, LumiereError] = await self._mediator.send(
-            CreateUserCommand(
-                name=name,
-                username=username,
-                email=email,
-                plain_password=plain_password,
-            )
+    ) -> UserDTO:
+        user = await self._create_user(
+            name=name, username=username, email=email, plain_password=plain_password
         )
-        if result.is_err:
-            return Result.err(result.error)
-        return Result.ok(user_to_dto(result.value))
+        return user_to_dto(user)
 
     async def verify_credentials(
         self,
         *,
         username: str,
         plain_password: str,
-    ) -> Result[UserDTO, LumiereError]:
-        result: Result[User, LumiereError] = await self._mediator.query(
-            VerifyCredentialsQuery(username=username, plain_password=plain_password)
+    ) -> UserDTO:
+        user = await self._verify_credentials(
+            username=username, plain_password=plain_password
         )
-        if result.is_err:
-            return Result.err(result.error)
-        return Result.ok(user_to_dto(result.value))
+        return user_to_dto(user)
+
+
+async def build_users_facade(
+    session: AsyncSession, cache: Cache, event_bus: EventBus
+) -> AsyncGenerator[UsersFacade]:
+    user_repository = UserRepositoryImpl(session)
+    async with UserUnitOfWorkImpl(session, user_repository) as uow:
+        yield UseCaseBackedUsersFacade(
+            GetUserByIDUseCase(uow.users, cache),
+            GetUserByUsernameUseCase(uow.users),
+            VerifyCredentialsUseCase(uow.users),
+            CreateUserUseCase(uow, event_bus),
+        )

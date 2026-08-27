@@ -24,24 +24,25 @@ facades, but PresenceService doesn't need to know that."""
 
 class PresenceService:
     """Owns the connect/disconnect/heartbeat side of presence — deliberately
-    **not** a mediator command (see modules/presence/module docstring for
-    why). Built once at app startup (main.py's lifespan), parallel to
-    ConnectionManager/RedisSubscriptionManager, and called directly from
-    api/v1/ws.py and ConnectionManager's `on_activity` callback rather than
-    dispatched through the mediator.
+    **not** a use case built through FastAPI's per-request DI (see
+    modules/presence/module docstring for why). Built once at app startup
+    (main.py's lifespan), parallel to ConnectionManager/RedisSubscriptionManager,
+    and called directly from api/v1/ws.py and ConnectionManager's
+    `on_activity` callback rather than resolved via `Depends()`.
 
     FastAPI resolves WebSocket route dependencies against a `WebSocket`,
-    never a `Request` — get_mediator's entire dependency chain is typed
-    `request: Request` throughout, so it doesn't resolve on a WS connection
-    at all (this is also why core/websocket/auth.py hand-duplicates
-    UserIdWSDep instead of reusing UserIdDep). Even if it did, the lifecycle
-    doesn't fit: get_mediator builds one session per HTTP request, but a
-    WebSocket connection lives for hours and heartbeats fire every ~25s —
-    routing those through a fresh mediator+session each time would mean a
-    DB round trip for an operation (a Redis ZADD) that needs no database
-    access at all. `lookup_fan_out_targets` is only called on an actual
-    transition (never on a plain heartbeat renewal that doesn't change the
-    aggregate status), which is the whole point of this split.
+    never a `Request` — api/v1/dependencies.py's HTTP-facing use-case
+    providers are typed `request: Request` throughout (via `SessionDep`
+    and friends), so they don't resolve on a WS connection at all (this is
+    also why core/websocket/auth.py hand-duplicates UserIdWSDep instead of
+    reusing UserIdDep). Even if they did, the lifecycle doesn't fit: those
+    providers build one session per HTTP request, but a WebSocket
+    connection lives for hours and heartbeats fire every ~25s — routing
+    those through a fresh use case+session each time would mean a DB round
+    trip for an operation (a Redis ZADD) that needs no database access at
+    all. `lookup_fan_out_targets` is only called on an actual transition
+    (never on a plain heartbeat renewal that doesn't change the aggregate
+    status), which is the whole point of this split.
     """
 
     def __init__(

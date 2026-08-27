@@ -10,7 +10,7 @@ from src.shared.errors import TransientError
 # Connection-level failures are worth retrying (a flaky/unreachable SMTP
 # relay); a rejection *after* connecting (bad recipient, auth failure,
 # server refused the DATA) is a permanent failure — see
-# `core.jobs.runner.handle_result` for why that distinction matters.
+# `core.jobs.runner.handle_task_error` for why that distinction matters.
 _TRANSIENT_EXCEPTIONS = (
     aiosmtplib.SMTPConnectError,
     aiosmtplib.SMTPConnectTimeoutError,

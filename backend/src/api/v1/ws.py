@@ -32,7 +32,7 @@ def get_connection_manager_ws(websocket: WebSocket) -> ConnectionManager:
     unlike `get_redis`/`get_cache`/etc. in api.v1.dependencies, nothing in
     the HTTP dependency graph needs direct `ConnectionManager` access
     (chat-room membership updates go through DistributedRoomMembershipUpdater
-    instead, see api/v1/dependencies.py::get_mediator)."""
+    instead, see api/v1/dependencies.py::get_room_membership_updater)."""
     return cast(ConnectionManager, websocket.app.state.connection_manager)
 
 
@@ -43,8 +43,8 @@ ConnectionManagerWSDep = Annotated[
 
 def get_presence_service_ws(websocket: WebSocket) -> PresenceService:
     """Mirror of get_connection_manager_ws — PresenceService is likewise a
-    startup singleton on app.state, not mediator-resolved (see its own
-    docstring for why WS routes can't use MediatorDep)."""
+    startup singleton on app.state, not use-case-resolved (see its own
+    docstring for why WS routes can't use per-request `Depends()`)."""
     return cast(PresenceService, websocket.app.state.presence_service)
 
 

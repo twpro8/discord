@@ -16,8 +16,6 @@ from src.modules.users.domain.entities.user import User
 from src.modules.users.domain.value_objects.email import Email
 from src.modules.users.domain.value_objects.username import Username
 from src.shared.domain.unset import set_fields
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 
 def make_user(username: str, is_active: bool = True) -> User:
@@ -130,12 +128,12 @@ class FakeUsersFacade:
 
     async def create_user(
         self, *, name: str, username: str, email: str, plain_password: str
-    ) -> Result[UserDTO, LumiereError]:
+    ) -> UserDTO:
         raise NotImplementedError
 
     async def verify_credentials(
         self, *, username: str, plain_password: str
-    ) -> Result[UserDTO, LumiereError]:
+    ) -> UserDTO:
         raise NotImplementedError
 
 

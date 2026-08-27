@@ -12,8 +12,8 @@ class PresenceSweeper:
     whose heartbeat stopped without a clean disconnect — e.g. a hard-killed
     process) and fans out any resulting offline transitions. Own background
     asyncio task, started/stopped in main.py's lifespan alongside
-    RedisSubscriptionManager — same shape, not registered on the mediator
-    for the same reason PresenceService itself isn't (see its docstring).
+    RedisSubscriptionManager — same shape, not resolved through per-request
+    DI for the same reason PresenceService itself isn't (see its docstring).
 
     If deployed with more than one backend instance, every instance's
     sweeper independently scans the same shared Redis state, so duplicate

@@ -20,8 +20,6 @@ from src.modules.servers.domain.entities.server_invite import ServerInvite
 from src.modules.servers.domain.entities.server_member import ServerMember
 from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 from src.shared.domain.unset import set_fields
-from src.shared.errors import LumiereError
-from src.shared.result import Result
 
 # ServerMemberOrm has left_at/joined_at columns that the domain ServerMember
 # entity never exposed (pre-existing gap) — callers still filter on left_at
@@ -253,28 +251,24 @@ class FakeServerUnitOfWork(ServerUnitOfWork):
 
 
 class FakeChannelsFacade:
-    """Stand-in for channels' ChannelsFacade — CreateServerCommandHandler
+    """Stand-in for channels' ChannelsFacade — CreateServerUseCase
     calls .create_default_channel() and never inspects the return value."""
 
     def __init__(self) -> None:
         self.calls: list[tuple[UUID, str]] = []
 
-    async def create_default_channel(
-        self, server_id: UUID
-    ) -> Result[ChannelDTO, LumiereError]:
+    async def create_default_channel(self, server_id: UUID) -> ChannelDTO:
         self.calls.append((server_id, "general"))
         now = datetime.now(UTC)
-        return Result.ok(
-            ChannelDTO(
-                id=uuid4(),
-                name="general",
-                server_id=server_id,
-                type=ChannelType.text,
-                topic=None,
-                position=0,
-                last_sequence=0,
-                is_private=False,
-                created_at=now,
-                updated_at=now,
-            )
+        return ChannelDTO(
+            id=uuid4(),
+            name="general",
+            server_id=server_id,
+            type=ChannelType.text,
+            topic=None,
+            position=0,
+            last_sequence=0,
+            is_private=False,
+            created_at=now,
+            updated_at=now,
         )

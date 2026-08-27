@@ -25,6 +25,6 @@ class TemplateRenderError(EmailError, ValidationError):
 class EmailDeliveryFailed(EmailError):
     """A permanent (non-retryable) delivery failure, e.g. a hard SMTP
     rejection. Transient send failures use the shared `TransientError`
-    instead so `core.jobs.runner.handle_result` retries them."""
+    instead so `core.jobs.runner.handle_task_error` retries them."""
 
     detail = "Failed to deliver email"

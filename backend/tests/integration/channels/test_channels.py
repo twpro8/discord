@@ -1,10 +1,10 @@
 """Integration tests for channels.
 
 The only currently-reachable channels behavior is the default "general"
-channel that CreateServerCommand creates internally when a server is created,
+channel that CreateServerUseCase creates internally when a server is created,
 plus the update/delete endpoints exercised below. Channel-membership/
 message-permission behavior is covered in tests/integration/messages/
-test_messages.py, where SendChannelMessageCommand actually lives.
+test_messages.py, where SendChannelMessageUseCase actually lives.
 """
 
 from datetime import UTC

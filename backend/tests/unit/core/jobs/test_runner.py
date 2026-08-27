@@ -3,16 +3,15 @@ from typing import Any
 
 import pytest
 
-from src.core.jobs.runner import handle_result
+from src.core.jobs.runner import handle_task_error
 from src.core.jobs.task_names import JobTaskName
 from src.shared.errors import NotFoundError, TransientError
-from src.shared.result import Result
 
 
 class RetrySignal(Exception):
     """Stands in for Celery's own Retry exception, which `Task.retry`
     raises internally — the fake below raises this instead so tests can
-    assert `handle_result` propagates it without depending on Celery's
+    assert `handle_task_error` propagates it without depending on Celery's
     worker machinery."""
 
 
@@ -23,7 +22,7 @@ class _FakeRequest:
 
 class FakeTask:
     """No DB, no HTTP, no broker — just enough of Celery's `Task` surface
-    (`.name`, `.request.id`, `.retry`) for `handle_result` to run against."""
+    (`.name`, `.request.id`, `.retry`) for `handle_task_error` to run against."""
 
     def __init__(self) -> None:
         self.name = JobTaskName.PING
@@ -35,28 +34,20 @@ class FakeTask:
         raise RetrySignal(exc)
 
 
-def test_handle_result_ok_does_not_retry() -> None:
-    task = FakeTask()
-
-    handle_result(Result.ok("done"), task=task)
-
-    assert task.retried_with is None
-
-
-def test_handle_result_transient_error_retries() -> None:
+def test_handle_task_error_transient_error_retries() -> None:
     task = FakeTask()
     error = TransientError()
 
     with pytest.raises(RetrySignal):
-        handle_result(Result.err(error), task=task)
+        handle_task_error(error, task=task)
 
     assert task.retried_with is error
 
 
-def test_handle_result_permanent_error_does_not_retry() -> None:
+def test_handle_task_error_permanent_error_does_not_retry() -> None:
     task = FakeTask()
     error = NotFoundError()
 
-    handle_result(Result.err(error), task=task)
+    handle_task_error(error, task=task)
 
     assert task.retried_with is None
