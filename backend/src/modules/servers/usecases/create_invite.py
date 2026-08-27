@@ -12,7 +12,10 @@ from src.modules.servers.domain.exceptions import (
     ServerInviteGenerationFailedError,
     ServerInvitePermissionDeniedError,
 )
-from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.modules.servers.domain.repositories.server_invite_repository import (
+    ServerInviteRepository,
+)
+from src.modules.servers.domain.repositories.server_repository import ServerRepository
 
 
 def _generate_random_code(length: int = 8) -> str:
@@ -21,13 +24,18 @@ def _generate_random_code(length: int = 8) -> str:
 
 
 class CreateInviteUseCase:
-    def __init__(self, uow: ServerUnitOfWork) -> None:
-        self._uow = uow
+    def __init__(
+        self,
+        server_repository: ServerRepository,
+        server_invite_repository: ServerInviteRepository,
+    ) -> None:
+        self._servers = server_repository
+        self._invites = server_invite_repository
 
     async def __call__(
         self, *, server_id: UUID, user_id: UUID, payload: ServerInviteCreateData
     ) -> ServerInvite:
-        server = await self._uow.servers.get_one(id=server_id, owner_id=user_id)
+        server = await self._servers.get_one(id=server_id, owner_id=user_id)
         if not server:
             raise ServerInvitePermissionDeniedError
 
@@ -38,7 +46,7 @@ class CreateInviteUseCase:
         code = None
         for _ in range(3):
             potential_code = _generate_random_code(8)
-            exists = await self._uow.invites.get_one(code=potential_code)
+            exists = await self._invites.get_one(code=potential_code)
             if not exists:
                 code = potential_code
                 break
@@ -54,6 +62,4 @@ class CreateInviteUseCase:
             expires_at=expires_at,
         )
 
-        invite = await self._uow.invites.create(db_payload)
-        await self._uow.commit()
-        return invite
+        return await self._invites.create(db_payload)

@@ -1,9 +1,8 @@
-from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends
 
-from src.api.v1.dependencies import RoomMembershipUpdaterDep, SessionDep
+from src.api.v1.dependencies import RoomMembershipUpdaterDep, SessionDep, TransactionDep
 from src.modules.channels.public.facade import ChannelsFacade, build_channels_facade
 from src.modules.servers.adapters.persistence.server_invite_repository_impl import (
     ServerInviteRepositoryImpl,
@@ -14,10 +13,13 @@ from src.modules.servers.adapters.persistence.server_member_repository_impl impo
 from src.modules.servers.adapters.persistence.server_repository_impl import (
     ServerRepositoryImpl,
 )
-from src.modules.servers.adapters.server_unit_of_work_impl import (
-    ServerUnitOfWorkImpl,
+from src.modules.servers.domain.repositories.server_invite_repository import (
+    ServerInviteRepository,
 )
-from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
+from src.modules.servers.domain.repositories.server_member_repository import (
+    ServerMemberRepository,
+)
+from src.modules.servers.domain.repositories.server_repository import ServerRepository
 from src.modules.servers.usecases.create_invite import CreateInviteUseCase
 from src.modules.servers.usecases.create_server import CreateServerUseCase
 from src.modules.servers.usecases.delete_invite import DeleteInviteUseCase
@@ -37,19 +39,16 @@ from src.modules.servers.usecases.transfer_ownership import (
 from src.modules.servers.usecases.update_server import UpdateServerUseCase
 
 
-async def get_server_unit_of_work(
-    session: SessionDep,
-) -> AsyncGenerator[ServerUnitOfWork]:
-    server_repository = ServerRepositoryImpl(session=session)
-    server_member_repository = ServerMemberRepositoryImpl(session=session)
-    server_invite_repository = ServerInviteRepositoryImpl(session=session)
-    async with ServerUnitOfWorkImpl(
-        session,
-        server_repository,
-        server_member_repository,
-        server_invite_repository,
-    ) as uow:
-        yield uow
+def get_server_repository(session: SessionDep) -> ServerRepository:
+    return ServerRepositoryImpl(session=session)
+
+
+def get_server_member_repository(session: SessionDep) -> ServerMemberRepository:
+    return ServerMemberRepositoryImpl(session=session)
+
+
+def get_server_invite_repository(session: SessionDep) -> ServerInviteRepository:
+    return ServerInviteRepositoryImpl(session=session)
 
 
 def get_channels_facade(session: SessionDep) -> ChannelsFacade:
@@ -58,78 +57,110 @@ def get_channels_facade(session: SessionDep) -> ChannelsFacade:
     return build_channels_facade(session)
 
 
-ServerUnitOfWorkDep = Annotated[ServerUnitOfWork, Depends(get_server_unit_of_work)]
+ServerRepositoryDep = Annotated[ServerRepository, Depends(get_server_repository)]
+ServerMemberRepositoryDep = Annotated[
+    ServerMemberRepository, Depends(get_server_member_repository)
+]
+ServerInviteRepositoryDep = Annotated[
+    ServerInviteRepository, Depends(get_server_invite_repository)
+]
 ChannelsFacadeDep = Annotated[ChannelsFacade, Depends(get_channels_facade)]
 
 
 async def get_create_server_use_case(
-    uow: ServerUnitOfWorkDep,
+    tx: TransactionDep,
+    server_repository: ServerRepositoryDep,
+    server_member_repository: ServerMemberRepositoryDep,
     channels_facade: ChannelsFacadeDep,
     room_membership_updater: RoomMembershipUpdaterDep,
 ) -> CreateServerUseCase:
-    return CreateServerUseCase(uow, channels_facade, room_membership_updater)
+    return CreateServerUseCase(
+        tx,
+        server_repository,
+        server_member_repository,
+        channels_facade,
+        room_membership_updater,
+    )
 
 
 async def get_update_server_use_case(
-    uow: ServerUnitOfWorkDep,
+    server_repository: ServerRepositoryDep,
+    _tx: TransactionDep,
 ) -> UpdateServerUseCase:
-    return UpdateServerUseCase(uow)
+    return UpdateServerUseCase(server_repository)
 
 
 async def get_delete_server_use_case(
-    uow: ServerUnitOfWorkDep,
+    server_repository: ServerRepositoryDep,
+    _tx: TransactionDep,
 ) -> DeleteServerUseCase:
-    return DeleteServerUseCase(uow)
+    return DeleteServerUseCase(server_repository)
 
 
 async def get_transfer_server_ownership_use_case(
-    uow: ServerUnitOfWorkDep,
+    server_repository: ServerRepositoryDep,
+    server_member_repository: ServerMemberRepositoryDep,
+    _tx: TransactionDep,
 ) -> TransferServerOwnershipUseCase:
-    return TransferServerOwnershipUseCase(uow)
+    return TransferServerOwnershipUseCase(server_repository, server_member_repository)
 
 
 async def get_join_server_use_case(
-    uow: ServerUnitOfWorkDep,
+    tx: TransactionDep,
+    server_repository: ServerRepositoryDep,
+    server_member_repository: ServerMemberRepositoryDep,
+    server_invite_repository: ServerInviteRepositoryDep,
     room_membership_updater: RoomMembershipUpdaterDep,
 ) -> JoinServerUseCase:
-    return JoinServerUseCase(uow, room_membership_updater)
+    return JoinServerUseCase(
+        tx,
+        server_repository,
+        server_member_repository,
+        server_invite_repository,
+        room_membership_updater,
+    )
 
 
 async def get_create_invite_use_case(
-    uow: ServerUnitOfWorkDep,
+    server_repository: ServerRepositoryDep,
+    server_invite_repository: ServerInviteRepositoryDep,
+    _tx: TransactionDep,
 ) -> CreateInviteUseCase:
-    return CreateInviteUseCase(uow)
+    return CreateInviteUseCase(server_repository, server_invite_repository)
 
 
 async def get_delete_invite_use_case(
-    uow: ServerUnitOfWorkDep,
+    server_repository: ServerRepositoryDep,
+    server_invite_repository: ServerInviteRepositoryDep,
+    _tx: TransactionDep,
 ) -> DeleteInviteUseCase:
-    return DeleteInviteUseCase(uow)
+    return DeleteInviteUseCase(server_repository, server_invite_repository)
 
 
 async def get_get_invites_use_case(
-    uow: ServerUnitOfWorkDep,
+    server_repository: ServerRepositoryDep,
+    server_invite_repository: ServerInviteRepositoryDep,
 ) -> GetInvitesUseCase:
-    return GetInvitesUseCase(uow.servers, uow.invites)
+    return GetInvitesUseCase(server_repository, server_invite_repository)
 
 
 async def get_get_server_members_use_case(
-    uow: ServerUnitOfWorkDep,
+    server_member_repository: ServerMemberRepositoryDep,
 ) -> GetServerMembersUseCase:
-    return GetServerMembersUseCase(uow.server_members)
+    return GetServerMembersUseCase(server_member_repository)
 
 
 async def get_get_server_where_user_member_use_case(
-    uow: ServerUnitOfWorkDep,
+    server_repository: ServerRepositoryDep,
     room_membership_updater: RoomMembershipUpdaterDep,
 ) -> GetServerWhereUserMemberUseCase:
-    return GetServerWhereUserMemberUseCase(uow.servers, room_membership_updater)
+    return GetServerWhereUserMemberUseCase(server_repository, room_membership_updater)
 
 
 async def get_get_servers_where_user_member_use_case(
-    uow: ServerUnitOfWorkDep,
+    server_repository: ServerRepositoryDep,
 ) -> GetServersWhereUserMemberUseCase:
-    return GetServersWhereUserMemberUseCase(uow.servers)
+    return GetServersWhereUserMemberUseCase(server_repository)
 
 
 CreateServerUseCaseDep = Annotated[
