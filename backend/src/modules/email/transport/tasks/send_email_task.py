@@ -9,17 +9,17 @@ from src.core.jobs.celery_app import celery_app
 from src.core.jobs.runner import handle_task_error, run_async
 from src.core.jobs.task_names import JobTaskName
 from src.core.logging import get_logger
-from src.modules.email.domain.enums import EmailTemplateName
-from src.modules.email.infrastructure.email_unit_of_work_impl import (
+from src.modules.email.adapters.email_unit_of_work_impl import (
     EmailUnitOfWorkImpl,
 )
-from src.modules.email.infrastructure.persistence.email_message_repository_impl import (
+from src.modules.email.adapters.persistence.email_message_repository_impl import (
     EmailMessageRepositoryImpl,
 )
-from src.modules.email.infrastructure.providers.factory import build_email_provider
-from src.modules.email.infrastructure.rendering.jinja_renderer import (
+from src.modules.email.adapters.providers.factory import build_email_provider
+from src.modules.email.adapters.rendering.jinja_renderer import (
     JinjaTemplateRenderer,
 )
+from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.usecases.deliver_email import DeliverEmailUseCase
 from src.shared.errors import LumiereError
 

@@ -3,17 +3,17 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.servers.adapters.persistence.server_member_repository_impl import (
+    ServerMemberRepositoryImpl,
+)
+from src.modules.servers.adapters.persistence.server_repository_impl import (
+    ServerRepositoryImpl,
+)
 from src.modules.servers.domain import services
 from src.modules.servers.domain.repositories.server_member_repository import (
     ServerMemberRepository,
 )
 from src.modules.servers.domain.repositories.server_repository import ServerRepository
-from src.modules.servers.infrastructure.persistence.server_member_repository_impl import (
-    ServerMemberRepositoryImpl,
-)
-from src.modules.servers.infrastructure.persistence.server_repository_impl import (
-    ServerRepositoryImpl,
-)
 
 
 class ServersFacade(Protocol):

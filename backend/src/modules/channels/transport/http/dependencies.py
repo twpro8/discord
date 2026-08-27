@@ -4,14 +4,14 @@ from typing import Annotated
 from fastapi import Depends
 
 from src.api.v1.dependencies import SessionDep
-from src.modules.channels.domain.repositories.channel_unit_of_work import (
-    ChannelUnitOfWork,
-)
-from src.modules.channels.infrastructure.channel_unit_of_work_impl import (
+from src.modules.channels.adapters.channel_unit_of_work_impl import (
     ChannelUnitOfWorkImpl,
 )
-from src.modules.channels.infrastructure.persistence.channel_repository_impl import (
+from src.modules.channels.adapters.persistence.channel_repository_impl import (
     ChannelRepositoryImpl,
+)
+from src.modules.channels.domain.repositories.channel_unit_of_work import (
+    ChannelUnitOfWork,
 )
 from src.modules.channels.usecases.create_channel import CreateChannelUseCase
 from src.modules.channels.usecases.delete_channel import DeleteChannelUseCase

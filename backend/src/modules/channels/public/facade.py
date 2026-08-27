@@ -4,13 +4,13 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.channels.domain.entities.dtos import ChannelDTO, channel_to_dto
-from src.modules.channels.infrastructure.channel_unit_of_work_impl import (
+from src.modules.channels.adapters.channel_unit_of_work_impl import (
     ChannelUnitOfWorkImpl,
 )
-from src.modules.channels.infrastructure.persistence.channel_repository_impl import (
+from src.modules.channels.adapters.persistence.channel_repository_impl import (
     ChannelRepositoryImpl,
 )
+from src.modules.channels.domain.entities.dtos import ChannelDTO, channel_to_dto
 from src.modules.channels.usecases.create_channel import CreateChannelUseCase
 
 
@@ -23,7 +23,7 @@ class UseCaseBackedChannelsFacade:
     caller, so a same-transaction, no-separate-commit delegation (e.g.
     servers creating a default channel while creating a server) still
     goes through this module's public boundary instead of the caller
-    reaching into channels' usecases/infrastructure directly.
+    reaching into channels' usecases/adapters directly.
 
     Deliberately not going through a shared dispatcher: per AGENTS.md, an
     operation that needs another module's write behavior as part of its

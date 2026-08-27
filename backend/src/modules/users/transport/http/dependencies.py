@@ -4,11 +4,11 @@ from typing import Annotated
 from fastapi import Depends
 
 from src.api.v1.dependencies import CacheDep, SessionDep, StorageDep
-from src.modules.users.domain.repositories.user_unit_of_work import UserUnitOfWork
-from src.modules.users.infrastructure.persistence.user_repository_impl import (
+from src.modules.users.adapters.persistence.user_repository_impl import (
     UserRepositoryImpl,
 )
-from src.modules.users.infrastructure.user_unit_of_work_impl import UserUnitOfWorkImpl
+from src.modules.users.adapters.user_unit_of_work_impl import UserUnitOfWorkImpl
+from src.modules.users.domain.repositories.user_unit_of_work import UserUnitOfWork
 from src.modules.users.usecases.change_password import ChangePasswordUseCase
 from src.modules.users.usecases.delete_user import DeleteUserUseCase
 from src.modules.users.usecases.get_user_by_id import GetUserByIDUseCase

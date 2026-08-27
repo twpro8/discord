@@ -10,14 +10,14 @@ from src.api.v1.dependencies import (
     RoomMembershipUpdaterDep,
     SessionDep,
 )
-from src.modules.chats.domain.repositories.chat_unit_of_work import ChatUnitOfWork
-from src.modules.chats.infrastructure.chat_unit_of_work_impl import ChatUnitOfWorkImpl
-from src.modules.chats.infrastructure.persistence.chat_member_repository_impl import (
+from src.modules.chats.adapters.chat_unit_of_work_impl import ChatUnitOfWorkImpl
+from src.modules.chats.adapters.persistence.chat_member_repository_impl import (
     ChatMemberRepositoryImpl,
 )
-from src.modules.chats.infrastructure.persistence.chat_repository_impl import (
+from src.modules.chats.adapters.persistence.chat_repository_impl import (
     ChatRepositoryImpl,
 )
+from src.modules.chats.domain.repositories.chat_unit_of_work import ChatUnitOfWork
 from src.modules.chats.usecases.add_member import AddMemberUseCase
 from src.modules.chats.usecases.create_chat import CreateChatUseCase
 from src.modules.chats.usecases.get_chat_details import GetChatDetailsUseCase

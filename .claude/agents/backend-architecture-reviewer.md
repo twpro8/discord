@@ -17,7 +17,7 @@ Identify the business capability, the entry point (router endpoint), the modules
 
 ### Stage 2 — Module boundaries
 
-`domain/` and `usecases/` must not import `fastapi`, `sqlalchemy`, or `pydantic`. Pydantic appears only in `transport/http/schemas.py` (a small inline exception in `router.py` is fine). Only `infrastructure/` imports SQLAlchemy; `public/facade.py` stays framework-free too (no `fastapi` import — DI wrapping happens in the *consumer's* `transport/http/dependencies.py`, not the producer's `public/facade.py`).
+`domain/` and `usecases/` must not import `fastapi`, `sqlalchemy`, or `pydantic`. Pydantic appears only in `transport/http/schemas.py` (a small inline exception in `router.py` is fine). Only `adapters/` imports SQLAlchemy; `public/facade.py` stays framework-free too (no `fastapi` import — DI wrapping happens in the *consumer's* `transport/http/dependencies.py`, not the producer's `public/facade.py`).
 
 A module reaches another module **only** through its `public/facade.py`, getting back a DTO (e.g. `UserDTO`, `ChannelDTO`) or a raised domain exception — never an entity or ORM row. The one accepted exception: a router importing another module's `<Name>UseCaseDep` directly from that module's `transport/http/dependencies.py` for a genuinely cross-module HTTP-triggered operation (e.g. `messages`' `list_chat_messages` calling `chats`' `MarkChatAsReadUseCaseDep`) — this is DI wiring at the transport layer, not a domain/business-logic boundary violation, and is the direct replacement for what a mediator dispatch used to allow.
 
@@ -59,7 +59,7 @@ Flag: an ORM row or entity returned directly as a `response_model` instead of br
 
 ### Stage 8 — Persistence & transactions
 
-`infrastructure/persistence/mappers.py` is the only place ORM rows convert to/from domain entities — repositories never leak ORM objects upward. `UnitOfWork` wraps one `AsyncSession` per request and is entered via `async with`; the use case calls `uow.commit()` explicitly. The UoW contract is an ABC (not a bare Protocol), so a unit-test fake must explicitly subclass it — structural typing alone won't satisfy `mypy --strict` here.
+`adapters/persistence/mappers.py` is the only place ORM rows convert to/from domain entities — repositories never leak ORM objects upward. `UnitOfWork` wraps one `AsyncSession` per request and is entered via `async with`; the use case calls `uow.commit()` explicitly. The UoW contract is an ABC (not a bare Protocol), so a unit-test fake must explicitly subclass it — structural typing alone won't satisfy `mypy --strict` here.
 
 Flag: a commit happening inside a repository instead of the use case/UoW; N+1 queries or an unbounded `SELECT`; an ORM attribute accessed lazily outside the session that loaded it; a new Alembic migration whose *only* purpose is soft-delete/history preservation — this project prefers a hard delete over a migration added solely to preserve deleted-row history.
 

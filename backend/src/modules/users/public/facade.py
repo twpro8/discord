@@ -6,12 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.cache import Cache
 from src.core.event_bus import EventBus
-from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
-from src.modules.users.domain.exceptions import UserNotFoundError
-from src.modules.users.infrastructure.persistence.user_repository_impl import (
+from src.modules.users.adapters.persistence.user_repository_impl import (
     UserRepositoryImpl,
 )
-from src.modules.users.infrastructure.user_unit_of_work_impl import UserUnitOfWorkImpl
+from src.modules.users.adapters.user_unit_of_work_impl import UserUnitOfWorkImpl
+from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
+from src.modules.users.domain.exceptions import UserNotFoundError
 from src.modules.users.usecases.create_user import CreateUserUseCase
 from src.modules.users.usecases.get_user_by_id import GetUserByIDUseCase
 from src.modules.users.usecases.get_user_by_username import GetUserByUsernameUseCase

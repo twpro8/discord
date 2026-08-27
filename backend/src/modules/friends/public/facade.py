@@ -3,10 +3,10 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.friends.domain.repositories.friend_repository import FriendRepository
-from src.modules.friends.infrastructure.persistence.friend_repository_impl import (
+from src.modules.friends.adapters.persistence.friend_repository_impl import (
     FriendRepositoryImpl,
 )
+from src.modules.friends.domain.repositories.friend_repository import FriendRepository
 
 
 class FriendsFacade(Protocol):

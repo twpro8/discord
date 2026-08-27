@@ -6,12 +6,12 @@ from fastapi import Depends
 from fastapi.security import APIKeyCookie
 
 from src.api.v1.dependencies import CacheDep, EventBusDep, JobDispatcherDep, SessionDep
-from src.modules.auth.domain.exceptions import AuthenticationError
-from src.modules.auth.domain.repositories.auth_unit_of_work import AuthUnitOfWork
-from src.modules.auth.infrastructure.auth_unit_of_work_impl import AuthUnitOfWorkImpl
-from src.modules.auth.infrastructure.persistence.refresh_token_repository_impl import (
+from src.modules.auth.adapters.auth_unit_of_work_impl import AuthUnitOfWorkImpl
+from src.modules.auth.adapters.persistence.refresh_token_repository_impl import (
     RefreshTokenRepositoryImpl,
 )
+from src.modules.auth.domain.exceptions import AuthenticationError
+from src.modules.auth.domain.repositories.auth_unit_of_work import AuthUnitOfWork
 from src.modules.auth.usecases.login import LoginUseCase
 from src.modules.auth.usecases.logout import LogoutUseCase
 from src.modules.auth.usecases.refresh import RefreshUseCase

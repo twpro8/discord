@@ -5,14 +5,14 @@ from typing import Annotated
 from fastapi import Depends
 
 from src.api.v1.dependencies import CacheDep, EventBusDep, SessionDep
-from src.modules.friends.domain.repositories.friend_unit_of_work import (
-    FriendUnitOfWork,
-)
-from src.modules.friends.infrastructure.friend_unit_of_work_impl import (
+from src.modules.friends.adapters.friend_unit_of_work_impl import (
     FriendUnitOfWorkImpl,
 )
-from src.modules.friends.infrastructure.persistence.friend_repository_impl import (
+from src.modules.friends.adapters.persistence.friend_repository_impl import (
     FriendRepositoryImpl,
+)
+from src.modules.friends.domain.repositories.friend_unit_of_work import (
+    FriendUnitOfWork,
 )
 from src.modules.friends.usecases.accept_request import AcceptFriendRequestUseCase
 from src.modules.friends.usecases.delete_request import DeleteFriendRequestUseCase

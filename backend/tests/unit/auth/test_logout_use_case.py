@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from src.modules.auth.domain.entities.dtos import RefreshTokenCreate
-from src.modules.auth.infrastructure.security import hash_refresh_token
+from src.modules.auth.adapters.security import hash_refresh_token
 from src.modules.auth.usecases.logout import LogoutUseCase
 from tests.unit.auth.fakes import FakeAuthUnitOfWork, FakeRefreshTokenRepository
 

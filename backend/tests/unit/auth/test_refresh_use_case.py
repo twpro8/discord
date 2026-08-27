@@ -5,7 +5,7 @@ import pytest
 
 from src.modules.auth.domain.entities.dtos import RefreshTokenCreate
 from src.modules.auth.domain.exceptions import InvalidRefreshTokenError
-from src.modules.auth.infrastructure.security import hash_refresh_token
+from src.modules.auth.adapters.security import hash_refresh_token
 from src.modules.auth.usecases.refresh import RefreshUseCase
 from tests.unit.auth.fakes import FakeAuthUnitOfWork, FakeRefreshTokenRepository
 

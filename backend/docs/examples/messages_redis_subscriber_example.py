@@ -1,7 +1,7 @@
-"""Illustrative — this is what modules/messages/infrastructure/websocket/
+"""Illustrative — this is what modules/messages/adapters/websocket/
 redis_subscriber.py would look like once `messages` grows a WebSocket
 gateway. Not wired into anything; kept here as a concrete example of the
-core.realtime -> module.infrastructure -> module.transport split.
+core.realtime -> module.adapters -> module.transport split.
 
     from src.core.realtime import PubSubTransport
 

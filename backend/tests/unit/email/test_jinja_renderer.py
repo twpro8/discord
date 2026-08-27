@@ -7,7 +7,7 @@ from src.modules.email.domain.exceptions import (
     TemplateNotFoundError,
     TemplateRenderError,
 )
-from src.modules.email.infrastructure.rendering.jinja_renderer import (
+from src.modules.email.adapters.rendering.jinja_renderer import (
     JinjaTemplateRenderer,
 )
 

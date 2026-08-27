@@ -6,19 +6,19 @@ from fastapi import Depends
 
 from src.api.v1.dependencies import RoomMembershipUpdaterDep, SessionDep
 from src.modules.channels.public.facade import ChannelsFacade, build_channels_facade
-from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
-from src.modules.servers.infrastructure.persistence.server_invite_repository_impl import (
+from src.modules.servers.adapters.persistence.server_invite_repository_impl import (
     ServerInviteRepositoryImpl,
 )
-from src.modules.servers.infrastructure.persistence.server_member_repository_impl import (
+from src.modules.servers.adapters.persistence.server_member_repository_impl import (
     ServerMemberRepositoryImpl,
 )
-from src.modules.servers.infrastructure.persistence.server_repository_impl import (
+from src.modules.servers.adapters.persistence.server_repository_impl import (
     ServerRepositoryImpl,
 )
-from src.modules.servers.infrastructure.server_unit_of_work_impl import (
+from src.modules.servers.adapters.server_unit_of_work_impl import (
     ServerUnitOfWorkImpl,
 )
+from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 from src.modules.servers.usecases.create_invite import CreateInviteUseCase
 from src.modules.servers.usecases.create_server import CreateServerUseCase
 from src.modules.servers.usecases.delete_invite import DeleteInviteUseCase

@@ -14,7 +14,7 @@ from httpx import AsyncClient
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.channels.infrastructure.persistence.models import ChannelOrm
+from src.modules.channels.adapters.persistence.models import ChannelOrm
 from src.modules.users.domain.entities.user import User
 
 

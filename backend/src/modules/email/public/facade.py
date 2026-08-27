@@ -5,15 +5,15 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.jobs import JobDispatcher
+from src.modules.email.adapters.email_unit_of_work_impl import (
+    EmailUnitOfWorkImpl,
+)
+from src.modules.email.adapters.persistence.email_message_repository_impl import (
+    EmailMessageRepositoryImpl,
+)
 from src.modules.email.domain.entities.dtos import EmailMessageDTO
 from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.domain.exceptions import EmailMessageNotFoundError
-from src.modules.email.infrastructure.email_unit_of_work_impl import (
-    EmailUnitOfWorkImpl,
-)
-from src.modules.email.infrastructure.persistence.email_message_repository_impl import (
-    EmailMessageRepositoryImpl,
-)
 from src.modules.email.usecases.get_email_status import GetEmailStatusUseCase
 from src.modules.email.usecases.send_email import SendEmailUseCase
 

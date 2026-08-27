@@ -10,7 +10,7 @@ class EmailStatus(StrEnum):
 
 class EmailTemplateName(StrEnum):
     """The module's own template catalog. Values map 1:1 to a directory
-    under `infrastructure/templates/`. Kept demo-only for now — naming a
+    under `adapters/templates/`. Kept demo-only for now — naming a
     real template after a business flow (e.g. "welcome") is the future
     consuming module's concern once it actually integrates."""
 

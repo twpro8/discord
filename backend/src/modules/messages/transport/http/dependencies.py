@@ -8,21 +8,21 @@ from src.api.v1.dependencies import (
     RoomMembershipUpdaterDep,
     SessionDep,
 )
-from src.modules.channels.infrastructure.persistence.channel_repository_impl import (
+from src.modules.channels.adapters.persistence.channel_repository_impl import (
     ChannelRepositoryImpl,
 )
-from src.modules.chats.infrastructure.persistence.chat_repository_impl import (
+from src.modules.chats.adapters.persistence.chat_repository_impl import (
     ChatRepositoryImpl,
 )
 from src.modules.chats.public.facade import ChatsFacade, build_chats_facade
-from src.modules.messages.domain.repositories.message_unit_of_work import (
-    MessageUnitOfWork,
-)
-from src.modules.messages.infrastructure.message_unit_of_work_impl import (
+from src.modules.messages.adapters.message_unit_of_work_impl import (
     MessageUnitOfWorkImpl,
 )
-from src.modules.messages.infrastructure.persistence.message_repository_impl import (
+from src.modules.messages.adapters.persistence.message_repository_impl import (
     MessageRepositoryImpl,
+)
+from src.modules.messages.domain.repositories.message_unit_of_work import (
+    MessageUnitOfWork,
 )
 from src.modules.messages.usecases.delete_message import DeleteMessageUseCase
 from src.modules.messages.usecases.edit_message import EditMessageUseCase

@@ -5,11 +5,11 @@ from fastapi import Depends
 from src.api.v1.dependencies import RedisDep, SessionDep
 from src.core.config.settings import settings
 from src.modules.friends.public.facade import FriendsFacade, build_friends_facade
+from src.modules.presence.adapters.persistence.redis_presence_repository import (
+    RedisPresenceRepository,
+)
 from src.modules.presence.domain.repositories.presence_repository import (
     PresenceRepository,
-)
-from src.modules.presence.infrastructure.persistence.redis_presence_repository import (
-    RedisPresenceRepository,
 )
 from src.modules.presence.usecases.get_friends_presence import (
     GetFriendsPresenceUseCase,
