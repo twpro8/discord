@@ -8,16 +8,16 @@ from src.modules.messages.domain.exceptions import (
     MessageNotFoundError,
     NotMessageSenderError,
 )
-from src.modules.messages.domain.repositories.message_unit_of_work import (
-    MessageUnitOfWork,
+from src.modules.messages.domain.repositories.message_repository import (
+    MessageRepository,
 )
 
 EDIT_WINDOW = timedelta(hours=24)
 
 
 class EditMessageUseCase:
-    def __init__(self, uow: MessageUnitOfWork) -> None:
-        self._uow = uow
+    def __init__(self, message_repository: MessageRepository) -> None:
+        self._messages = message_repository
 
     async def __call__(
         self,
@@ -28,7 +28,7 @@ class EditMessageUseCase:
         chat_id: UUID | None = None,
         channel_id: UUID | None = None,
     ) -> Message:
-        message = await self._uow.messages.find_by_id(message_id)
+        message = await self._messages.find_by_id(message_id)
         if message is None:
             raise MessageNotFoundError
 
@@ -43,6 +43,4 @@ class EditMessageUseCase:
         if datetime.now(UTC) - message.created_at > EDIT_WINDOW:
             raise MessageEditWindowExpiredError
 
-        updated = await self._uow.messages.update_body(message_id, data.body)
-        await self._uow.commit()
-        return updated
+        return await self._messages.update_body(message_id, data.body)

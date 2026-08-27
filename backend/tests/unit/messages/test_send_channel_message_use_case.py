@@ -11,8 +11,7 @@ from src.modules.messages.usecases.send_channel_message import (
 from src.modules.servers.domain.entities.dtos import ServerMemberCreate
 from src.modules.servers.domain.exceptions import NotServerMemberError
 from tests.unit.channels.fakes import FakeChannelRepository
-from tests.unit.chats.fakes import FakeChatRepository
-from tests.unit.messages.fakes import FakeMessageRepository, FakeMessageUnitOfWork
+from tests.unit.messages.fakes import FakeMessageRepository
 from tests.unit.servers.fakes import (
     FakeServerMemberRepository,
     FakeServerRepository,
@@ -25,14 +24,9 @@ def _use_case() -> tuple[
 ]:
     channels = FakeChannelRepository()
     server_members = FakeServerMemberRepository()
-    uow = FakeMessageUnitOfWork(
-        FakeMessageRepository(),
-        FakeChatRepository(),
-        channels,
-    )
     servers_facade = FakeServersFacade(server_members, FakeServerRepository())
     return (
-        SendChannelMessageUseCase(uow, servers_facade),
+        SendChannelMessageUseCase(FakeMessageRepository(), channels, servers_facade),
         channels,
         server_members,
     )

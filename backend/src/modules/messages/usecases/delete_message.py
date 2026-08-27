@@ -1,13 +1,16 @@
 from uuid import UUID
 
+from src.modules.channels.domain.repositories.channel_repository import (
+    ChannelRepository,
+)
 from src.modules.chats.public.facade import ChatsFacade
 from src.modules.messages.domain.entities.message import Message
 from src.modules.messages.domain.exceptions import (
     MessageDeletePermissionError,
     MessageNotFoundError,
 )
-from src.modules.messages.domain.repositories.message_unit_of_work import (
-    MessageUnitOfWork,
+from src.modules.messages.domain.repositories.message_repository import (
+    MessageRepository,
 )
 from src.modules.servers.public.facade import ServersFacade
 from src.shared.errors import LumiereError
@@ -16,11 +19,13 @@ from src.shared.errors import LumiereError
 class DeleteMessageUseCase:
     def __init__(
         self,
-        uow: MessageUnitOfWork,
+        message_repository: MessageRepository,
+        channel_repository: ChannelRepository,
         chats_facade: ChatsFacade,
         servers_facade: ServersFacade,
     ) -> None:
-        self._uow = uow
+        self._messages = message_repository
+        self._channels = channel_repository
         self._chats_facade = chats_facade
         self._servers_facade = servers_facade
 
@@ -32,7 +37,7 @@ class DeleteMessageUseCase:
         chat_id: UUID | None = None,
         channel_id: UUID | None = None,
     ) -> Message:
-        message = await self._uow.messages.find_by_id(message_id)
+        message = await self._messages.find_by_id(message_id)
         if message is None:
             raise MessageNotFoundError
 
@@ -55,7 +60,7 @@ class DeleteMessageUseCase:
                     is_owner = False
             else:
                 assert message.channel_id is not None
-                channel = await self._uow.channels.find_by_id(message.channel_id)
+                channel = await self._channels.find_by_id(message.channel_id)
                 if channel is not None:
                     try:
                         await self._servers_facade.assert_is_server_owner(
@@ -68,6 +73,4 @@ class DeleteMessageUseCase:
         if not (is_sender or is_owner):
             raise MessageDeletePermissionError
 
-        deleted = await self._uow.messages.soft_delete(message_id)
-        await self._uow.commit()
-        return deleted
+        return await self._messages.soft_delete(message_id)
