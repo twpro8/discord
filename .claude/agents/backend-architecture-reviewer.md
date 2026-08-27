@@ -25,7 +25,7 @@ A module reaches another module **only** through its `public/facade.py`, getting
 
 ### Stage 3 — Use cases
 
-A use case is a single class, `<Name>UseCase`, with dependencies (UoW, facades, cross-cutting services) taken in `__init__` and the operation itself as `async def __call__(self, *, ...) -> T` with plain keyword arguments — never a Command/Query dataclass, never a separate Handler class. It calls `uow.commit()` explicitly after mutating (skip only when the caller passes `is_commit=False` for a same-transaction delegated write, as `CreateChannelUseCase` does).
+A use case is a single class, `<Name>UseCase`, with dependencies (repositories, a `Transaction`, facades, cross-cutting services) taken in `__init__` and the operation itself as `async def __call__(self, *, ...) -> T` with plain keyword arguments — never a Command/Query dataclass, never a separate Handler class. There's no Unit-of-Work object grouping repositories; commit is automatic by default (the request's `TransactionDep` auto-commits before a successful response), so a use case only injects `Transaction` and calls `commit()` itself when it has work that must run strictly *after* the write is durable (a realtime publish, a cache invalidation, an enqueued job) or must commit before raising (a raised exception skips auto-commit too).
 
 Expected business failures `raise` a `LumiereError` subclass directly — never a `Result` wrapper (that type no longer exists in this codebase; if you see `Result[T, E]`/`.is_ok`/`.is_err` anywhere, it's a regression). `api/errors.py`'s global exception handler already converts any raised `LumiereError` to the right JSON/status response.
 
@@ -33,11 +33,11 @@ Flag: a `Result`-shaped return type or `.is_ok`/`.is_err` usage anywhere; a use 
 
 ### Stage 4 — Use-case DI wiring
 
-Each module's `transport/http/dependencies.py` defines: a UnitOfWork provider as an async generator (`async def get_x_unit_of_work(session: SessionDep) -> AsyncGenerator[XUnitOfWork]`, doing `async with XUnitOfWorkImpl(...) as uow: yield uow`), a provider function + `Annotated[X, Depends(get_x)]` Dep alias per use case, and — for every other module's facade this one needs — a small locally-defined wrapper built only from that producer's `public/facade.py` (never its `transport/`), using `contextlib.aclosing` when the producer's factory is itself an async generator. Provider functions come first in the file, then every `...Dep = Annotated[...]` alias together at the end.
+Each module's `transport/http/dependencies.py` defines: a plain provider per repository (`def get_x_repository(session: SessionDep) -> XRepository: return XRepositoryImpl(session)`), a provider function + `Annotated[X, Depends(get_x)]` Dep alias per use case, and — for every other module's facade this one needs — a small locally-defined wrapper built only from that producer's `public/facade.py` (never its `transport/`). A use-case provider takes `TransactionDep` when the use case itself calls `commit()`; otherwise, if the use case still needs the request's auto-commit to run, the provider takes an unused `_tx: TransactionDep` (underscore-prefixed so ruff's `ARG001` doesn't flag it) purely to force that dependency to build. Provider functions come first in the file, then every `...Dep = Annotated[...]` alias together at the end.
 
 A use case needing another module's *write* behavior as part of the same atomic operation (e.g. `servers` creating a default channel) holds a same-session facade/use-case instance built by its own `transport/http/dependencies.py` — never a second independent session/transaction, since that wouldn't share the caller's open work.
 
-Flag: a use case resolving its dependencies dynamically instead of constructor injection from `transport/http/dependencies.py`; a module's own facade/UoW provider duplicated instead of imported from the producer's `public/facade.py`; `Depends()` providers not ordered provider-functions-then-Dep-aliases; a new module missing a `transport/http/dependencies.py` entirely where it has any use case with real dependencies.
+Flag: a use case resolving its dependencies dynamically instead of constructor injection from `transport/http/dependencies.py`; a module's own facade/repository provider duplicated instead of imported from the producer's `public/facade.py`; `Depends()` providers not ordered provider-functions-then-Dep-aliases; a new module missing a `transport/http/dependencies.py` entirely where it has any use case with real dependencies; a write use-case provider missing `TransactionDep`/`_tx: TransactionDep` entirely (the write would go silently uncommitted — nothing in the request's dependency graph would trigger the auto-commit).
 
 ### Stage 5 — Domain modeling
 
@@ -49,7 +49,7 @@ An anemic domain model elsewhere is not automatically a defect — most of this 
 
 ### Stage 6 — SOLID (pragmatic, not mechanical)
 
-Check responsibilities, not class count. Flag a use case that validates, authorizes, persists, and builds transport responses all at once; flag a repository interface carrying methods no consumer uses; flag a direct dependency on `AsyncSession`/Redis/an HTTP client from `usecases/` or `domain/` instead of through a Protocol. Do not require an interface for every class — introduce one only where it's a real substitution or testing boundary (repositories, UoWs, and facades already are; most everything else doesn't need to be).
+Check responsibilities, not class count. Flag a use case that validates, authorizes, persists, and builds transport responses all at once; flag a repository interface carrying methods no consumer uses; flag a direct dependency on `AsyncSession`/Redis/an HTTP client from `usecases/` or `domain/` instead of through a Protocol. Do not require an interface for every class — introduce one only where it's a real substitution or testing boundary (repositories, `Transaction`, and facades already are; most everything else doesn't need to be).
 
 ### Stage 7 — FastAPI / transport
 
@@ -59,7 +59,7 @@ Flag: an ORM row or entity returned directly as a `response_model` instead of br
 
 ### Stage 8 — Persistence & transactions
 
-`adapters/persistence/mappers.py` is the only place ORM rows convert to/from domain entities — repositories never leak ORM objects upward. `UnitOfWork` wraps one `AsyncSession` per request and is entered via `async with`; the use case calls `uow.commit()` explicitly. The UoW contract is an ABC (not a bare Protocol), so a unit-test fake must explicitly subclass it — structural typing alone won't satisfy `mypy --strict` here.
+`adapters/persistence/mappers.py` is the only place ORM rows convert to/from domain entities — repositories never leak ORM objects upward. There is no Unit-of-Work: repositories are injected directly, and `api/v1/dependencies.py::get_transaction` auto-commits the request's shared `AsyncSession` before a successful response (skipped entirely on a raised exception). `Transaction` (`shared/domain/transaction.py`) is a bare `Protocol`, so a unit-test fake (the shared `tests/unit/fakes.py::FakeTransaction`) satisfies it structurally — no subclassing needed.
 
 Flag: a commit happening inside a repository instead of the use case/UoW; N+1 queries or an unbounded `SELECT`; an ORM attribute accessed lazily outside the session that loaded it; a new Alembic migration whose *only* purpose is soft-delete/history preservation — this project prefers a hard delete over a migration added solely to preserve deleted-row history.
 
