@@ -16,7 +16,7 @@ from tests.unit.chats.fakes import (
     FakeChatRepository,
     FakeChatsFacade,
 )
-from tests.unit.messages.fakes import FakeMessageRepository, FakeMessageUnitOfWork
+from tests.unit.messages.fakes import FakeMessageRepository
 from tests.unit.servers.fakes import (
     FakeServerMemberRepository,
     FakeServerRepository,
@@ -26,16 +26,18 @@ from tests.unit.servers.fakes import (
 
 async def test_sender_can_delete_own_chat_message() -> None:
     chats, chat_members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeMessageUnitOfWork(FakeMessageRepository(), chats, FakeChannelRepository())
+    messages = FakeMessageRepository()
     chats_facade = FakeChatsFacade(chats, chat_members)
     servers_facade = FakeServersFacade(
         FakeServerMemberRepository(), FakeServerRepository()
     )
-    use_case = DeleteMessageUseCase(uow, chats_facade, servers_facade)
+    use_case = DeleteMessageUseCase(
+        messages, FakeChannelRepository(), chats_facade, servers_facade
+    )
 
     sender_id = uuid4()
     chat = await chats.create(ChatCreate(type=ChatType.private))
-    message = await uow.messages.create(
+    message = await messages.create(
         MessageCreate(
             sender_id=sender_id, body="hi", sequence=1, parent_id=None, chat_id=chat.id
         )
@@ -45,17 +47,18 @@ async def test_sender_can_delete_own_chat_message() -> None:
 
     assert deleted.is_deleted is True
     assert deleted.body is None
-    assert uow.committed
 
 
 async def test_chat_owner_can_delete_others_message() -> None:
     chats, chat_members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeMessageUnitOfWork(FakeMessageRepository(), chats, FakeChannelRepository())
+    messages = FakeMessageRepository()
     chats_facade = FakeChatsFacade(chats, chat_members)
     servers_facade = FakeServersFacade(
         FakeServerMemberRepository(), FakeServerRepository()
     )
-    use_case = DeleteMessageUseCase(uow, chats_facade, servers_facade)
+    use_case = DeleteMessageUseCase(
+        messages, FakeChannelRepository(), chats_facade, servers_facade
+    )
 
     owner_id, sender_id = uuid4(), uuid4()
     chat = await chats.create(
@@ -67,7 +70,7 @@ async def test_chat_owner_can_delete_others_message() -> None:
             MemberCreate(user_id=sender_id, chat_id=chat.id),
         ]
     )
-    message = await uow.messages.create(
+    message = await messages.create(
         MessageCreate(
             sender_id=sender_id, body="hi", sequence=1, parent_id=None, chat_id=chat.id
         )
@@ -80,12 +83,14 @@ async def test_chat_owner_can_delete_others_message() -> None:
 
 async def test_non_sender_non_owner_cannot_delete_chat_message() -> None:
     chats, chat_members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeMessageUnitOfWork(FakeMessageRepository(), chats, FakeChannelRepository())
+    messages = FakeMessageRepository()
     chats_facade = FakeChatsFacade(chats, chat_members)
     servers_facade = FakeServersFacade(
         FakeServerMemberRepository(), FakeServerRepository()
     )
-    use_case = DeleteMessageUseCase(uow, chats_facade, servers_facade)
+    use_case = DeleteMessageUseCase(
+        messages, FakeChannelRepository(), chats_facade, servers_facade
+    )
 
     owner_id, sender_id, other_id = uuid4(), uuid4(), uuid4()
     chat = await chats.create(
@@ -98,7 +103,7 @@ async def test_non_sender_non_owner_cannot_delete_chat_message() -> None:
             MemberCreate(user_id=other_id, chat_id=chat.id),
         ]
     )
-    message = await uow.messages.create(
+    message = await messages.create(
         MessageCreate(
             sender_id=sender_id, body="hi", sequence=1, parent_id=None, chat_id=chat.id
         )
@@ -110,11 +115,11 @@ async def test_non_sender_non_owner_cannot_delete_chat_message() -> None:
 
 async def test_server_owner_can_delete_channel_message() -> None:
     channels = FakeChannelRepository()
-    uow = FakeMessageUnitOfWork(FakeMessageRepository(), FakeChatRepository(), channels)
+    messages = FakeMessageRepository()
     server_members, servers = FakeServerMemberRepository(), FakeServerRepository()
     chats_facade = FakeChatsFacade(FakeChatRepository(), FakeChatMemberRepository())
     servers_facade = FakeServersFacade(server_members, servers)
-    use_case = DeleteMessageUseCase(uow, chats_facade, servers_facade)
+    use_case = DeleteMessageUseCase(messages, channels, chats_facade, servers_facade)
 
     owner_id, sender_id = uuid4(), uuid4()
     await servers.create(ServerCreate(name="S", owner_id=owner_id))
@@ -127,7 +132,7 @@ async def test_server_owner_can_delete_channel_message() -> None:
     channel = await channels.create(
         ChannelCreate(server_id=server.id, name="general", topic=None)
     )
-    message = await uow.messages.create(
+    message = await messages.create(
         MessageCreate(
             sender_id=sender_id,
             body="hi",

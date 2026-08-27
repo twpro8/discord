@@ -1,18 +1,13 @@
-from collections.abc import AsyncGenerator
-from contextlib import aclosing
 from typing import Annotated
 
 from fastapi import Depends
 
-from src.api.v1.dependencies import CacheDep, EventBusDep, SessionDep
-from src.modules.friends.domain.repositories.friend_unit_of_work import (
-    FriendUnitOfWork,
-)
-from src.modules.friends.infrastructure.friend_unit_of_work_impl import (
-    FriendUnitOfWorkImpl,
-)
-from src.modules.friends.infrastructure.persistence.friend_repository_impl import (
+from src.api.v1.dependencies import CacheDep, EventBusDep, SessionDep, TransactionDep
+from src.modules.friends.adapters.persistence.friend_repository_impl import (
     FriendRepositoryImpl,
+)
+from src.modules.friends.domain.repositories.friend_repository import (
+    FriendRepository,
 )
 from src.modules.friends.usecases.accept_request import AcceptFriendRequestUseCase
 from src.modules.friends.usecases.delete_request import DeleteFriendRequestUseCase
@@ -24,62 +19,62 @@ from src.modules.friends.usecases.send_request import SendFriendRequestUseCase
 from src.modules.users.public.facade import UsersFacade, build_users_facade
 
 
-async def get_friend_unit_of_work(
-    session: SessionDep,
-) -> AsyncGenerator[FriendUnitOfWork]:
-    friend_repository = FriendRepositoryImpl(session)
-    async with FriendUnitOfWorkImpl(session, friend_repository) as uow:
-        yield uow
+def get_friend_repository(session: SessionDep) -> FriendRepository:
+    return FriendRepositoryImpl(session)
 
 
-async def get_users_facade(
+def get_users_facade(
     session: SessionDep, cache: CacheDep, event_bus: EventBusDep
-) -> AsyncGenerator[UsersFacade]:
-    async with aclosing(build_users_facade(session, cache, event_bus)) as facades:
-        async for facade in facades:
-            yield facade
+) -> UsersFacade:
+    return build_users_facade(session, cache, event_bus)
 
 
-FriendUnitOfWorkDep = Annotated[FriendUnitOfWork, Depends(get_friend_unit_of_work)]
+FriendRepositoryDep = Annotated[FriendRepository, Depends(get_friend_repository)]
 UsersFacadeDep = Annotated[UsersFacade, Depends(get_users_facade)]
 
 
 async def get_send_friend_request_use_case(
-    uow: FriendUnitOfWorkDep, users_facade: UsersFacadeDep
+    friend_repository: FriendRepositoryDep,
+    users_facade: UsersFacadeDep,
+    _tx: TransactionDep,
 ) -> SendFriendRequestUseCase:
-    return SendFriendRequestUseCase(uow, users_facade)
+    return SendFriendRequestUseCase(friend_repository, users_facade)
 
 
 async def get_accept_friend_request_use_case(
-    uow: FriendUnitOfWorkDep,
+    friend_repository: FriendRepositoryDep, _tx: TransactionDep
 ) -> AcceptFriendRequestUseCase:
-    return AcceptFriendRequestUseCase(uow)
+    return AcceptFriendRequestUseCase(friend_repository)
 
 
 async def get_delete_friend_request_use_case(
-    uow: FriendUnitOfWorkDep,
+    friend_repository: FriendRepositoryDep, _tx: TransactionDep
 ) -> DeleteFriendRequestUseCase:
-    return DeleteFriendRequestUseCase(uow)
+    return DeleteFriendRequestUseCase(friend_repository)
 
 
-async def get_remove_friend_use_case(uow: FriendUnitOfWorkDep) -> RemoveFriendUseCase:
-    return RemoveFriendUseCase(uow)
+async def get_remove_friend_use_case(
+    friend_repository: FriendRepositoryDep, _tx: TransactionDep
+) -> RemoveFriendUseCase:
+    return RemoveFriendUseCase(friend_repository)
 
 
-async def get_get_friends_use_case(uow: FriendUnitOfWorkDep) -> GetFriendsUseCase:
-    return GetFriendsUseCase(uow.friends)
+async def get_get_friends_use_case(
+    friend_repository: FriendRepositoryDep,
+) -> GetFriendsUseCase:
+    return GetFriendsUseCase(friend_repository)
 
 
 async def get_get_friend_requests_use_case(
-    uow: FriendUnitOfWorkDep,
+    friend_repository: FriendRepositoryDep,
 ) -> GetFriendRequestsUseCase:
-    return GetFriendRequestsUseCase(uow.friends)
+    return GetFriendRequestsUseCase(friend_repository)
 
 
 async def get_get_sent_friend_requests_use_case(
-    uow: FriendUnitOfWorkDep,
+    friend_repository: FriendRepositoryDep,
 ) -> GetSentFriendRequestsUseCase:
-    return GetSentFriendRequestsUseCase(uow.friends)
+    return GetSentFriendRequestsUseCase(friend_repository)
 
 
 SendFriendRequestUseCaseDep = Annotated[

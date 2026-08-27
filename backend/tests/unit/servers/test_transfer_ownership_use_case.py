@@ -13,26 +13,16 @@ from src.modules.servers.domain.exceptions import (
 from src.modules.servers.usecases.transfer_ownership import (
     TransferServerOwnershipUseCase,
 )
-from tests.unit.servers.fakes import (
-    FakeServerInviteRepository,
-    FakeServerMemberRepository,
-    FakeServerRepository,
-    FakeServerUnitOfWork,
-)
+from tests.unit.servers.fakes import FakeServerMemberRepository, FakeServerRepository
 
 
-def _seeded_uow() -> tuple[
-    FakeServerUnitOfWork, FakeServerRepository, FakeServerMemberRepository
-]:
-    servers = FakeServerRepository()
-    members = FakeServerMemberRepository()
-    uow = FakeServerUnitOfWork(servers, members, FakeServerInviteRepository())
-    return uow, servers, members
+def _seeded_repos() -> tuple[FakeServerRepository, FakeServerMemberRepository]:
+    return FakeServerRepository(), FakeServerMemberRepository()
 
 
 async def test_rejects_unknown_server() -> None:
-    uow, _, _ = _seeded_uow()
-    use_case = TransferServerOwnershipUseCase(uow)
+    servers, members = _seeded_repos()
+    use_case = TransferServerOwnershipUseCase(servers, members)
 
     with pytest.raises(ServerNotFoundError):
         await use_case(
@@ -43,7 +33,7 @@ async def test_rejects_unknown_server() -> None:
 
 
 async def test_rejects_transfer_to_self() -> None:
-    uow, servers, members = _seeded_uow()
+    servers, members = _seeded_repos()
     owner_id = uuid4()
     server = await servers.create(ServerCreate(name="S", owner_id=owner_id))
     await members.create(
@@ -51,7 +41,7 @@ async def test_rejects_transfer_to_self() -> None:
             server_id=server.id, user_id=owner_id, role=ServerMemberRole.owner
         )
     )
-    use_case = TransferServerOwnershipUseCase(uow)
+    use_case = TransferServerOwnershipUseCase(servers, members)
 
     with pytest.raises(CannotTransferToSelfError):
         await use_case(
@@ -62,7 +52,7 @@ async def test_rejects_transfer_to_self() -> None:
 
 
 async def test_rejects_non_owner() -> None:
-    uow, servers, members = _seeded_uow()
+    servers, members = _seeded_repos()
     owner_id, member_id, other_id = uuid4(), uuid4(), uuid4()
     server = await servers.create(ServerCreate(name="S", owner_id=owner_id))
     await members.create(
@@ -70,7 +60,7 @@ async def test_rejects_non_owner() -> None:
             server_id=server.id, user_id=member_id, role=ServerMemberRole.member
         )
     )
-    use_case = TransferServerOwnershipUseCase(uow)
+    use_case = TransferServerOwnershipUseCase(servers, members)
 
     with pytest.raises(YouAreNotOwnerError):
         await use_case(
@@ -81,7 +71,7 @@ async def test_rejects_non_owner() -> None:
 
 
 async def test_rejects_unknown_new_owner() -> None:
-    uow, servers, members = _seeded_uow()
+    servers, members = _seeded_repos()
     owner_id = uuid4()
     server = await servers.create(ServerCreate(name="S", owner_id=owner_id))
     await members.create(
@@ -89,7 +79,7 @@ async def test_rejects_unknown_new_owner() -> None:
             server_id=server.id, user_id=owner_id, role=ServerMemberRole.owner
         )
     )
-    use_case = TransferServerOwnershipUseCase(uow)
+    use_case = TransferServerOwnershipUseCase(servers, members)
 
     with pytest.raises(MemberNotFoundError):
         await use_case(
@@ -100,7 +90,7 @@ async def test_rejects_unknown_new_owner() -> None:
 
 
 async def test_transfers_ownership_and_swaps_roles() -> None:
-    uow, servers, members = _seeded_uow()
+    servers, members = _seeded_repos()
     owner_id, new_owner_id = uuid4(), uuid4()
     server = await servers.create(ServerCreate(name="S", owner_id=owner_id))
     await members.create(
@@ -113,7 +103,7 @@ async def test_transfers_ownership_and_swaps_roles() -> None:
             server_id=server.id, user_id=new_owner_id, role=ServerMemberRole.member
         )
     )
-    use_case = TransferServerOwnershipUseCase(uow)
+    use_case = TransferServerOwnershipUseCase(servers, members)
 
     updated = await use_case(
         server_id=server.id,

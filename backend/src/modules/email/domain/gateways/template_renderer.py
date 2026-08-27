@@ -7,7 +7,7 @@ from src.modules.email.domain.enums import EmailTemplateName
 
 class TemplateRenderer(Protocol):
     """Port for turning a template name + context into subject/body content.
-    Implemented by `infrastructure/rendering/jinja_renderer.py::JinjaTemplateRenderer`
+    Implemented by `adapters/rendering/jinja_renderer.py::JinjaTemplateRenderer`
     — the application layer never touches Jinja2 directly."""
 
     async def render(

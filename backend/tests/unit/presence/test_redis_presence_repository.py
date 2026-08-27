@@ -4,7 +4,7 @@ import pytest
 from fakeredis.aioredis import FakeRedis
 
 from src.modules.presence.domain.entities.dtos import PresenceStatus
-from src.modules.presence.infrastructure.persistence.redis_presence_repository import (
+from src.modules.presence.adapters.persistence.redis_presence_repository import (
     RedisPresenceRepository,
 )
 
@@ -119,7 +119,7 @@ async def test_sweep_stale_purges_dead_connections_and_reports_transitions(
 
     fake_now = [1_000_000.0]
     monkeypatch.setattr(
-        "src.modules.presence.infrastructure.persistence.redis_presence_repository.time.time",
+        "src.modules.presence.adapters.persistence.redis_presence_repository.time.time",
         lambda: fake_now[0],
     )
 

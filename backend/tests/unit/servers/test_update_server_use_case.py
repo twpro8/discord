@@ -5,20 +5,12 @@ import pytest
 from src.modules.servers.domain.entities.dtos import ServerCreate, ServerUpdateData
 from src.modules.servers.domain.exceptions import ServerNotFoundError
 from src.modules.servers.usecases.update_server import UpdateServerUseCase
-from tests.unit.servers.fakes import (
-    FakeServerInviteRepository,
-    FakeServerMemberRepository,
-    FakeServerRepository,
-    FakeServerUnitOfWork,
-)
+from tests.unit.servers.fakes import FakeServerRepository
 
 
 def _use_case() -> tuple[UpdateServerUseCase, FakeServerRepository]:
     servers = FakeServerRepository()
-    uow = FakeServerUnitOfWork(
-        servers, FakeServerMemberRepository(), FakeServerInviteRepository()
-    )
-    return UpdateServerUseCase(uow), servers
+    return UpdateServerUseCase(servers), servers
 
 
 async def test_rejects_unknown_server() -> None:

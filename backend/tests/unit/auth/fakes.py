@@ -5,9 +5,6 @@ from uuid import UUID, uuid4
 from src.core.security.hashing import hash_password, verify_password
 from src.modules.auth.domain.entities.dtos import RefreshTokenCreate
 from src.modules.auth.domain.entities.refresh_token import RefreshToken
-from src.modules.auth.domain.repositories.auth_unit_of_work import (
-    AuthUnitOfWork,
-)
 from src.modules.email.domain.entities.dtos import EmailMessageDTO
 from src.modules.email.domain.enums import EmailStatus, EmailTemplateName
 from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
@@ -160,19 +157,3 @@ class FakeRefreshTokenRepository:
         for token in self.tokens.values():
             if token.user_id == user_id:
                 token.is_revoked = True
-
-
-class FakeAuthUnitOfWork(AuthUnitOfWork):
-    def __init__(
-        self,
-        refresh_tokens: FakeRefreshTokenRepository,
-    ) -> None:
-        self.refresh_tokens = refresh_tokens
-        self.committed = False
-        self.rolled_back = False
-
-    async def commit(self) -> None:
-        self.committed = True
-
-    async def rollback(self) -> None:
-        self.rolled_back = True

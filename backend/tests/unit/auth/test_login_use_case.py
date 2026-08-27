@@ -9,12 +9,12 @@ from src.modules.users.domain.exceptions import (
 )
 from src.shared.errors import TransientError
 from tests.unit.auth.fakes import (
-    FakeAuthUnitOfWork,
     FakeEmailFacade,
     FakeRefreshTokenRepository,
     FakeUsersFacade,
     make_user,
 )
+from tests.unit.fakes import FakeTransaction
 
 
 def _use_case(
@@ -22,10 +22,10 @@ def _use_case(
     email_facade: FakeEmailFacade | None = None,
 ) -> tuple[LoginUseCase, FakeRefreshTokenRepository, FakeEmailFacade]:
     refresh_tokens = FakeRefreshTokenRepository()
-    uow = FakeAuthUnitOfWork(refresh_tokens)
+    tx = FakeTransaction()
     email = email_facade or FakeEmailFacade()
     return (
-        LoginUseCase(uow, FakeUsersFacade(users), email),
+        LoginUseCase(tx, refresh_tokens, FakeUsersFacade(users), email),
         refresh_tokens,
         email,
     )

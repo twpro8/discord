@@ -9,14 +9,14 @@ Do not remove or bypass these imports unless you update Alembic's
 model discovery logic accordingly.
 """
 
-from src.modules.auth.infrastructure.persistence.models import RefreshTokenOrm
-from src.modules.channels.infrastructure.persistence.models import ChannelOrm
-from src.modules.chats.infrastructure.persistence.models import ChatOrm
-from src.modules.email.infrastructure.persistence.models import EmailMessageOrm
-from src.modules.friends.infrastructure.persistence.models import FriendOrm
-from src.modules.messages.infrastructure.persistence.models import MessageOrm
-from src.modules.servers.infrastructure.persistence.models import ServerOrm
-from src.modules.users.infrastructure.persistence.models import UserOrm
+from src.modules.auth.adapters.persistence.models import RefreshTokenOrm
+from src.modules.channels.adapters.persistence.models import ChannelOrm
+from src.modules.chats.adapters.persistence.models import ChatOrm
+from src.modules.email.adapters.persistence.models import EmailMessageOrm
+from src.modules.friends.adapters.persistence.models import FriendOrm
+from src.modules.messages.adapters.persistence.models import MessageOrm
+from src.modules.servers.adapters.persistence.models import ServerOrm
+from src.modules.users.adapters.persistence.models import UserOrm
 
 __all__ = [
     "UserOrm",

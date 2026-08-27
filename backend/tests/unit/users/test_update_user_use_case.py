@@ -8,33 +8,29 @@ from src.modules.users.domain.exceptions import (
 )
 from src.modules.users.usecases.get_user_by_id import cache_key
 from src.modules.users.usecases.update_user import UpdateUserUseCase
-from tests.unit.users.fakes import (
-    FakeCache,
-    FakeUserRepository,
-    FakeUserUnitOfWork,
-    make_user,
-)
+from tests.unit.fakes import FakeTransaction
+from tests.unit.users.fakes import FakeCache, FakeUserRepository, make_user
 
 
 async def test_partial_update_only_touches_provided_fields() -> None:
     user = make_user(username="original")
     users = FakeUserRepository([user])
-    uow = FakeUserUnitOfWork(users)
-    use_case = UpdateUserUseCase(uow, FakeCache())
+    tx = FakeTransaction()
+    use_case = UpdateUserUseCase(tx, users, FakeCache())
 
     updated = await use_case(user_id=user.id, data=UserUpdate(name="New Name"))
 
     assert updated.name == "New Name"
     assert str(updated.username) == "original"
-    assert uow.committed
+    assert tx.committed
 
 
 async def test_invalidates_cache() -> None:
     user = make_user()
-    uow = FakeUserUnitOfWork(FakeUserRepository([user]))
+    tx = FakeTransaction()
     cache = FakeCache()
     await cache.set(cache_key(user.id), "stale")
-    use_case = UpdateUserUseCase(uow, cache)
+    use_case = UpdateUserUseCase(tx, FakeUserRepository([user]), cache)
 
     await use_case(user_id=user.id, data=UserUpdate(name="New Name"))
 
@@ -44,19 +40,19 @@ async def test_invalidates_cache() -> None:
 async def test_rejects_username_taken_by_another_user() -> None:
     user = make_user(username="alice")
     other = make_user(username="bob")
-    uow = FakeUserUnitOfWork(FakeUserRepository([user, other]))
-    use_case = UpdateUserUseCase(uow, FakeCache())
+    tx = FakeTransaction()
+    use_case = UpdateUserUseCase(tx, FakeUserRepository([user, other]), FakeCache())
 
     with pytest.raises(UserAlreadyExistsError):
         await use_case(user_id=user.id, data=UserUpdate(username="bob"))
 
-    assert not uow.committed
+    assert not tx.committed
 
 
 async def test_allows_keeping_own_username() -> None:
     user = make_user(username="alice")
-    uow = FakeUserUnitOfWork(FakeUserRepository([user]))
-    use_case = UpdateUserUseCase(uow, FakeCache())
+    tx = FakeTransaction()
+    use_case = UpdateUserUseCase(tx, FakeUserRepository([user]), FakeCache())
 
     updated = await use_case(user_id=user.id, data=UserUpdate(username="alice"))
 
@@ -66,8 +62,8 @@ async def test_allows_keeping_own_username() -> None:
 async def test_rejects_email_taken_by_another_user() -> None:
     user = make_user(username="alice")
     other = make_user(username="bob")
-    uow = FakeUserUnitOfWork(FakeUserRepository([user, other]))
-    use_case = UpdateUserUseCase(uow, FakeCache())
+    tx = FakeTransaction()
+    use_case = UpdateUserUseCase(tx, FakeUserRepository([user, other]), FakeCache())
 
     with pytest.raises(UserAlreadyExistsError):
         await use_case(user_id=user.id, data=UserUpdate(email="bob@test.com"))
@@ -75,8 +71,8 @@ async def test_rejects_email_taken_by_another_user() -> None:
 
 async def test_rejects_invalid_username_value() -> None:
     user = make_user()
-    uow = FakeUserUnitOfWork(FakeUserRepository([user]))
-    use_case = UpdateUserUseCase(uow, FakeCache())
+    tx = FakeTransaction()
+    use_case = UpdateUserUseCase(tx, FakeUserRepository([user]), FakeCache())
 
     with pytest.raises(InvalidUsername):
         await use_case(user_id=user.id, data=UserUpdate(username="ab"))
@@ -84,8 +80,8 @@ async def test_rejects_invalid_username_value() -> None:
 
 async def test_rejects_invalid_email_value() -> None:
     user = make_user()
-    uow = FakeUserUnitOfWork(FakeUserRepository([user]))
-    use_case = UpdateUserUseCase(uow, FakeCache())
+    tx = FakeTransaction()
+    use_case = UpdateUserUseCase(tx, FakeUserRepository([user]), FakeCache())
 
     with pytest.raises(InvalidEmail):
         await use_case(user_id=user.id, data=UserUpdate(email="not-an-email"))

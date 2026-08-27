@@ -3,17 +3,17 @@ from uuid import uuid4
 
 import pytest
 
+from src.modules.auth.adapters.security import hash_refresh_token
 from src.modules.auth.domain.entities.dtos import RefreshTokenCreate
 from src.modules.auth.domain.exceptions import InvalidRefreshTokenError
-from src.modules.auth.infrastructure.security import hash_refresh_token
 from src.modules.auth.usecases.refresh import RefreshUseCase
-from tests.unit.auth.fakes import FakeAuthUnitOfWork, FakeRefreshTokenRepository
+from tests.unit.auth.fakes import FakeRefreshTokenRepository
+from tests.unit.fakes import FakeTransaction
 
 
 def _use_case() -> tuple[RefreshUseCase, FakeRefreshTokenRepository]:
     refresh_tokens = FakeRefreshTokenRepository()
-    uow = FakeAuthUnitOfWork(refresh_tokens)
-    return RefreshUseCase(uow), refresh_tokens
+    return RefreshUseCase(FakeTransaction(), refresh_tokens), refresh_tokens
 
 
 async def test_rejects_unknown_token() -> None:

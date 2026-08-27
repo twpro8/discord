@@ -16,9 +16,9 @@ from src.shared.errors import TransientError
 from tests.unit.email.fakes import (
     FakeEmailMessageRepository,
     FakeEmailProvider,
-    FakeEmailUnitOfWork,
     FakeTemplateRenderer,
 )
+from tests.unit.fakes import FakeTransaction
 
 _TEMPLATE = EmailTemplateName.GENERIC_NOTIFICATION
 _CONTEXT = {"recipient_name": "User", "message": "hi"}
@@ -38,11 +38,11 @@ async def _pending_message_id(repository: FakeEmailMessageRepository) -> UUID:
 
 async def test_delivers_successfully_and_marks_sent() -> None:
     repository = FakeEmailMessageRepository()
-    uow = FakeEmailUnitOfWork(repository)
+    tx = FakeTransaction()
     provider = FakeEmailProvider()
     renderer = FakeTemplateRenderer()
     message_id = await _pending_message_id(repository)
-    use_case = DeliverEmailUseCase(uow, renderer, provider)
+    use_case = DeliverEmailUseCase(tx, repository, renderer, provider)
 
     dto = await use_case(
         message_id=message_id,
@@ -53,19 +53,19 @@ async def test_delivers_successfully_and_marks_sent() -> None:
 
     assert dto.status == EmailStatus.SENT
     assert dto.provider_message_id == "provider-message-id"
-    assert uow.committed
+    assert tx.committed
     assert len(provider.sent) == 1
     assert provider.sent[0].to == "user@example.com"
 
 
 async def test_already_sent_message_is_a_safe_noop() -> None:
     repository = FakeEmailMessageRepository()
-    uow = FakeEmailUnitOfWork(repository)
+    tx = FakeTransaction()
     provider = FakeEmailProvider()
     renderer = FakeTemplateRenderer()
     message_id = await _pending_message_id(repository)
     await repository.mark_sent(message_id, provider_message_id="already-sent")
-    use_case = DeliverEmailUseCase(uow, renderer, provider)
+    use_case = DeliverEmailUseCase(tx, repository, renderer, provider)
 
     dto = await use_case(
         message_id=message_id,
@@ -76,12 +76,14 @@ async def test_already_sent_message_is_a_safe_noop() -> None:
 
     assert dto.status == EmailStatus.SENT
     assert provider.sent == []  # never re-sent
-    assert not uow.committed  # no write needed for a redelivered no-op
+    assert not tx.committed  # no write needed for a redelivered no-op
 
 
 async def test_message_not_found_raises() -> None:
-    uow = FakeEmailUnitOfWork(FakeEmailMessageRepository())
-    use_case = DeliverEmailUseCase(uow, FakeTemplateRenderer(), FakeEmailProvider())
+    tx = FakeTransaction()
+    use_case = DeliverEmailUseCase(
+        tx, FakeEmailMessageRepository(), FakeTemplateRenderer(), FakeEmailProvider()
+    )
 
     with pytest.raises(EmailMessageNotFoundError):
         await use_case(
@@ -101,9 +103,11 @@ class _RaisingTemplateRenderer(FakeTemplateRenderer):
 
 async def test_template_render_error_marks_failed_not_retrying() -> None:
     repository = FakeEmailMessageRepository()
-    uow = FakeEmailUnitOfWork(repository)
+    tx = FakeTransaction()
     message_id = await _pending_message_id(repository)
-    use_case = DeliverEmailUseCase(uow, _RaisingTemplateRenderer(), FakeEmailProvider())
+    use_case = DeliverEmailUseCase(
+        tx, repository, _RaisingTemplateRenderer(), FakeEmailProvider()
+    )
 
     with pytest.raises(TemplateRenderError):
         await use_case(
@@ -118,10 +122,10 @@ async def test_template_render_error_marks_failed_not_retrying() -> None:
 
 async def test_transient_provider_error_marks_retrying() -> None:
     repository = FakeEmailMessageRepository()
-    uow = FakeEmailUnitOfWork(repository)
+    tx = FakeTransaction()
     message_id = await _pending_message_id(repository)
     provider = FakeEmailProvider(error=TransientError("SMTP connection refused"))
-    use_case = DeliverEmailUseCase(uow, FakeTemplateRenderer(), provider)
+    use_case = DeliverEmailUseCase(tx, repository, FakeTemplateRenderer(), provider)
 
     with pytest.raises(TransientError):
         await use_case(
@@ -136,10 +140,10 @@ async def test_transient_provider_error_marks_retrying() -> None:
 
 async def test_permanent_provider_error_marks_failed() -> None:
     repository = FakeEmailMessageRepository()
-    uow = FakeEmailUnitOfWork(repository)
+    tx = FakeTransaction()
     message_id = await _pending_message_id(repository)
     provider = FakeEmailProvider(error=EmailDeliveryFailed("hard bounce"))
-    use_case = DeliverEmailUseCase(uow, FakeTemplateRenderer(), provider)
+    use_case = DeliverEmailUseCase(tx, repository, FakeTemplateRenderer(), provider)
 
     with pytest.raises(EmailDeliveryFailed):
         await use_case(

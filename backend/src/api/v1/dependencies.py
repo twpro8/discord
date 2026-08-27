@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from typing import Annotated, cast
 from uuid import UUID
 
@@ -18,6 +19,8 @@ from src.core.security.jwt import decode_access_token
 from src.core.storage import Storage
 from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
+from src.shared.data.transaction import SqlAlchemyTransaction
+from src.shared.domain.transaction import Transaction
 
 access_cookie_scheme = APIKeyCookie(name="access_token")
 
@@ -58,6 +61,27 @@ RedisSubscriptionManagerDep = Annotated[
     RedisSubscriptionManager, Depends(get_redis_subscription_manager)
 ]
 JobDispatcherDep = Annotated[JobDispatcher, Depends(get_job_dispatcher)]
+
+
+async def get_transaction(session: SessionDep) -> AsyncGenerator[Transaction]:
+    """Commits on a successful response, before it is sent to the client;
+    skipped entirely if the request raised. `scope="function"` is what makes
+    that ordering safe — the default `scope="request"` tears down *after*
+    the response is sent, so a failed commit there couldn't change what the
+    client already received.
+
+    A use case with work that must run strictly after its write is durable
+    (a realtime publish, a cache invalidation, an enqueued job, ...) injects
+    `Transaction` and calls `commit()` itself; the `in_transaction()` guard
+    below then makes this a no-op rather than a second commit.
+    """
+    tx = SqlAlchemyTransaction(session)
+    yield tx
+    if session.in_transaction():
+        await tx.commit()
+
+
+TransactionDep = Annotated[Transaction, Depends(get_transaction, scope="function")]
 
 
 def get_current_user_id(access_token: AccessTokenDep) -> UUID:

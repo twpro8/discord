@@ -5,6 +5,7 @@ from src.core.logging import get_logger
 from src.core.realtime.envelope import EventType
 from src.core.realtime.notifier import RealtimeNotifier
 from src.core.realtime.rooms import chat_room
+from src.modules.chats.domain.repositories.chat_repository import ChatRepository
 from src.modules.chats.public.facade import ChatsFacade
 from src.modules.messages.domain.entities.dtos import (
     ChatMessage,
@@ -12,9 +13,10 @@ from src.modules.messages.domain.entities.dtos import (
     MessageCreateData,
     chat_message_from_message,
 )
-from src.modules.messages.domain.repositories.message_unit_of_work import (
-    MessageUnitOfWork,
+from src.modules.messages.domain.repositories.message_repository import (
+    MessageRepository,
 )
+from src.shared.domain.transaction import Transaction
 
 logger = get_logger(__name__)
 
@@ -22,11 +24,15 @@ logger = get_logger(__name__)
 class SendChatMessageUseCase:
     def __init__(
         self,
-        uow: MessageUnitOfWork,
+        tx: Transaction,
+        message_repository: MessageRepository,
+        chat_repository: ChatRepository,
         chats_facade: ChatsFacade,
         realtime_notifier: RealtimeNotifier,
     ) -> None:
-        self._uow = uow
+        self._tx = tx
+        self._messages = message_repository
+        self._chats = chat_repository
         self._chats_facade = chats_facade
         self._realtime = realtime_notifier
 
@@ -34,8 +40,8 @@ class SendChatMessageUseCase:
         self, *, chat_id: UUID, sender_id: UUID, data: MessageCreateData
     ) -> ChatMessage:
         await self._chats_facade.assert_is_chat_member(sender_id, chat_id)
-        sequence = await self._uow.chats.increment_sequence(chat_id)
-        message = await self._uow.messages.create(
+        sequence = await self._chats.increment_sequence(chat_id)
+        message = await self._messages.create(
             MessageCreate(
                 chat_id=chat_id,
                 sender_id=sender_id,
@@ -45,7 +51,7 @@ class SendChatMessageUseCase:
             )
         )
 
-        await self._uow.commit()
+        await self._tx.commit()
         chat_message = chat_message_from_message(message)
         await self._notify(chat_id, chat_message)
         return chat_message

@@ -11,10 +11,10 @@ from src.modules.chats.usecases.create_chat import CreateChatUseCase
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
-    FakeChatUnitOfWork,
     FakeRoomMembershipUpdater,
     RecordingEventBus,
 )
+from tests.unit.fakes import FakeTransaction
 
 
 def _use_case() -> tuple[
@@ -26,11 +26,10 @@ def _use_case() -> tuple[
 ]:
     chats = FakeChatRepository()
     members = FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
     event_bus = RecordingEventBus()
     room_updater = FakeRoomMembershipUpdater()
     return (
-        CreateChatUseCase(uow, event_bus, room_updater),
+        CreateChatUseCase(FakeTransaction(), chats, members, event_bus, room_updater),
         chats,
         members,
         event_bus,

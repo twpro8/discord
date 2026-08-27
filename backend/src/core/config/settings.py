@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     CELERY_TASK_MAX_RETRIES: int = 3
     CELERY_TASK_DEFAULT_RETRY_DELAY: int = 10
 
-    # Emails — consumed by modules/email only (see its infrastructure/providers)
+    # Emails — consumed by modules/email only (see its adapters/providers)
     EMAIL_PROVIDER: Literal["smtp"] = "smtp"
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587

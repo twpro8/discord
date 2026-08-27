@@ -1,16 +1,12 @@
-from collections.abc import AsyncGenerator
 from typing import Protocol
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.channels.domain.entities.dtos import ChannelDTO, channel_to_dto
-from src.modules.channels.infrastructure.channel_unit_of_work_impl import (
-    ChannelUnitOfWorkImpl,
-)
-from src.modules.channels.infrastructure.persistence.channel_repository_impl import (
+from src.modules.channels.adapters.persistence.channel_repository_impl import (
     ChannelRepositoryImpl,
 )
+from src.modules.channels.domain.entities.dtos import ChannelDTO, channel_to_dto
 from src.modules.channels.usecases.create_channel import CreateChannelUseCase
 
 
@@ -20,10 +16,12 @@ class ChannelsFacade(Protocol):
 
 class UseCaseBackedChannelsFacade:
     """Wraps a CreateChannelUseCase built against the *same* session as the
-    caller, so a same-transaction, no-separate-commit delegation (e.g.
-    servers creating a default channel while creating a server) still
-    goes through this module's public boundary instead of the caller
-    reaching into channels' usecases/infrastructure directly.
+    caller, so a same-transaction delegation (e.g. servers creating a
+    default channel while creating a server) still goes through this
+    module's public boundary instead of the caller reaching into channels'
+    usecases/adapters directly. CreateChannelUseCase never commits itself
+    (see its docstring), so the caller's own commit — explicit or the
+    request's auto-commit — covers this write too.
 
     Deliberately not going through a shared dispatcher: per AGENTS.md, an
     operation that needs another module's write behavior as part of its
@@ -35,17 +33,10 @@ class UseCaseBackedChannelsFacade:
         self._create_channel = create_channel_use_case
 
     async def create_default_channel(self, server_id: UUID) -> ChannelDTO:
-        channel = await self._create_channel(
-            server_id=server_id, name="general", is_commit=False
-        )
+        channel = await self._create_channel(server_id=server_id, name="general")
         return channel_to_dto(channel)
 
 
-async def build_channels_facade(
-    session: AsyncSession,
-) -> AsyncGenerator[ChannelsFacade]:
+def build_channels_facade(session: AsyncSession) -> ChannelsFacade:
     channel_repository = ChannelRepositoryImpl(session)
-    async with ChannelUnitOfWorkImpl(
-        session=session, channel_repository=channel_repository
-    ) as uow:
-        yield UseCaseBackedChannelsFacade(CreateChannelUseCase(uow))
+    return UseCaseBackedChannelsFacade(CreateChannelUseCase(channel_repository))

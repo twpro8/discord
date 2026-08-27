@@ -3,14 +3,20 @@ from uuid import UUID
 from src.modules.channels.domain.entities.channel import Channel
 from src.modules.channels.domain.entities.dtos import ChannelCreate
 from src.modules.channels.domain.enums import ChannelType
-from src.modules.channels.domain.repositories.channel_unit_of_work import (
-    ChannelUnitOfWork,
+from src.modules.channels.domain.repositories.channel_repository import (
+    ChannelRepository,
 )
 
 
 class CreateChannelUseCase:
-    def __init__(self, channel_unit_of_work: ChannelUnitOfWork) -> None:
-        self._uow = channel_unit_of_work
+    """No explicit commit: called directly (auto-committed by the request's
+    TransactionDep) or, via ChannelsFacade.create_default_channel, as part
+    of another module's own atomic write (e.g. CreateServerUseCase) — that
+    caller's own explicit commit covers this write too, since both share
+    the same session."""
+
+    def __init__(self, channel_repository: ChannelRepository) -> None:
+        self._channels = channel_repository
 
     async def __call__(
         self,
@@ -20,7 +26,6 @@ class CreateChannelUseCase:
         type: ChannelType = ChannelType.text,
         topic: str | None = None,
         is_private: bool = False,
-        is_commit: bool = True,
     ) -> Channel:
         channel_data = ChannelCreate(
             server_id=server_id,
@@ -31,8 +36,4 @@ class CreateChannelUseCase:
             is_private=is_private,
         )
 
-        channel = await self._uow.channels.create(channel_data)
-        if is_commit:
-            await self._uow.commit()
-
-        return channel
+        return await self._channels.create(channel_data)

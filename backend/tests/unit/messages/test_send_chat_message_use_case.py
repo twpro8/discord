@@ -9,17 +9,13 @@ from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.domain.exceptions import ChatNotFoundError, NotChatMemberError
 from src.modules.messages.domain.entities.dtos import MessageCreateData
 from src.modules.messages.usecases.send_chat_message import SendChatMessageUseCase
-from tests.unit.channels.fakes import FakeChannelRepository
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
     FakeChatsFacade,
 )
-from tests.unit.messages.fakes import (
-    FakeMessageRepository,
-    FakeMessageUnitOfWork,
-    FakeRealtimeNotifier,
-)
+from tests.unit.fakes import FakeTransaction
+from tests.unit.messages.fakes import FakeMessageRepository, FakeRealtimeNotifier
 
 
 def _use_case() -> tuple[
@@ -30,15 +26,12 @@ def _use_case() -> tuple[
 ]:
     chats = FakeChatRepository()
     chat_members = FakeChatMemberRepository()
-    uow = FakeMessageUnitOfWork(
-        FakeMessageRepository(),
-        chats,
-        FakeChannelRepository(),
-    )
     chats_facade = FakeChatsFacade(chats, chat_members)
     realtime = FakeRealtimeNotifier()
     return (
-        SendChatMessageUseCase(uow, chats_facade, realtime),
+        SendChatMessageUseCase(
+            FakeTransaction(), FakeMessageRepository(), chats, chats_facade, realtime
+        ),
         chats,
         chat_members,
         realtime,

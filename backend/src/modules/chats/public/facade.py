@@ -3,17 +3,17 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.chats.adapters.persistence.chat_member_repository_impl import (
+    ChatMemberRepositoryImpl,
+)
+from src.modules.chats.adapters.persistence.chat_repository_impl import (
+    ChatRepositoryImpl,
+)
 from src.modules.chats.domain import services
 from src.modules.chats.domain.repositories.chat_member_repository import (
     ChatMemberRepository,
 )
 from src.modules.chats.domain.repositories.chat_repository import ChatRepository
-from src.modules.chats.infrastructure.persistence.chat_member_repository_impl import (
-    ChatMemberRepositoryImpl,
-)
-from src.modules.chats.infrastructure.persistence.chat_repository_impl import (
-    ChatRepositoryImpl,
-)
 
 
 class ChatsFacade(Protocol):

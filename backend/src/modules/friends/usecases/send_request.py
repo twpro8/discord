@@ -10,15 +10,17 @@ from src.modules.friends.domain.exceptions import (
     FriendRequestAlreadyExistsError,
     TargetUserNotFoundError,
 )
-from src.modules.friends.domain.repositories.friend_unit_of_work import (
-    FriendUnitOfWork,
+from src.modules.friends.domain.repositories.friend_repository import (
+    FriendRepository,
 )
 from src.modules.users.public.facade import UsersFacade
 
 
 class SendFriendRequestUseCase:
-    def __init__(self, uow: FriendUnitOfWork, users_facade: UsersFacade) -> None:
-        self._uow = uow
+    def __init__(
+        self, friend_repository: FriendRepository, users_facade: UsersFacade
+    ) -> None:
+        self._friends = friend_repository
         self._users_facade = users_facade
 
     async def __call__(
@@ -31,14 +33,10 @@ class SendFriendRequestUseCase:
         if sender_id == target_user.id:
             raise CannotSendFriendRequestToSelfError
 
-        relationship = await self._uow.friends.get_between_users(
-            sender_id, target_user.id
-        )
+        relationship = await self._friends.get_between_users(sender_id, target_user.id)
         if relationship is not None:
             raise FriendRequestAlreadyExistsError
 
-        request = await self._uow.friends.create(
+        return await self._friends.create(
             FriendRequestCreate(user_id=sender_id, target_user_id=target_user.id)
         )
-        await self._uow.commit()
-        return request

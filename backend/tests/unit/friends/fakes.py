@@ -8,9 +8,6 @@ from src.modules.friends.domain.entities.dtos import (
 )
 from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.domain.enums import FriendStatus
-from src.modules.friends.domain.repositories.friend_unit_of_work import (
-    FriendUnitOfWork,
-)
 from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
 from src.modules.users.domain.entities.user import User
 from src.modules.users.domain.value_objects.email import Email
@@ -147,19 +144,3 @@ class FakeFriendsFacade:
 
     async def list_friend_ids(self, user_id: UUID) -> set[UUID]:
         return self.friend_ids.get(user_id, set())
-
-
-class FakeFriendUnitOfWork(FriendUnitOfWork):
-    def __init__(
-        self,
-        friends: FakeFriendRepository,
-    ) -> None:
-        self.friends = friends
-        self.committed = False
-        self.rolled_back = False
-
-    async def commit(self) -> None:
-        self.committed = True
-
-    async def rollback(self) -> None:
-        self.rolled_back = True

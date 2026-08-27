@@ -18,7 +18,6 @@ from src.modules.servers.domain.entities.dtos import (
 from src.modules.servers.domain.entities.server import Server
 from src.modules.servers.domain.entities.server_invite import ServerInvite
 from src.modules.servers.domain.entities.server_member import ServerMember
-from src.modules.servers.domain.repositories.server_unit_of_work import ServerUnitOfWork
 from src.shared.domain.unset import set_fields
 
 # ServerMemberOrm has left_at/joined_at columns that the domain ServerMember
@@ -228,26 +227,6 @@ class FakeServerInviteRepository:
             return 0
         invite.use_count += 1
         return 1
-
-
-class FakeServerUnitOfWork(ServerUnitOfWork):
-    def __init__(
-        self,
-        servers: FakeServerRepository,
-        server_members: FakeServerMemberRepository,
-        invites: FakeServerInviteRepository,
-    ) -> None:
-        self.servers = servers
-        self.server_members = server_members
-        self.invites = invites
-        self.committed = False
-        self.rolled_back = False
-
-    async def commit(self) -> None:
-        self.committed = True
-
-    async def rollback(self) -> None:
-        self.rolled_back = True
 
 
 class FakeChannelsFacade:

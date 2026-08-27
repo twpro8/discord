@@ -11,7 +11,6 @@ from src.modules.email.domain.entities.dtos import (
 )
 from src.modules.email.domain.entities.email_message import EmailMessage
 from src.modules.email.domain.enums import EmailStatus, EmailTemplateName
-from src.modules.email.domain.repositories.email_unit_of_work import EmailUnitOfWork
 from src.modules.email.domain.value_objects.email_address import EmailAddress
 
 
@@ -77,19 +76,6 @@ class FakeEmailMessageRepository:
         message.attempts += 1
         message.error_message = error
         return message
-
-
-class FakeEmailUnitOfWork(EmailUnitOfWork):
-    def __init__(self, email_messages: FakeEmailMessageRepository) -> None:
-        self.email_messages = email_messages
-        self.committed = False
-        self.rolled_back = False
-
-    async def commit(self) -> None:
-        self.committed = True
-
-    async def rollback(self) -> None:
-        self.rolled_back = True
 
 
 class FakeTemplateRenderer:

@@ -1,17 +1,13 @@
-from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends
 
-from src.api.v1.dependencies import SessionDep
-from src.modules.channels.domain.repositories.channel_unit_of_work import (
-    ChannelUnitOfWork,
-)
-from src.modules.channels.infrastructure.channel_unit_of_work_impl import (
-    ChannelUnitOfWorkImpl,
-)
-from src.modules.channels.infrastructure.persistence.channel_repository_impl import (
+from src.api.v1.dependencies import SessionDep, TransactionDep
+from src.modules.channels.adapters.persistence.channel_repository_impl import (
     ChannelRepositoryImpl,
+)
+from src.modules.channels.domain.repositories.channel_repository import (
+    ChannelRepository,
 )
 from src.modules.channels.usecases.create_channel import CreateChannelUseCase
 from src.modules.channels.usecases.delete_channel import DeleteChannelUseCase
@@ -19,40 +15,42 @@ from src.modules.channels.usecases.update_channel import UpdateChannelUseCase
 from src.modules.servers.public.facade import ServersFacade, build_servers_facade
 
 
-async def get_channel_unit_of_work(
-    session: SessionDep,
-) -> AsyncGenerator[ChannelUnitOfWork]:
-    channel_repository = ChannelRepositoryImpl(session)
-    async with ChannelUnitOfWorkImpl(
-        session=session, channel_repository=channel_repository
-    ) as uow:
-        yield uow
+def get_channel_repository(session: SessionDep) -> ChannelRepository:
+    return ChannelRepositoryImpl(session)
 
 
-async def get_servers_facade(session: SessionDep) -> ServersFacade:
+def get_servers_facade(session: SessionDep) -> ServersFacade:
     return build_servers_facade(session)
 
 
-ChannelUnitOfWorkDep = Annotated[ChannelUnitOfWork, Depends(get_channel_unit_of_work)]
+ChannelRepositoryDep = Annotated[ChannelRepository, Depends(get_channel_repository)]
 ServersFacadeDep = Annotated[ServersFacade, Depends(get_servers_facade)]
 
 
 async def get_create_channel_use_case(
-    uow: ChannelUnitOfWorkDep,
+    channel_repository: ChannelRepositoryDep,
+    _tx: TransactionDep,
 ) -> CreateChannelUseCase:
-    return CreateChannelUseCase(uow)
+    # CreateChannelUseCase never commits itself (see its docstring) — this
+    # unused _tx forces the request's auto-commit dependency to actually
+    # build, since nothing else in this provider's graph references it.
+    return CreateChannelUseCase(channel_repository)
 
 
 async def get_update_channel_use_case(
-    uow: ChannelUnitOfWorkDep, servers_facade: ServersFacadeDep
+    channel_repository: ChannelRepositoryDep,
+    servers_facade: ServersFacadeDep,
+    _tx: TransactionDep,
 ) -> UpdateChannelUseCase:
-    return UpdateChannelUseCase(uow, servers_facade)
+    return UpdateChannelUseCase(channel_repository, servers_facade)
 
 
 async def get_delete_channel_use_case(
-    uow: ChannelUnitOfWorkDep, servers_facade: ServersFacadeDep
+    channel_repository: ChannelRepositoryDep,
+    servers_facade: ServersFacadeDep,
+    _tx: TransactionDep,
 ) -> DeleteChannelUseCase:
-    return DeleteChannelUseCase(uow, servers_facade)
+    return DeleteChannelUseCase(channel_repository, servers_facade)
 
 
 CreateChannelUseCaseDep = Annotated[

@@ -11,8 +11,7 @@ from src.modules.messages.usecases.list_channel_messages import (
 from src.modules.servers.domain.entities.dtos import ServerMemberCreate
 from src.modules.servers.domain.exceptions import NotServerMemberError
 from tests.unit.channels.fakes import FakeChannelRepository
-from tests.unit.chats.fakes import FakeChatRepository
-from tests.unit.messages.fakes import FakeMessageRepository, FakeMessageUnitOfWork
+from tests.unit.messages.fakes import FakeMessageRepository
 from tests.unit.servers.fakes import (
     FakeServerMemberRepository,
     FakeServerRepository,
@@ -22,10 +21,10 @@ from tests.unit.servers.fakes import (
 
 async def test_returns_messages_in_ascending_order() -> None:
     channels = FakeChannelRepository()
-    uow = FakeMessageUnitOfWork(FakeMessageRepository(), FakeChatRepository(), channels)
+    messages = FakeMessageRepository()
     server_members = FakeServerMemberRepository()
     servers_facade = FakeServersFacade(server_members, FakeServerRepository())
-    use_case = ListChannelMessagesUseCase(uow, servers_facade)
+    use_case = ListChannelMessagesUseCase(messages, channels, servers_facade)
 
     user_id, server_id = uuid4(), uuid4()
     channel = await channels.create(
@@ -35,7 +34,7 @@ async def test_returns_messages_in_ascending_order() -> None:
         ServerMemberCreate(server_id=server_id, user_id=user_id)
     )
     for seq in (1, 2, 3):
-        await uow.messages.create(
+        await messages.create(
             MessageCreate(
                 sender_id=user_id,
                 body=f"msg{seq}",
@@ -52,11 +51,12 @@ async def test_returns_messages_in_ascending_order() -> None:
 
 async def test_rejects_unknown_channel() -> None:
     channels = FakeChannelRepository()
-    uow = FakeMessageUnitOfWork(FakeMessageRepository(), FakeChatRepository(), channels)
     servers_facade = FakeServersFacade(
         FakeServerMemberRepository(), FakeServerRepository()
     )
-    use_case = ListChannelMessagesUseCase(uow, servers_facade)
+    use_case = ListChannelMessagesUseCase(
+        FakeMessageRepository(), channels, servers_facade
+    )
 
     with pytest.raises(ChannelNotFoundError):
         await use_case(channel_id=uuid4(), user_id=uuid4(), limit=20)
@@ -64,11 +64,12 @@ async def test_rejects_unknown_channel() -> None:
 
 async def test_rejects_non_server_member() -> None:
     channels = FakeChannelRepository()
-    uow = FakeMessageUnitOfWork(FakeMessageRepository(), FakeChatRepository(), channels)
     servers_facade = FakeServersFacade(
         FakeServerMemberRepository(), FakeServerRepository()
     )
-    use_case = ListChannelMessagesUseCase(uow, servers_facade)
+    use_case = ListChannelMessagesUseCase(
+        FakeMessageRepository(), channels, servers_facade
+    )
 
     channel = await channels.create(
         ChannelCreate(server_id=uuid4(), name="general", topic=None)

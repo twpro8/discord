@@ -6,7 +6,7 @@ from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import Base
-from src.modules.users.infrastructure.persistence.models import UserOrm
+from src.modules.users.adapters.persistence.models import UserOrm
 from src.shared.schemas import BaseSchema
 from tests.data import users
 

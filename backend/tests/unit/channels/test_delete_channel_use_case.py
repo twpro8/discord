@@ -14,7 +14,7 @@ from src.modules.servers.domain.exceptions import (
     NotServerMemberError,
     NotServerOwnerError,
 )
-from tests.unit.channels.fakes import FakeChannelRepository, FakeChannelUnitOfWork
+from tests.unit.channels.fakes import FakeChannelRepository
 from tests.unit.servers.fakes import (
     FakeServerMemberRepository,
     FakeServerRepository,
@@ -42,19 +42,18 @@ def _use_case(
     channels: FakeChannelRepository,
     server_members: FakeServerMemberRepository,
     servers: FakeServerRepository,
-) -> tuple[DeleteChannelUseCase, FakeChannelUnitOfWork]:
-    uow = FakeChannelUnitOfWork(channels)
+) -> DeleteChannelUseCase:
     servers_facade = FakeServersFacade(server_members, servers)
-    return DeleteChannelUseCase(uow, servers_facade), uow
+    return DeleteChannelUseCase(channels, servers_facade)
 
 
-async def test_owner_can_delete_extra_channel_and_commit() -> None:
+async def test_owner_can_delete_extra_channel() -> None:
     channels, server_members, servers = (
         FakeChannelRepository(),
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, uow = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     channel = await channels.create(
@@ -65,7 +64,6 @@ async def test_owner_can_delete_extra_channel_and_commit() -> None:
     await use_case(channel_id=channel.id, user_id=owner_id, server_id=server_id)
 
     assert await channels.find_by_id(channel.id) is None
-    assert uow.committed
 
 
 async def test_deleting_only_channel_is_rejected() -> None:
@@ -74,7 +72,7 @@ async def test_deleting_only_channel_is_rejected() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, uow = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     channel = await channels.create(
@@ -85,7 +83,6 @@ async def test_deleting_only_channel_is_rejected() -> None:
         await use_case(channel_id=channel.id, user_id=owner_id, server_id=server_id)
 
     assert await channels.find_by_id(channel.id) is not None
-    assert not uow.committed
 
 
 async def test_channel_not_found() -> None:
@@ -94,14 +91,12 @@ async def test_channel_not_found() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, uow = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
 
     with pytest.raises(ChannelNotFoundError):
         await use_case(channel_id=uuid4(), user_id=owner_id, server_id=server_id)
-
-    assert not uow.committed
 
 
 async def test_server_mismatch_is_not_found() -> None:
@@ -110,7 +105,7 @@ async def test_server_mismatch_is_not_found() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id = uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     channel = await channels.create(
@@ -130,7 +125,7 @@ async def test_non_owner_member_cannot_delete() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id, member_id = uuid4(), uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     await server_members.create(
@@ -153,7 +148,7 @@ async def test_non_member_cannot_delete() -> None:
         FakeServerMemberRepository(),
         FakeServerRepository(),
     )
-    use_case, _ = _use_case(channels, server_members, servers)
+    use_case = _use_case(channels, server_members, servers)
     owner_id, outsider_id = uuid4(), uuid4()
     server_id = await _make_owned_server(server_members, servers, owner_id)
     channel = await channels.create(

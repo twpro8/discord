@@ -35,10 +35,10 @@ def build_celery_app() -> Celery:
         task_send_sent_event=True,
         worker_send_task_events=True,
     )
-    # Explicit list, not a wildcard scan — mirrors composition/container.py
-    # listing each module by name rather than scanning modules/*. These are
-    # *string* package paths: core/jobs must never gain a Python import
-    # dependency on modules/*.
+    # Explicit list, not a wildcard scan — mirrors api/v1/router.py's
+    # _MODULE_ROUTERS listing each module by name rather than scanning
+    # modules/*. These are *string* package paths: core/jobs must never
+    # gain a Python import dependency on modules/*.
     app.autodiscover_tasks(
         [
             # related_name="tasks" imports "<package>.tasks" for each entry

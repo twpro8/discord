@@ -14,7 +14,6 @@ from src.modules.friends.usecases.send_request import SendFriendRequestUseCase
 from src.modules.users.domain.entities.user import User
 from tests.unit.friends.fakes import (
     FakeFriendRepository,
-    FakeFriendUnitOfWork,
     FakeUsersFacade,
     make_user,
 )
@@ -24,8 +23,7 @@ def _use_case(
     users: list[User] | None = None,
 ) -> tuple[SendFriendRequestUseCase, FakeFriendRepository]:
     friends = FakeFriendRepository()
-    uow = FakeFriendUnitOfWork(friends)
-    return SendFriendRequestUseCase(uow, FakeUsersFacade(users)), friends
+    return SendFriendRequestUseCase(friends, FakeUsersFacade(users)), friends
 
 
 async def test_rejects_unknown_username() -> None:

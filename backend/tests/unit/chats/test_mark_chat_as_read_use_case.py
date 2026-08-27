@@ -6,17 +6,12 @@ from src.modules.chats.domain.entities.dtos import ChatCreate, MemberCreate
 from src.modules.chats.domain.enums import ChatType
 from src.modules.chats.domain.exceptions import NotChatMemberError
 from src.modules.chats.usecases.mark_chat_as_read import MarkChatAsReadUseCase
-from tests.unit.chats.fakes import (
-    FakeChatMemberRepository,
-    FakeChatRepository,
-    FakeChatUnitOfWork,
-)
+from tests.unit.chats.fakes import FakeChatMemberRepository, FakeChatRepository
 
 
 async def test_marks_read_up_to_latest_sequence_by_default() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = MarkChatAsReadUseCase(uow)
+    use_case = MarkChatAsReadUseCase(chats, members)
     user_id = uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=user_id, name="G")
@@ -29,13 +24,11 @@ async def test_marks_read_up_to_latest_sequence_by_default() -> None:
     membership = await members.find_active(chat.id, user_id)
     assert membership is not None
     assert membership.last_read_seq == 5
-    assert uow.committed
 
 
 async def test_marks_read_up_to_explicit_sequence() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = MarkChatAsReadUseCase(uow)
+    use_case = MarkChatAsReadUseCase(chats, members)
     user_id = uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=user_id, name="G")
@@ -52,8 +45,7 @@ async def test_marks_read_up_to_explicit_sequence() -> None:
 
 async def test_cursor_never_regresses() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = MarkChatAsReadUseCase(uow)
+    use_case = MarkChatAsReadUseCase(chats, members)
     user_id = uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=user_id, name="G")
@@ -70,8 +62,7 @@ async def test_cursor_never_regresses() -> None:
 
 async def test_rejects_non_member() -> None:
     chats, members = FakeChatRepository(), FakeChatMemberRepository()
-    uow = FakeChatUnitOfWork(chats, members)
-    use_case = MarkChatAsReadUseCase(uow)
+    use_case = MarkChatAsReadUseCase(chats, members)
     owner_id = uuid4()
     chat = await chats.create(
         ChatCreate(type=ChatType.group, owner_id=owner_id, name="G")

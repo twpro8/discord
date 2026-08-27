@@ -3,9 +3,6 @@ from uuid import UUID, uuid4
 
 from src.modules.channels.domain.entities.channel import Channel
 from src.modules.channels.domain.entities.dtos import ChannelCreate, ChannelUpdate
-from src.modules.channels.domain.repositories.channel_unit_of_work import (
-    ChannelUnitOfWork,
-)
 from src.shared.domain.unset import set_fields
 
 
@@ -62,16 +59,3 @@ class FakeChannelRepository:
         channel = self.channels[channel_id]
         channel.last_sequence += 1
         return channel.last_sequence
-
-
-class FakeChannelUnitOfWork(ChannelUnitOfWork):
-    def __init__(self, channels: FakeChannelRepository) -> None:
-        self.channels = channels
-        self.committed = False
-        self.rolled_back = False
-
-    async def commit(self) -> None:
-        self.committed = True
-
-    async def rollback(self) -> None:
-        self.rolled_back = True

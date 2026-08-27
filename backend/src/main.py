@@ -8,7 +8,6 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.api.errors import register_exception_handlers
 from src.api.v1.router import build_api_v1_router
-from src.composition.container import build_container
 from src.core.cache import RedisCache
 from src.core.config import settings
 from src.core.database.session import get_session_factory
@@ -22,11 +21,11 @@ from src.core.storage import close_storage, init_storage
 from src.core.version import get_app_version
 from src.core.websocket.manager import ConnectionManager
 from src.modules.friends.public.facade import build_friends_facade
-from src.modules.presence.application.presence_service import PresenceService
-from src.modules.presence.application.presence_sweeper import PresenceSweeper
-from src.modules.presence.infrastructure.persistence.redis_presence_repository import (
+from src.modules.presence.adapters.persistence.redis_presence_repository import (
     RedisPresenceRepository,
 )
+from src.modules.presence.application.presence_service import PresenceService
+from src.modules.presence.application.presence_sweeper import PresenceSweeper
 from src.modules.servers.public.facade import build_servers_facade
 from src.modules.typing.application.typing_service import TypingService
 from src.utils import custom_generate_unique_id
@@ -176,9 +175,7 @@ def create_app() -> FastAPI:
         app
     ).expose(app, include_in_schema=False, tags=["Meta"])
 
-    container = build_container()
-    app.state.container = container
-    app.include_router(build_api_v1_router(container))
+    app.include_router(build_api_v1_router())
 
     return app
 

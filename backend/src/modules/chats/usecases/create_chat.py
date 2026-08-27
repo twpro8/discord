@@ -11,20 +11,26 @@ from src.modules.chats.domain.entities.dtos import (
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
 from src.modules.chats.domain.events import ChatCreatedEvent
 from src.modules.chats.domain.exceptions import SelfChatForbiddenError
-from src.modules.chats.domain.repositories.chat_unit_of_work import (
-    ChatUnitOfWork,
+from src.modules.chats.domain.repositories.chat_member_repository import (
+    ChatMemberRepository,
 )
+from src.modules.chats.domain.repositories.chat_repository import ChatRepository
 from src.modules.chats.usecases.realtime import join_members_to_chat_room
+from src.shared.domain.transaction import Transaction
 
 
 class CreateChatUseCase:
     def __init__(
         self,
-        uow: ChatUnitOfWork,
+        tx: Transaction,
+        chat_repository: ChatRepository,
+        chat_member_repository: ChatMemberRepository,
         event_bus: EventBus,
         room_membership_updater: RoomMembershipUpdater,
     ) -> None:
-        self._uow = uow
+        self._tx = tx
+        self._chats = chat_repository
+        self._members = chat_member_repository
         self._event_bus = event_bus
         self._room_membership_updater = room_membership_updater
 
@@ -46,14 +52,14 @@ class CreateChatUseCase:
 
         assert data.target_user_id
 
-        existing_chat = await self._uow.chats.find_private_chat(
+        existing_chat = await self._chats.find_private_chat(
             user_a=creator_id,
             user_b=data.target_user_id,
         )
         if existing_chat:
             return existing_chat
 
-        chat = await self._uow.chats.create(ChatCreate(type=ChatType.private))
+        chat = await self._chats.create(ChatCreate(type=ChatType.private))
         chat.record_event(ChatCreatedEvent(chat_id=chat.id))
 
         member_ids = [creator_id, data.target_user_id]
@@ -61,8 +67,8 @@ class CreateChatUseCase:
             MemberCreate(user_id=user_id, chat_id=chat.id) for user_id in member_ids
         ]
 
-        await self._uow.members.add_members(members)
-        await self._uow.commit()
+        await self._members.add_members(members)
+        await self._tx.commit()
         await self._publish_events(chat)
         await join_members_to_chat_room(
             self._room_membership_updater, chat.id, member_ids
@@ -75,7 +81,7 @@ class CreateChatUseCase:
         creator_id: UUID,
         data: ChatCreateData,
     ) -> Chat:
-        chat = await self._uow.chats.create(
+        chat = await self._chats.create(
             ChatCreate(
                 owner_id=creator_id,
                 type=ChatType.group,
@@ -104,8 +110,8 @@ class CreateChatUseCase:
             )
         )
 
-        await self._uow.members.add_members(members)
-        await self._uow.commit()
+        await self._members.add_members(members)
+        await self._tx.commit()
         await self._publish_events(chat)
         await join_members_to_chat_room(
             self._room_membership_updater, chat.id, member_ids
