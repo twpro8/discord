@@ -5,9 +5,6 @@ from uuid import UUID, uuid4
 from src.core.event_bus import EventHandler
 from src.modules.users.domain.entities.dtos import UserUpdate
 from src.modules.users.domain.entities.user import User
-from src.modules.users.domain.repositories.user_unit_of_work import (
-    UserUnitOfWork,
-)
 from src.modules.users.domain.value_objects.email import Email
 from src.modules.users.domain.value_objects.username import Username
 from src.shared.domain.domain_event import DomainEvent
@@ -57,19 +54,6 @@ class FakeUserRepository:
         for key, value in updates.items():
             setattr(user, key, value)
         return user
-
-
-class FakeUserUnitOfWork(UserUnitOfWork):
-    def __init__(self, users: FakeUserRepository) -> None:
-        self.users = users
-        self.committed = False
-        self.rolled_back = False
-
-    async def commit(self) -> None:
-        self.committed = True
-
-    async def rollback(self) -> None:
-        self.rolled_back = True
 
 
 class FakeCache:

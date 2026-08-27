@@ -1,14 +1,18 @@
 from src.core.event_bus import EventBus
 from src.core.security.hashing import hash_password
 from src.modules.users.domain.entities.user import User
-from src.modules.users.domain.repositories.user_unit_of_work import UserUnitOfWork
+from src.modules.users.domain.repositories.user_repository import UserRepository
 from src.modules.users.domain.value_objects.email import Email
 from src.modules.users.domain.value_objects.username import Username
+from src.shared.domain.transaction import Transaction
 
 
 class CreateUserUseCase:
-    def __init__(self, uow: UserUnitOfWork, event_bus: EventBus) -> None:
-        self._uow = uow
+    def __init__(
+        self, tx: Transaction, user_repository: UserRepository, event_bus: EventBus
+    ) -> None:
+        self._tx = tx
+        self._users = user_repository
         self._event_bus = event_bus
 
     async def __call__(
@@ -20,8 +24,8 @@ class CreateUserUseCase:
             username=Username(username),
             password_hash=hash_password(plain_password),
         )
-        await self._uow.users.add(user)
-        await self._uow.commit()
+        await self._users.add(user)
+        await self._tx.commit()
 
         await self._event_bus.publish_many(user.pull_events())
         return user

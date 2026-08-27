@@ -9,8 +9,9 @@ from src.modules.users.domain.exceptions import (
     StorageNotConfiguredError,
     UnsupportedAvatarFormatError,
 )
-from src.modules.users.domain.repositories.user_unit_of_work import UserUnitOfWork
+from src.modules.users.domain.repositories.user_repository import UserRepository
 from src.modules.users.usecases.get_user_by_id import cache_key
+from src.shared.domain.transaction import Transaction
 
 _ALLOWED_CONTENT_TYPES = {
     "image/jpeg": ".jpg",
@@ -23,9 +24,14 @@ _AVATAR_PREFIX = "user_avatar"
 
 class UpdateAvatarUseCase:
     def __init__(
-        self, uow: UserUnitOfWork, cache: Cache, storage: Storage | None
+        self,
+        tx: Transaction,
+        user_repository: UserRepository,
+        cache: Cache,
+        storage: Storage | None,
     ) -> None:
-        self._uow = uow
+        self._tx = tx
+        self._users = user_repository
         self._cache = cache
         self._storage = storage
 
@@ -47,7 +53,7 @@ class UpdateAvatarUseCase:
         # stored URL changes every time the avatar content changes.
         avatar_url = f"{self._storage.public_url(key)}?v={uuid4().hex[:8]}"
 
-        user = await self._uow.users.update(user_id, UserUpdate(avatar_url=avatar_url))
-        await self._uow.commit()
+        user = await self._users.update(user_id, UserUpdate(avatar_url=avatar_url))
+        await self._tx.commit()
         await self._cache.delete(cache_key(user_id))
         return user_to_dto(user)

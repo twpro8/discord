@@ -8,13 +8,13 @@ from src.core.event_bus import EventBus
 from src.modules.users.adapters.persistence.user_repository_impl import (
     UserRepositoryImpl,
 )
-from src.modules.users.adapters.user_unit_of_work_impl import UserUnitOfWorkImpl
 from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
 from src.modules.users.domain.exceptions import UserNotFoundError
 from src.modules.users.usecases.create_user import CreateUserUseCase
 from src.modules.users.usecases.get_user_by_id import GetUserByIDUseCase
 from src.modules.users.usecases.get_user_by_username import GetUserByUsernameUseCase
 from src.modules.users.usecases.verify_credentials import VerifyCredentialsUseCase
+from src.shared.data.transaction import SqlAlchemyTransaction
 
 
 class UsersFacade(Protocol):
@@ -107,10 +107,10 @@ def build_users_facade(
     session: AsyncSession, cache: Cache, event_bus: EventBus
 ) -> UsersFacade:
     user_repository = UserRepositoryImpl(session)
-    uow = UserUnitOfWorkImpl(session, user_repository)
+    tx = SqlAlchemyTransaction(session)
     return UseCaseBackedUsersFacade(
-        GetUserByIDUseCase(uow.users, cache),
-        GetUserByUsernameUseCase(uow.users),
-        VerifyCredentialsUseCase(uow.users),
-        CreateUserUseCase(uow, event_bus),
+        GetUserByIDUseCase(user_repository, cache),
+        GetUserByUsernameUseCase(user_repository),
+        VerifyCredentialsUseCase(user_repository),
+        CreateUserUseCase(tx, user_repository, event_bus),
     )
