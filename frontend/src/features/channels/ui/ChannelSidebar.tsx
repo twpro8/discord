@@ -2,10 +2,12 @@
 import { useState } from "react";
 
 // third party
-import { Hash, Plus } from "lucide-react";
+import { Hash, Mic, Plus } from "lucide-react";
 
 // shared
 import { cn } from "@/shared/helpers/utils";
+
+import { useVoiceRoom } from "@/features/calls/model/use-voice-room";
 
 // relative
 import { useChannels } from "../model/use-channels";
@@ -53,6 +55,8 @@ export function ChannelSidebar({
 }) {
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
   const { data: channels = [], isLoading } = useChannels(serverId);
+  const joinVoice = useVoiceRoom((s) => s.join);
+  const activeVoiceChannelId = useVoiceRoom((s) => s.channelId);
 
   return (
     <aside
@@ -82,22 +86,37 @@ export function ChannelSidebar({
           <EmptyState onCreate={onCreateChannel} />
         ) : (
           <div className="space-y-0.5">
-            {channels.map((channel) => (
-              <button
-                key={channel.id}
-                type="button"
-                onClick={() => setActiveChannelId(channel.id)}
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
-                  activeChannelId === channel.id
-                    ? "bg-accent-subtle text-text-primary"
-                    : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
-                )}
-              >
-                <Hash className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 truncate">{channel.name}</span>
-              </button>
-            ))}
+            {channels.map((channel) => {
+              const isVoice = channel.type === "voice";
+              const isActiveVoice = activeVoiceChannelId === channel.id;
+              return (
+                <button
+                  key={channel.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveChannelId(channel.id);
+                    if (isVoice) joinVoice(channel.id);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
+                    activeChannelId === channel.id || isActiveVoice
+                      ? "bg-accent-subtle text-text-primary"
+                      : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
+                    isActiveVoice && "ring-1 ring-primary/30",
+                  )}
+                >
+                  {isVoice ? (
+                    <Mic className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <Hash className="h-4 w-4 shrink-0" />
+                  )}
+                  <span className="min-w-0 truncate">{channel.name}</span>
+                  {isVoice && isActiveVoice && (
+                    <span className="ml-auto h-2 w-2 rounded-full bg-green-500" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

@@ -48,13 +48,21 @@ export function useOutgoingCallEvents(userId?: string) {
     });
 
     subscribeToCallAccepted((payload) => {
-      const { call_id } = payload as {
-        call_id: string;
+      const data = payload as {
+        call_id?: string;
+        room_id?: string;
         callee_id: string;
       };
-      const { callId, setAccepted } = useOutgoingCall.getState();
-      if (callId === call_id) {
-        setAccepted(call_id);
+      const roomId = data.room_id ?? data.call_id;
+      if (!roomId) return;
+      const {
+        callId,
+        roomId: storedRoomId,
+        setAccepted,
+      } = useOutgoingCall.getState();
+      const expected = storedRoomId ?? callId;
+      if (expected === roomId) {
+        setAccepted(roomId);
       }
     });
   }, [queryClient, userId]);

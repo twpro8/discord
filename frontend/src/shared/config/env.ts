@@ -18,3 +18,8 @@ export const WS_EVENTS_URL = `${WS_BASE_URL}/api/v1/ws`;
 export const CALL_SERVER_URL =
   (import.meta.env.VITE_CALL_SERVER_URL as string | undefined) ??
   "ws://localhost:4000/socket";
+
+/** TURN server URL for NAT traversal (STUN fallback: stun.l.google.com).
+ *  Production: set VITE_TURN_URL and handle TURN credential fetch from backend. */
+export const TURN_URL =
+  (import.meta.env.VITE_TURN_URL as string | undefined) ?? null;
