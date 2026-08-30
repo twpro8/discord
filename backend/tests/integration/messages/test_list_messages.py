@@ -88,7 +88,7 @@ async def test_listing_messages_advances_read_cursor(
 
     await ac.post(
         "/api/v1/auth/login",
-        json={"username": str(peer.username), "password": "12345678"},
+        json={"username": peer.username, "password": "12345678"},
     )
     details_before = await ac.get(f"/api/v1/chats/{chat_id}")
     assert details_before.json()["unread_count"] == 1

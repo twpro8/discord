@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from src.api.v1.dependencies import CacheDep, EventBusDep, SessionDep, TransactionDep
+from src.api.v1.dependencies import CacheDep, SessionDep, TransactionDep
 from src.modules.friends.adapters.persistence.friend_repository_impl import (
     FriendRepositoryImpl,
 )
@@ -23,10 +23,8 @@ def get_friend_repository(session: SessionDep) -> FriendRepository:
     return FriendRepositoryImpl(session)
 
 
-def get_users_facade(
-    session: SessionDep, cache: CacheDep, event_bus: EventBusDep
-) -> UsersFacade:
-    return build_users_facade(session, cache, event_bus)
+def get_users_facade(session: SessionDep, cache: CacheDep) -> UsersFacade:
+    return build_users_facade(session, cache)
 
 
 FriendRepositoryDep = Annotated[FriendRepository, Depends(get_friend_repository)]

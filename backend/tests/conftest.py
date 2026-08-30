@@ -10,7 +10,6 @@ from src.main import app
 from src.modules.users.domain.entities.user import User
 from src.shared.data.models import *  # noqa
 from tests.dependency_overrides.cache import get_test_cache
-from tests.dependency_overrides.event_bus import get_test_event_bus
 from tests.dependency_overrides.job_dispatcher import get_test_job_dispatcher
 from tests.dependency_overrides.redis_client import get_fake_redis_client
 from tests.dependency_overrides.redis_subscription_manager import (
@@ -33,7 +32,6 @@ def override_dependencies(
     """Override dependencies once for all tests"""
     from src.api.v1.dependencies import (
         get_cache,
-        get_event_bus,
         get_job_dispatcher,
         get_redis,
         get_redis_subscription_manager,
@@ -42,7 +40,6 @@ def override_dependencies(
 
     app.dependency_overrides[get_session] = get_null_pool_session
     app.dependency_overrides[get_redis] = get_fake_redis_client
-    app.dependency_overrides[get_event_bus] = get_test_event_bus
     app.dependency_overrides[get_cache] = get_test_cache
     app.dependency_overrides[get_redis_subscription_manager] = (
         get_test_redis_subscription_manager
@@ -70,7 +67,7 @@ async def authed_client(
     response = await ac.post(
         "/api/v1/auth/login",
         json={
-            "username": str(current_user.username),
+            "username": current_user.username,
             "password": "12345678",
         },
     )

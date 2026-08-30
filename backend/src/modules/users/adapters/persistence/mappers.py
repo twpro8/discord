@@ -1,7 +1,5 @@
 from src.modules.users.adapters.persistence.models import UserOrm
 from src.modules.users.domain.entities.user import User
-from src.modules.users.domain.value_objects.email import Email
-from src.modules.users.domain.value_objects.username import Username
 
 
 class UserDataMapper:
@@ -10,8 +8,8 @@ class UserDataMapper:
         return User(
             id=model.id,
             name=model.name,
-            username=Username(model.username),
-            email=Email(model.email),
+            username=model.username,
+            email=model.email,
             password_hash=model.password_hash,
             avatar_url=model.avatar_url,
             is_active=model.is_active,
@@ -29,8 +27,8 @@ class UserDataMapper:
         return UserOrm(
             id=user.id,
             name=user.name,
-            username=str(user.username),
-            email=str(user.email),
+            username=user.username,
+            email=user.email,
             password_hash=user.password_hash,
             avatar_url=user.avatar_url,
             is_active=user.is_active,

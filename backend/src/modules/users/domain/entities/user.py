@@ -1,19 +1,16 @@
 import uuid
 from datetime import UTC, datetime
 
-from src.modules.users.domain.events.user_registered import UserRegisteredEvent
-from src.modules.users.domain.value_objects.email import Email
-from src.modules.users.domain.value_objects.username import Username
-from src.shared.domain.aggregate_root import AggregateRoot
+from src.shared.domain.entity import Entity
 
 
-class User(AggregateRoot):
+class User(Entity):
     def __init__(
         self,
         id: uuid.UUID,
         name: str,
-        username: Username,
-        email: Email,
+        username: str,
+        email: str,
         password_hash: str,
         avatar_url: str | None,
         is_active: bool,
@@ -35,13 +32,13 @@ class User(AggregateRoot):
         cls,
         *,
         name: str,
-        email: Email,
-        username: Username,
+        email: str,
+        username: str,
         password_hash: str,
     ) -> User:
         """Factory encapsulating the invariants of user creation."""
         now = datetime.now(UTC)
-        user = cls(
+        return cls(
             id=uuid.uuid4(),
             name=name,
             email=email,
@@ -52,8 +49,6 @@ class User(AggregateRoot):
             created_at=now,
             updated_at=now,
         )
-        user.record_event(UserRegisteredEvent(user_id=user.id, email=str(email)))
-        return user
 
     def mark_as_inactive(self) -> None:
         self.is_active = False

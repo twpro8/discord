@@ -1,7 +1,6 @@
 from src.modules.email.adapters.persistence.models import EmailMessageOrm
 from src.modules.email.domain.entities.email_message import EmailMessage
 from src.modules.email.domain.enums import EmailTemplateName
-from src.modules.email.domain.value_objects.email_address import EmailAddress
 
 
 class EmailMessageDataMapper:
@@ -10,7 +9,7 @@ class EmailMessageDataMapper:
         return EmailMessage(
             id=model.id,
             idempotency_key=model.idempotency_key,
-            to=EmailAddress(model.to),
+            to=model.to,
             template=EmailTemplateName(model.template),
             context=dict(model.context),
             status=model.status,

@@ -11,7 +11,6 @@ from src.modules.email.domain.entities.dtos import (
 )
 from src.modules.email.domain.entities.email_message import EmailMessage
 from src.modules.email.domain.enums import EmailStatus, EmailTemplateName
-from src.modules.email.domain.value_objects.email_address import EmailAddress
 
 
 class FakeEmailMessageRepository:
@@ -27,7 +26,7 @@ class FakeEmailMessageRepository:
         message = EmailMessage(
             id=uuid4(),
             idempotency_key=data.idempotency_key,
-            to=EmailAddress(data.to),
+            to=data.to,
             template=data.template,
             context=dict(data.context),
             status=EmailStatus.PENDING,

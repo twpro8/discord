@@ -1,6 +1,5 @@
 from uuid import UUID
 
-from src.core.event_bus import EventBus
 from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.chats.domain.entities.chat import Chat
 from src.modules.chats.domain.entities.dtos import (
@@ -9,7 +8,6 @@ from src.modules.chats.domain.entities.dtos import (
     MemberCreate,
 )
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
-from src.modules.chats.domain.events import ChatCreatedEvent
 from src.modules.chats.domain.exceptions import SelfChatForbiddenError
 from src.modules.chats.domain.repositories.chat_member_repository import (
     ChatMemberRepository,
@@ -25,17 +23,12 @@ class CreateChatUseCase:
         tx: Transaction,
         chat_repository: ChatRepository,
         chat_member_repository: ChatMemberRepository,
-        event_bus: EventBus,
         room_membership_updater: RoomMembershipUpdater,
     ) -> None:
         self._tx = tx
         self._chats = chat_repository
         self._members = chat_member_repository
-        self._event_bus = event_bus
         self._room_membership_updater = room_membership_updater
-
-    async def _publish_events(self, chat: Chat) -> None:
-        await self._event_bus.publish_many(chat.pull_events())
 
     async def __call__(self, *, creator_id: UUID, data: ChatCreateData) -> Chat:
         if data.type == ChatType.private:
@@ -60,7 +53,6 @@ class CreateChatUseCase:
             return existing_chat
 
         chat = await self._chats.create(ChatCreate(type=ChatType.private))
-        chat.record_event(ChatCreatedEvent(chat_id=chat.id))
 
         member_ids = [creator_id, data.target_user_id]
         members = [
@@ -69,7 +61,6 @@ class CreateChatUseCase:
 
         await self._members.add_members(members)
         await self._tx.commit()
-        await self._publish_events(chat)
         await join_members_to_chat_room(
             self._room_membership_updater, chat.id, member_ids
         )
@@ -89,7 +80,6 @@ class CreateChatUseCase:
                 description=data.description,
             )
         )
-        chat.record_event(ChatCreatedEvent(chat_id=chat.id))
 
         member_ids = list(data.member_ids) if data.member_ids else []
         members = [
@@ -112,7 +102,6 @@ class CreateChatUseCase:
 
         await self._members.add_members(members)
         await self._tx.commit()
-        await self._publish_events(chat)
         await join_members_to_chat_room(
             self._room_membership_updater, chat.id, member_ids
         )

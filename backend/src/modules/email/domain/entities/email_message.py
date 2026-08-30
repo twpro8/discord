@@ -3,7 +3,6 @@ from typing import Any
 from uuid import UUID
 
 from src.modules.email.domain.enums import EmailStatus, EmailTemplateName
-from src.modules.email.domain.value_objects.email_address import EmailAddress
 from src.shared.domain.entity import Entity
 
 
@@ -19,7 +18,7 @@ class EmailMessage(Entity):
         self,
         id: UUID,
         idempotency_key: str | None,
-        to: EmailAddress,
+        to: str,
         template: EmailTemplateName,
         context: dict[str, Any],
         status: EmailStatus,

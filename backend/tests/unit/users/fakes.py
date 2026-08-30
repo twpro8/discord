@@ -1,13 +1,8 @@
-from collections.abc import Sequence
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from src.core.event_bus import EventHandler
 from src.modules.users.domain.entities.dtos import UserUpdate
 from src.modules.users.domain.entities.user import User
-from src.modules.users.domain.value_objects.email import Email
-from src.modules.users.domain.value_objects.username import Username
-from src.shared.domain.domain_event import DomainEvent
 from src.shared.domain.unset import set_fields
 
 
@@ -16,8 +11,8 @@ def make_user(username: str = "alice", is_active: bool = True) -> User:
     return User(
         id=uuid4(),
         name=username,
-        username=Username(username),
-        email=Email(f"{username}@test.com"),
+        username=username,
+        email=f"{username}@test.com",
         password_hash="hash",
         avatar_url=None,
         is_active=is_active,
@@ -37,20 +32,14 @@ class FakeUserRepository:
         return self.users.get(user_id)
 
     async def get_by_username(self, username: str) -> User | None:
-        return next(
-            (u for u in self.users.values() if str(u.username) == username), None
-        )
+        return next((u for u in self.users.values() if u.username == username), None)
 
     async def get_by_email(self, email: str) -> User | None:
-        return next((u for u in self.users.values() if str(u.email) == email), None)
+        return next((u for u in self.users.values() if u.email == email), None)
 
     async def update(self, user_id: UUID, data: UserUpdate) -> User:
         user = self.users[user_id]
         updates = set_fields(data)
-        if "username" in updates:
-            updates["username"] = Username(updates["username"])
-        if "email" in updates:
-            updates["email"] = Email(updates["email"])
         for key, value in updates.items():
             setattr(user, key, value)
         return user
@@ -97,18 +86,3 @@ class FakeStorage:
 
     def public_url(self, key: str) -> str:
         return f"{self._public_base_url}/{key}"
-
-
-class FakeEventBus:
-    def __init__(self) -> None:
-        self.published: list[DomainEvent] = []
-
-    def subscribe(self, event_type: type[DomainEvent], handler: EventHandler) -> None:
-        raise NotImplementedError
-
-    async def publish(self, event: DomainEvent) -> None:
-        self.published.append(event)
-
-    async def publish_many(self, events: Sequence[DomainEvent]) -> None:
-        for event in events:
-            await self.publish(event)

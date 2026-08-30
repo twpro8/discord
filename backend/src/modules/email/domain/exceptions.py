@@ -8,11 +8,6 @@ class EmailMessageNotFoundError(EmailError, NotFoundError):
     detail = "Email message not found"
 
 
-class InvalidEmailAddress(EmailError, ValidationError):
-    def __init__(self, value: str) -> None:
-        super().__init__(f"'{value}' is not a valid email address")
-
-
 class TemplateNotFoundError(EmailError, ValidationError):
     def __init__(self, template: str) -> None:
         super().__init__(f"Unknown email template '{template}'")

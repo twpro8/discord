@@ -38,8 +38,8 @@ def user_to_dto(user: User) -> UserDTO:
     return UserDTO(
         id=user.id,
         name=user.name,
-        username=str(user.username),
-        email=str(user.email),
+        username=user.username,
+        email=user.email,
         avatar_url=user.avatar_url,
         is_active=user.is_active,
         created_at=user.created_at,

@@ -220,7 +220,7 @@ class TestUpdateChannel:
         monica = get_all_users[1]
         await ac.post(
             "/api/v1/auth/login",
-            json={"username": str(monica.username), "password": "12345678"},
+            json={"username": monica.username, "password": "12345678"},
         )
         response = await ac.patch(
             f"/api/v1/channels/{channel_id}",
@@ -322,7 +322,7 @@ class TestDeleteChannel:
         monica = get_all_users[1]
         await ac.post(
             "/api/v1/auth/login",
-            json={"username": str(monica.username), "password": "12345678"},
+            json={"username": monica.username, "password": "12345678"},
         )
         response = await ac.request(
             "DELETE",

@@ -2,11 +2,10 @@ from datetime import datetime
 from uuid import UUID
 
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
-from src.shared.domain.aggregate_root import AggregateRoot
 from src.shared.domain.entity import Entity
 
 
-class Chat(AggregateRoot):
+class Chat(Entity):
     def __init__(
         self,
         id: UUID,

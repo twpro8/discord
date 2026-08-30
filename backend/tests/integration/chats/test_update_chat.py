@@ -36,7 +36,7 @@ async def test_non_owner_cannot_rename_group_chat(
 
     await ac.post(
         "/api/v1/auth/login",
-        json={"username": str(peer.username), "password": "12345678"},
+        json={"username": peer.username, "password": "12345678"},
     )
     response = await ac.patch(f"/api/v1/chats/{chat_id}", json={"name": "New Name"})
     assert response.status_code == 403

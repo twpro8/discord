@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.cache import Cache
 from src.core.database import get_session
-from src.core.event_bus import EventBus
 from src.core.jobs import JobDispatcher
 from src.core.realtime.membership import DistributedRoomMembershipUpdater
 from src.core.realtime.notifier import RealtimeNotifier, RedisRealtimeNotifier
@@ -32,10 +31,6 @@ def get_redis(request: Request) -> Redis:
 RedisDep = Annotated[Redis, Depends(get_redis)]
 
 
-def get_event_bus(request: Request) -> EventBus:
-    return cast(EventBus, request.app.state.event_bus)
-
-
 def get_cache(request: Request) -> Cache:
     return cast(Cache, request.app.state.cache)
 
@@ -53,7 +48,6 @@ def get_job_dispatcher(request: Request) -> JobDispatcher:
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
-EventBusDep = Annotated[EventBus, Depends(get_event_bus)]
 CacheDep = Annotated[Cache, Depends(get_cache)]
 StorageDep = Annotated[Storage | None, Depends(get_storage)]
 AccessTokenDep = Annotated[str, Depends(access_cookie_scheme)]

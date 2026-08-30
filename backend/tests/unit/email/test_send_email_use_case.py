@@ -1,7 +1,4 @@
-import pytest
-
 from src.modules.email.domain.enums import EmailStatus, EmailTemplateName
-from src.modules.email.domain.exceptions import InvalidEmailAddress
 from src.modules.email.usecases.send_email import SendEmailUseCase
 from tests.dependency_overrides.job_dispatcher import FakeJobDispatcher
 from tests.unit.email.fakes import FakeEmailMessageRepository
@@ -40,20 +37,6 @@ async def test_creates_pending_message_commits_and_enqueues_delivery() -> None:
     assert payload["to"] == "user@example.com"
     assert payload["template"] == EmailTemplateName.GENERIC_NOTIFICATION.value
     assert queue == "default"
-
-
-async def test_invalid_email_address_raises_without_enqueuing() -> None:
-    use_case, tx, _repository, dispatcher = _use_case()
-
-    with pytest.raises(InvalidEmailAddress):
-        await use_case(
-            to="not-an-email",
-            template=EmailTemplateName.GENERIC_NOTIFICATION,
-            context={},
-        )
-
-    assert not tx.committed
-    assert dispatcher.calls == []
 
 
 async def test_idempotency_key_returns_existing_without_duplicate_enqueue() -> None:

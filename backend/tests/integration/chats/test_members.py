@@ -76,7 +76,7 @@ async def test_owner_leaving_transfers_ownership(
 
     await ac.post(
         "/api/v1/auth/login",
-        json={"username": str(member.username), "password": "12345678"},
+        json={"username": member.username, "password": "12345678"},
     )
     # Ownership transferred to the remaining member — proven behaviorally,
     # since GroupChatSummaryResponse doesn't expose owner_id: only the owner

@@ -10,8 +10,6 @@ from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.domain.enums import FriendStatus
 from src.modules.users.domain.entities.dtos import UserDTO, user_to_dto
 from src.modules.users.domain.entities.user import User
-from src.modules.users.domain.value_objects.email import Email
-from src.modules.users.domain.value_objects.username import Username
 from src.shared.domain.unset import set_fields
 
 
@@ -20,8 +18,8 @@ def make_user(username: str, is_active: bool = True) -> User:
     return User(
         id=uuid4(),
         name=username,
-        username=Username(username),
-        email=Email(f"{username}@test.com"),
+        username=username,
+        email=f"{username}@test.com",
         password_hash="hash",
         avatar_url=None,
         is_active=is_active,
@@ -116,7 +114,7 @@ class FakeUsersFacade:
 
     async def get_user_by_username(self, username: str) -> UserDTO | None:
         for user in self.users.values():
-            if str(user.username) == username and user.is_active:
+            if user.username == username and user.is_active:
                 return user_to_dto(user)
         return None
 

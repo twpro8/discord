@@ -4,7 +4,6 @@ from fastapi import Depends
 
 from src.api.v1.dependencies import (
     CacheDep,
-    EventBusDep,
     RoomMembershipUpdaterDep,
     SessionDep,
     TransactionDep,
@@ -39,10 +38,8 @@ def get_chat_member_repository(session: SessionDep) -> ChatMemberRepository:
     return ChatMemberRepositoryImpl(session)
 
 
-def get_users_facade(
-    session: SessionDep, cache: CacheDep, event_bus: EventBusDep
-) -> UsersFacade:
-    return build_users_facade(session, cache, event_bus)
+def get_users_facade(session: SessionDep, cache: CacheDep) -> UsersFacade:
+    return build_users_facade(session, cache)
 
 
 ChatRepositoryDep = Annotated[ChatRepository, Depends(get_chat_repository)]
@@ -56,11 +53,10 @@ async def get_create_chat_use_case(
     tx: TransactionDep,
     chat_repository: ChatRepositoryDep,
     chat_member_repository: ChatMemberRepositoryDep,
-    event_bus: EventBusDep,
     room_membership_updater: RoomMembershipUpdaterDep,
 ) -> CreateChatUseCase:
     return CreateChatUseCase(
-        tx, chat_repository, chat_member_repository, event_bus, room_membership_updater
+        tx, chat_repository, chat_member_repository, room_membership_updater
     )
 
 

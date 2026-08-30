@@ -49,7 +49,7 @@ async def test_get_chat_details_forbidden_for_non_member(
 
     await ac.post(
         "/api/v1/auth/login",
-        json={"username": str(outsider.username), "password": "12345678"},
+        json={"username": outsider.username, "password": "12345678"},
     )
     response = await ac.get(f"/api/v1/chats/{chat_id}")
     assert response.status_code == 403

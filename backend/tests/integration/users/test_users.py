@@ -16,8 +16,8 @@ class TestUsersAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == str(current_user.id)
-        assert data["username"] == str(current_user.username)
-        assert data["email"] == str(current_user.email)
+        assert data["username"] == current_user.username
+        assert data["email"] == current_user.email
         assert "password_hash" not in data
 
     async def test_get_current_user_unauthorized(self, ac: AsyncClient) -> None:
@@ -33,7 +33,7 @@ class TestUsersAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == str(current_user.id)
-        assert data["username"] == str(current_user.username)
+        assert data["username"] == current_user.username
 
     async def test_get_user_by_id_not_found(self, authed_client: AsyncClient) -> None:
         random_id = uuid.uuid4()
@@ -63,7 +63,7 @@ class TestUsersAPI:
         get_all_users: list[User],
     ) -> None:
         other = next(u for u in get_all_users if u.id != get_all_users[0].id)
-        payload = {"username": str(other.username)}
+        payload = {"username": other.username}
         response = await authed_client.patch("/api/v1/users/me", json=payload)
         assert response.status_code == 409  # Conflict
 
@@ -73,7 +73,7 @@ class TestUsersAPI:
         get_all_users: list[User],
     ) -> None:
         other = next(u for u in get_all_users if u.id != get_all_users[0].id)
-        payload = {"email": str(other.email)}
+        payload = {"email": other.email}
         response = await authed_client.patch("/api/v1/users/me", json=payload)
         assert response.status_code == 409  # Conflict
 
