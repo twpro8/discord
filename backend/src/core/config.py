@@ -1,10 +1,16 @@
 from functools import lru_cache
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import AnyUrl, BeforeValidator, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from src.core.utils import parse_cors
+
+def _parse_cors(value: Any) -> list[str] | str:
+    if isinstance(value, str) and not value.startswith("["):
+        return [i.strip() for i in value.split(",") if i.strip()]
+    elif isinstance(value, list | str):
+        return value
+    raise ValueError(value)
 
 
 class Settings(BaseSettings):
@@ -95,7 +101,7 @@ class Settings(BaseSettings):
     WS_PRESENCE_SWEEP_INTERVAL_SECONDS: float = 30.0
 
     FRONTEND_HOST: str
-    CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = []
+    CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(_parse_cors)] = []
 
     @computed_field  # type: ignore
     @property
