@@ -40,7 +40,7 @@ class FakeEmailMessageRepository:
         self.messages[message.id] = message
         return message
 
-    async def find_by_id(self, message_id: UUID) -> EmailMessage | None:
+    async def get_by_id(self, message_id: UUID) -> EmailMessage | None:
         return self.messages.get(message_id)
 
     async def find_by_idempotency_key(

@@ -18,7 +18,7 @@ class GetChatDetailsUseCase:
         self._chat_members = chat_member_repository
 
     async def __call__(self, *, chat_id: UUID, user_id: UUID) -> ChatSummary:
-        chat = await self._chats.find_by_id(chat_id)
+        chat = await self._chats.get_by_id(chat_id)
         if chat is None:
             raise ChatNotFoundError
 

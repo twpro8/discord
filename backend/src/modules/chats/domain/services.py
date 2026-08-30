@@ -20,7 +20,7 @@ async def assert_is_chat_member(
     user_id: UUID,
     chat_id: UUID,
 ) -> Chat:
-    chat = await chats.find_by_id(chat_id)
+    chat = await chats.get_by_id(chat_id)
     if chat is None:
         raise ChatNotFoundError
 

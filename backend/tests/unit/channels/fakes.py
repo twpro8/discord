@@ -27,7 +27,7 @@ class FakeChannelRepository:
         self.channels[channel.id] = channel
         return channel
 
-    async def find_by_id(self, channel_id: UUID) -> Channel | None:
+    async def get_by_id(self, channel_id: UUID) -> Channel | None:
         return self.channels.get(channel_id)
 
     async def find_by_name(self, server_id: UUID, name: str) -> Channel | None:

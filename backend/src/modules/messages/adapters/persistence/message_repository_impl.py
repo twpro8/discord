@@ -42,7 +42,7 @@ class MessageRepositoryImpl:
             raise
         return MessageDataMapper.to_entity(result.scalar_one())
 
-    async def find_by_id(self, message_id: UUID) -> Message | None:
+    async def get_by_id(self, message_id: UUID) -> Message | None:
         query = select(MessageOrm).filter_by(id=message_id)
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()

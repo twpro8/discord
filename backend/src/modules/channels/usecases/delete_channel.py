@@ -20,7 +20,7 @@ class DeleteChannelUseCase:
     async def __call__(
         self, *, channel_id: UUID, user_id: UUID, server_id: UUID
     ) -> None:
-        channel = await self._channels.find_by_id(channel_id)
+        channel = await self._channels.get_by_id(channel_id)
         if channel is None:
             raise ChannelNotFoundError
         if channel.server_id != server_id:

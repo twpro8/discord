@@ -63,7 +63,7 @@ async def test_owner_can_delete_extra_channel() -> None:
 
     await use_case(channel_id=channel.id, user_id=owner_id, server_id=server_id)
 
-    assert await channels.find_by_id(channel.id) is None
+    assert await channels.get_by_id(channel.id) is None
 
 
 async def test_deleting_only_channel_is_rejected() -> None:
@@ -82,7 +82,7 @@ async def test_deleting_only_channel_is_rejected() -> None:
     with pytest.raises(OnlyChannelDeletionError):
         await use_case(channel_id=channel.id, user_id=owner_id, server_id=server_id)
 
-    assert await channels.find_by_id(channel.id) is not None
+    assert await channels.get_by_id(channel.id) is not None
 
 
 async def test_channel_not_found() -> None:
@@ -116,7 +116,7 @@ async def test_server_mismatch_is_not_found() -> None:
     with pytest.raises(ChannelNotFoundError):
         await use_case(channel_id=channel.id, user_id=owner_id, server_id=uuid4())
 
-    assert await channels.find_by_id(channel.id) is not None
+    assert await channels.get_by_id(channel.id) is not None
 
 
 async def test_non_owner_member_cannot_delete() -> None:
@@ -139,7 +139,7 @@ async def test_non_owner_member_cannot_delete() -> None:
     with pytest.raises(NotServerOwnerError):
         await use_case(channel_id=channel.id, user_id=member_id, server_id=server_id)
 
-    assert await channels.find_by_id(channel.id) is not None
+    assert await channels.get_by_id(channel.id) is not None
 
 
 async def test_non_member_cannot_delete() -> None:
@@ -159,4 +159,4 @@ async def test_non_member_cannot_delete() -> None:
     with pytest.raises(NotServerMemberError):
         await use_case(channel_id=channel.id, user_id=outsider_id, server_id=server_id)
 
-    assert await channels.find_by_id(channel.id) is not None
+    assert await channels.get_by_id(channel.id) is not None

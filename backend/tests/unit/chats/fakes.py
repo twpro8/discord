@@ -53,7 +53,7 @@ class FakeChatRepository:
         self.chats[chat.id] = chat
         return chat
 
-    async def find_by_id(self, chat_id: UUID) -> Chat | None:
+    async def get_by_id(self, chat_id: UUID) -> Chat | None:
         return self.chats.get(chat_id)
 
     async def find_private_chat(self, user_a: UUID, user_b: UUID) -> Chat | None:

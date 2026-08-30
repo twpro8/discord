@@ -179,7 +179,7 @@ class ChatRepositoryImpl:
 
         return query
 
-    async def find_by_id(self, chat_id: UUID) -> Chat | None:
+    async def get_by_id(self, chat_id: UUID) -> Chat | None:
         query = select(ChatOrm).filter_by(id=chat_id)
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()

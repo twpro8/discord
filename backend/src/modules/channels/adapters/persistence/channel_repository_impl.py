@@ -20,7 +20,7 @@ class ChannelRepositoryImpl:
         result = await self._session.execute(stmt)
         return ChannelDataMapper.to_entity(result.scalar_one())
 
-    async def find_by_id(self, channel_id: UUID) -> Channel | None:
+    async def get_by_id(self, channel_id: UUID) -> Channel | None:
         query = select(ChannelOrm).filter_by(id=channel_id)
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()

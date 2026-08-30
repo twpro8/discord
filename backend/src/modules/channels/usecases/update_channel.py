@@ -28,7 +28,7 @@ class UpdateChannelUseCase:
         server_id: UUID,
         update_data: ChannelUpdateData,
     ) -> Channel:
-        channel = await self._channels.find_by_id(channel_id)
+        channel = await self._channels.get_by_id(channel_id)
         if channel is None:
             raise ChannelNotFoundError
         if channel.server_id != server_id:

@@ -39,7 +39,7 @@ class EmailMessageRepositoryImpl:
             raise
         return EmailMessageDataMapper.to_entity(result.scalar_one())
 
-    async def find_by_id(self, message_id: UUID) -> EmailMessage | None:
+    async def get_by_id(self, message_id: UUID) -> EmailMessage | None:
         query = select(EmailMessageOrm).filter_by(id=message_id)
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()

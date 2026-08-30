@@ -32,7 +32,7 @@ class ListChannelMessagesUseCase:
         before_cursor: str | None = None,
         after_cursor: str | None = None,
     ) -> ChannelMessagePage:
-        channel = await self._channels.find_by_id(channel_id)
+        channel = await self._channels.get_by_id(channel_id)
         if channel is None:
             raise ChannelNotFoundError
 
