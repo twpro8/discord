@@ -8,7 +8,7 @@ from src.core.config import settings
 from src.core.database import get_session
 from src.main import app
 from src.modules.users.domain.entities.user import User
-from src.shared.data.models import *  # noqa
+from src.core.database.models import *  # noqa
 from tests.dependency_overrides.cache import get_test_cache
 from tests.dependency_overrides.job_dispatcher import get_test_job_dispatcher
 from tests.dependency_overrides.redis_client import get_fake_redis_client

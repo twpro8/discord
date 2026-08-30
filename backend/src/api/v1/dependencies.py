@@ -18,7 +18,7 @@ from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.security.jwt import decode_access_token
 from src.core.storage import Storage
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
-from src.shared.data.transaction import SqlAlchemyTransaction
+from src.shared.adapters.transaction import SqlAlchemyTransaction
 from src.shared.domain.transaction import Transaction
 
 access_cookie_scheme = APIKeyCookie(name="access_token")

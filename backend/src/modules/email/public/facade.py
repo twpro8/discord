@@ -12,7 +12,7 @@ from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.domain.exceptions import EmailMessageNotFoundError
 from src.modules.email.usecases.get_email_status import GetEmailStatusUseCase
 from src.modules.email.usecases.send_email import SendEmailUseCase
-from src.shared.data.transaction import SqlAlchemyTransaction
+from src.shared.adapters.transaction import SqlAlchemyTransaction
 
 
 class EmailFacade(Protocol):

@@ -1,2 +1,2 @@
 # required to load all ORM models for SQLAlchemy relationships
-import src.shared.data.models  # noqa
+import src.core.database.models  # noqa

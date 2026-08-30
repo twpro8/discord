@@ -13,7 +13,7 @@ from src.modules.users.usecases.create_user import CreateUserUseCase
 from src.modules.users.usecases.get_user_by_id import GetUserByIDUseCase
 from src.modules.users.usecases.get_user_by_username import GetUserByUsernameUseCase
 from src.modules.users.usecases.verify_credentials import VerifyCredentialsUseCase
-from src.shared.data.transaction import SqlAlchemyTransaction
+from src.shared.adapters.transaction import SqlAlchemyTransaction
 
 
 class UsersFacade(Protocol):
