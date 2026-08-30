@@ -1,154 +1,85 @@
 // react
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 
-// shared
-import { getCallChannel, leaveCallChannel } from "@/shared/api/socket";
-
-const ICE_SERVERS: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+// relative
+import { useLocalMedia } from "./use-local-media";
+import { usePeerConnections } from "./use-peer-connections";
 
 interface UseWebRTCOptions {
-  callId: string | null;
+  callId?: string | null;
+  roomId?: string | null;
   /** "caller" creates the offer; "callee" waits for it then answers. */
   role: "caller" | "callee";
 }
 
-/** Manages an RTCPeerConnection for a 1:1 voice call. Gets the local
- *  microphone stream, exchanges SDP offers/answers and ICE candidates
- *  through the Phoenix `call:*` channel, and exposes the remote audio
- *  stream for playback. Cleans up on unmount or when `callId` clears. */
-export function useWebRTC({ callId, role }: UseWebRTCOptions) {
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [connected, setConnected] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const roleRef = useRef(role);
-  roleRef.current = role;
+/** Facade for a room-based call. Unified room for 1:1, group and server voice.
+ *  `callId` is kept as alias for `roomId`. Manages local media (audio/camera/screen
+ *  as 3 independent tracks — B-mode) and peer connections (Map<peerId, PC> with
+ *  3 senders each). Backwards compat: `localStream` == audioStream,
+ *  `remoteStream` == first peer audio/video stream. */
+export function useWebRTC({ callId, roomId, role }: UseWebRTCOptions) {
+  const effectiveRoomId = roomId ?? callId ?? null;
+  const active = Boolean(effectiveRoomId);
 
-  useEffect(() => {
-    if (!callId) return;
+  const {
+    audioStream,
+    cameraStream,
+    screenStream,
+    muted,
+    cameraEnabled,
+    screenSharing,
+    toggleMute,
+    toggleCamera,
+    startScreenShare,
+    stopScreenShare,
+    stopAll,
+  } = useLocalMedia(active);
 
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    pcRef.current = pc;
+  const { remoteStreams, connected, pcsRef } = usePeerConnections({
+    roomId: effectiveRoomId,
+    role,
+    audioStream,
+    cameraStream,
+    screenStream,
+  });
 
-    pc.ontrack = (event) => {
-      const stream = event.streams[0] ?? null;
-
-      console.log("remote stream:", stream);
-      console.log("audio tracks:", stream?.getAudioTracks());
-
-      setRemoteStream(event.streams[0] ?? null);
-    };
-
-    pc.oniceconnectionstatechange = () => {
-      const state = pc.iceConnectionState;
-      if (state === "connected" || state === "completed") {
-        setConnected(true);
-      } else if (state === "disconnected" || state === "failed") {
-        setConnected(false);
-      }
-    };
-
-    const channel = getCallChannel(callId);
-
-    let makingOffer = false;
-
-    channel.on("offer", async ({ sdp }: { sdp: RTCSessionDescriptionInit }) => {
-      if (makingOffer || pc.signalingState === "have-local-offer") {
-        await pc.setLocalDescription({ type: "rollback" });
-      }
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      channel.push("answer", { sdp: pc.localDescription });
-    });
-
-    channel.on(
-      "answer",
-      async ({ sdp }: { sdp: RTCSessionDescriptionInit }) => {
-        if (pc.signalingState === "have-local-offer") {
-          await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-        }
-      },
-    );
-
-    channel.on(
-      "ice_candidate",
-      async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      },
-    );
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        channel.push("ice_candidate", {
-          candidate: event.candidate.toJSON(),
-        });
-      }
-    };
-
-    pc.onnegotiationneeded = async () => {
-      if (roleRef.current !== "caller") return;
-
-      if (makingOffer || pc.signalingState !== "stable") return;
-      makingOffer = true;
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        channel.push("offer", { sdp: pc.localDescription });
-      } finally {
-        makingOffer = false;
-      }
-    };
-
-    let cancelled = false;
-
-    async function start() {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-      });
-      if (cancelled) {
-        stream.getTracks().forEach((t) => t.stop());
-        return;
-      }
-      setLocalStream(stream);
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-    }
-
-    start();
-
-    return () => {
-      cancelled = true;
-      pc.close();
-      pcRef.current = null;
-      setRemoteStream(null);
-      setLocalStream(null);
-      setConnected(false);
-      channel.off("offer");
-      channel.off("answer");
-      channel.off("ice_candidate");
-      leaveCallChannel();
-    };
-  }, [callId]);
-
-  const toggleMute = useCallback(() => {
-    const track = localStream?.getAudioTracks()[0];
-    if (!track) return;
-    track.enabled = !track.enabled;
-    setMuted(!track.enabled);
-  }, [localStream]);
+  // Backwards compat aliases: single peer placeholder "remote".
+  const firstPeer = remoteStreams.get("remote");
+  const remoteStream =
+    firstPeer?.audioStream ??
+    firstPeer?.videoStream ??
+    firstPeer?.screenStream ??
+    null;
+  const remoteVideoStream = firstPeer?.videoStream ?? null;
+  const remoteScreenStream = firstPeer?.screenStream ?? null;
+  const localStream = audioStream;
 
   const hangup = useCallback(() => {
-    pcRef.current?.close();
-    localStream?.getTracks().forEach((t) => t.stop());
-    pcRef.current = null;
-    setRemoteStream(null);
-    setLocalStream(null);
-    setConnected(false);
-    setMuted(false);
-    leaveCallChannel();
-  }, [localStream]);
+    pcsRef.current.forEach((pc) => pc.close());
+    pcsRef.current.clear();
+    stopAll();
+  }, [pcsRef, stopAll]);
 
-  return { localStream, remoteStream, connected, muted, toggleMute, hangup };
+  return {
+    // New room/group-ready
+    roomId: effectiveRoomId,
+    localStream,
+    audioStream,
+    cameraStream,
+    screenStream,
+    localVideoStream: cameraStream,
+    remoteStreams,
+    remoteVideoStream,
+    remoteScreenStream,
+    remoteStream,
+    connected,
+    muted,
+    cameraEnabled,
+    screenSharing,
+    toggleMute,
+    toggleCamera,
+    startScreenShare,
+    stopScreenShare,
+    hangup,
+  };
 }

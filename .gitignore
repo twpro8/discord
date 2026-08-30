@@ -219,3 +219,6 @@ __marimo__/
 node_modules/
 
 graphify-out/
+
+# Elixir
+erl_crash.dump

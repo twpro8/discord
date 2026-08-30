@@ -80,10 +80,11 @@ export function subscribeToCallAccepted(
   userChannel.on("call_accepted", callback);
 }
 
-/** Joins the `call:{callId}` channel for WebRTC signaling relay.
- * Leaves any previously joined call channel first. */
-export function getCallChannel(callId: string): Channel {
-  if (callChannel && joinedCallId !== callId) {
+/** Joins the `room:{roomId}` channel for WebRTC signaling relay.
+ * Unified room for 1:1, group and server voice — `call:{id}` is kept as alias.
+ * Leaves any previously joined room channel first. */
+export function getRoomChannel(roomId: string): Channel {
+  if (callChannel && joinedCallId !== roomId) {
     callChannel.leave();
     callChannel = null;
     joinedCallId = null;
@@ -94,19 +95,30 @@ export function getCallChannel(callId: string): Channel {
       socket = new Socket(CALL_SERVER_URL);
       socket.connect();
     }
-    callChannel = socket.channel(`call:${callId}`);
+    // Phoenix server joins both "room:" and "call:" topics (alias for backwards compat).
+    callChannel = socket.channel(`room:${roomId}`);
     callChannel.join();
-    joinedCallId = callId;
+    joinedCallId = roomId;
   }
 
   return callChannel;
 }
 
-/** Leaves the current call channel and resets state. */
-export function leaveCallChannel(): void {
+/** Alias for backwards compat: `call:{callId}` == `room:{roomId}`. */
+export function getCallChannel(callId: string): Channel {
+  return getRoomChannel(callId);
+}
+
+/** Leaves the current room channel and resets state. */
+export function leaveRoomChannel(): void {
   if (callChannel) {
     callChannel.leave();
     callChannel = null;
     joinedCallId = null;
   }
+}
+
+/** Alias for backwards compat. */
+export function leaveCallChannel(): void {
+  leaveRoomChannel();
 }

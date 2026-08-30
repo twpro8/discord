@@ -17,13 +17,11 @@ import {
 import { getUserById } from "../api/get-user";
 
 /** Tracks an incoming call broadcast on the current user's Phoenix
- * `user:{id}` channel. Joins the channel (idempotently) and subscribes
- * to `incoming_call`, `call_cancelled`, and `call_accepted` exactly once
- * per user, surfacing the caller's id to the UI through `callerId`.
- * `dismiss` is only for a deliberate decline by this user — being
- * cancelled by the caller closes the window (with an informative toast)
- * without pushing `decline_call` back. When the callee accepts,
- * `acceptedCallId` is set so WebRTC can start. */
+ * `user:{id}` channel. Unified room: `room_id` (alias `call_id`) for 1:1, group
+ * and server voice. Joins the channel (idempotently) and subscribes to
+ * `incoming_call`, `call_cancelled`, and `call_accepted` exactly once per user,
+ * surfacing the caller's id to the UI through `callerId`. When the callee accepts,
+ * `acceptedCallId` (alias `acceptedRoomId`) is set so WebRTC can start. */
 export function useIncomingCall(userId?: string) {
   const [callerId, setCallerId] = useState<string | null>(null);
   const [callId, setCallId] = useState<string | null>(null);
@@ -58,7 +56,11 @@ export function useIncomingCall(userId?: string) {
     setAcceptedCallId(callId);
 
     getUserChannel(userId)
-      .push("accept_call", { caller_id: callerId, call_id: callId })
+      .push("accept_call", {
+        caller_id: callerId,
+        call_id: callId,
+        room_id: callId,
+      })
       .receive("ok", () => {
         console.log("Call accepted");
       })
@@ -73,12 +75,16 @@ export function useIncomingCall(userId?: string) {
     getUserChannel(userId);
 
     subscribeToIncomingCalls((payload) => {
-      const { caller_id, call_id } = payload as {
+      const data = payload as {
         caller_id: string;
-        call_id: string;
+        call_id?: string;
+        room_id?: string;
+        participant_ids?: string[];
       };
-      setCallerId(caller_id);
-      setCallId(call_id);
+      const roomId = data.room_id ?? data.call_id;
+      if (!roomId) return;
+      setCallerId(data.caller_id);
+      setCallId(roomId);
       setAcceptedCallId(null);
     });
 
@@ -104,16 +110,28 @@ export function useIncomingCall(userId?: string) {
     });
 
     subscribeToCallAccepted((payload) => {
-      const { call_id, callee_id } = payload as {
-        call_id: string;
+      const data = payload as {
+        call_id?: string;
+        room_id?: string;
         callee_id: string;
       };
-      if (callee_id !== userId) return;
-      setAcceptedCallId(call_id);
+      if (data.callee_id !== userId) return;
+      const roomId = data.room_id ?? data.call_id;
+      if (!roomId) return;
+      setAcceptedCallId(roomId);
       setCallerId(null);
       setCallId(null);
     });
   }, [queryClient, userId]);
 
-  return { callerId, callId, acceptedCallId, acceptCall, dismiss };
+  return {
+    callerId,
+    callId,
+    /** Alias for unified room: roomId == callId */
+    roomId: callId,
+    acceptedCallId,
+    acceptedRoomId: acceptedCallId,
+    acceptCall,
+    dismiss,
+  };
 }

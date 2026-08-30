@@ -15,6 +15,7 @@ import { useShellDrawer } from "@/shared/ui/shell-drawer";
 import { useIncomingCall } from "@/features/calls/model/use-incoming-call";
 import { useOutgoingCall } from "@/features/calls/model/use-outgoing-call";
 import { useOutgoingCallEvents } from "@/features/calls/model/use-outgoing-call-events";
+import { useVoiceRoom } from "@/features/calls/model/use-voice-room";
 import { useWebRTC } from "@/features/calls/model/use-webRTC";
 import { CallWindow } from "@/features/calls/ui/CallWindow";
 import { ChannelSidebar } from "@/features/channels/ui/ChannelSidebar";
@@ -42,6 +43,10 @@ export default function HomeLayout() {
   );
   const clearOutgoing = useOutgoingCall((state) => state.clear);
 
+  const voiceChannelId = useVoiceRoom((s) => s.channelId);
+  const voiceRoomId = useVoiceRoom((s) => s.roomId);
+  const leaveVoice = useVoiceRoom((s) => s.leave);
+
   const calleeWebRTC = useWebRTC({
     callId: acceptedCallId,
     role: "callee",
@@ -49,6 +54,11 @@ export default function HomeLayout() {
 
   const callerWebRTC = useWebRTC({
     callId: outgoingAcceptedCallId,
+    role: "caller",
+  });
+
+  const voiceWebRTC = useWebRTC({
+    roomId: voiceRoomId,
     role: "caller",
   });
 
@@ -65,6 +75,11 @@ export default function HomeLayout() {
   function handleHangupIncoming() {
     calleeWebRTC.hangup();
     dismiss();
+  }
+
+  function handleLeaveVoice() {
+    voiceWebRTC.hangup();
+    leaveVoice();
   }
 
   const isDesktop = useMediaQuery(breakpoints.desktop);
@@ -181,19 +196,68 @@ export default function HomeLayout() {
           id={callerId}
           active={Boolean(acceptedCallId)}
           muted={calleeWebRTC.muted}
+          cameraEnabled={calleeWebRTC.cameraEnabled}
+          screenSharing={calleeWebRTC.screenSharing}
           onClose={acceptedCallId ? handleHangupIncoming : dismiss}
           onClick={acceptCall}
           onToggleMute={calleeWebRTC.toggleMute}
+          onToggleCamera={calleeWebRTC.toggleCamera}
+          onToggleScreenShare={
+            calleeWebRTC.screenSharing
+              ? calleeWebRTC.stopScreenShare
+              : calleeWebRTC.startScreenShare
+          }
           remoteStream={calleeWebRTC.remoteStream}
+          remoteVideoStream={calleeWebRTC.remoteVideoStream}
+          remoteScreenStream={calleeWebRTC.remoteScreenStream}
+          remoteStreams={calleeWebRTC.remoteStreams}
+          localCameraStream={calleeWebRTC.localVideoStream}
+          localScreenStream={calleeWebRTC.screenStream}
         />
         <CallWindow
           mode="outgoing"
           id={outgoingPeerId}
           active={Boolean(outgoingAcceptedCallId)}
           muted={callerWebRTC.muted}
+          cameraEnabled={callerWebRTC.cameraEnabled}
+          screenSharing={callerWebRTC.screenSharing}
           onClose={handleCancelOutgoing}
           onToggleMute={callerWebRTC.toggleMute}
+          onToggleCamera={callerWebRTC.toggleCamera}
+          onToggleScreenShare={
+            callerWebRTC.screenSharing
+              ? callerWebRTC.stopScreenShare
+              : callerWebRTC.startScreenShare
+          }
           remoteStream={callerWebRTC.remoteStream}
+          remoteVideoStream={callerWebRTC.remoteVideoStream}
+          remoteScreenStream={callerWebRTC.remoteScreenStream}
+          remoteStreams={callerWebRTC.remoteStreams}
+          localCameraStream={callerWebRTC.localVideoStream}
+          localScreenStream={callerWebRTC.screenStream}
+        />
+        {/* Unified voice channel room — same component, same WebRTC, persistent room:channel:* */}
+        <CallWindow
+          mode="outgoing"
+          id={voiceChannelId}
+          active={Boolean(voiceRoomId)}
+          muted={voiceWebRTC.muted}
+          cameraEnabled={voiceWebRTC.cameraEnabled}
+          screenSharing={voiceWebRTC.screenSharing}
+          onClose={handleLeaveVoice}
+          onToggleMute={voiceWebRTC.toggleMute}
+          onToggleCamera={voiceWebRTC.toggleCamera}
+          onToggleScreenShare={
+            voiceWebRTC.screenSharing
+              ? voiceWebRTC.stopScreenShare
+              : voiceWebRTC.startScreenShare
+          }
+          remoteStream={voiceWebRTC.remoteStream}
+          remoteVideoStream={voiceWebRTC.remoteVideoStream}
+          remoteScreenStream={voiceWebRTC.remoteScreenStream}
+          remoteStreams={voiceWebRTC.remoteStreams}
+          localCameraStream={voiceWebRTC.localVideoStream}
+          localScreenStream={voiceWebRTC.screenStream}
         />
       </div>
     </RealtimeProvider>
