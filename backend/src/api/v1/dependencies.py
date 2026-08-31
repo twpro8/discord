@@ -11,12 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.cache import Cache
 from src.core.database import get_session
 from src.core.jobs import JobDispatcher
+from src.core.realtime.manager import RoomMembershipUpdater
 from src.core.realtime.membership import DistributedRoomMembershipUpdater
 from src.core.realtime.notifier import RealtimeNotifier, RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
 from src.core.security.jwt import decode_access_token
 from src.core.storage import Storage
-from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.auth.domain.exceptions import InvalidAccessTokenError
 from src.shared.data.transaction import SqlAlchemyTransaction
 from src.shared.domain.transaction import Transaction

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from src.core.websocket.manager import RoomMembershipUpdater
+from src.core.realtime.manager import RoomMembershipUpdater
 from src.modules.chats.domain.entities.chat import Chat
 from src.modules.chats.domain.entities.dtos import (
     ChatCreate,

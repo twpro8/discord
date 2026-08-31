@@ -4,9 +4,9 @@ from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, WebSocket
 
+from src.core.realtime.auth import UserIdWSDep
+from src.core.realtime.manager import ConnectionManager
 from src.core.realtime.rooms import user_room
-from src.core.websocket.auth import UserIdWSDep
-from src.core.websocket.manager import ConnectionManager
 from src.modules.presence.application.presence_service import PresenceService
 
 router = APIRouter()

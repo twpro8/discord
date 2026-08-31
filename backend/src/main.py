@@ -13,12 +13,12 @@ from src.core.config import settings
 from src.core.database.session import get_session_factory
 from src.core.jobs import CeleryJobDispatcher, celery_app
 from src.core.logging import configure_logging, get_logger
+from src.core.realtime.manager import ConnectionManager
 from src.core.realtime.notifier import RedisRealtimeNotifier
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
-from src.core.redis import close_redis, init_redis
+from src.core.redis_client import close_redis, init_redis
 from src.core.storage import close_storage, init_storage
 from src.core.version import get_app_version
-from src.core.websocket.manager import ConnectionManager
 from src.modules.friends.public.facade import build_friends_facade
 from src.modules.presence.adapters.persistence.redis_presence_repository import (
     RedisPresenceRepository,

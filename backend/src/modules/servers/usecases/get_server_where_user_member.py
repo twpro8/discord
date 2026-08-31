@@ -1,8 +1,8 @@
 from uuid import UUID
 
 from src.core.logging import get_logger
+from src.core.realtime.manager import RoomMembershipUpdater
 from src.core.realtime.rooms import server_room
-from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.servers.domain.entities.server import Server
 from src.modules.servers.domain.exceptions import ServerNotFoundError
 from src.modules.servers.domain.repositories.server_repository import ServerRepository

@@ -1,4 +1,4 @@
-from src.core.config.settings import Settings
+from src.core.config import Settings
 from src.modules.email.adapters.providers.smtp_provider import SmtpEmailProvider
 from src.modules.email.domain.gateways.email_provider import EmailProvider
 
