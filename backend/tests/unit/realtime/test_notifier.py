@@ -3,9 +3,9 @@ import json
 from uuid import uuid4
 
 from src.core.realtime.envelope import EventType
+from src.core.realtime.manager import ConnectionManager
 from src.core.realtime.notifier import LocalRealtimeNotifier
 from src.core.realtime.rooms import user_room
-from src.core.realtime.manager import ConnectionManager
 
 
 class _FakeWebSocket:

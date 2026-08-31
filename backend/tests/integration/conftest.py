@@ -1,13 +1,10 @@
+import subprocess
 from collections.abc import AsyncGenerator
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.database import Base
-from src.core.database.session import (
-    get_null_pool_engine,
-    get_null_pool_session_factory,
-)
+from src.core.database.session import get_null_pool_session_factory
 from tests.seeder import populate_database
 
 
@@ -16,10 +13,14 @@ async def setup_database(
     check_test_mode: None,  # noqa
 ) -> None:
     """Setup database tables"""
-    engine = get_null_pool_engine()
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+    subprocess.run(
+        ["alembic", "downgrade", "base"],
+        check=True,
+    )
+    subprocess.run(
+        ["alembic", "upgrade", "head"],
+        check=True,
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)

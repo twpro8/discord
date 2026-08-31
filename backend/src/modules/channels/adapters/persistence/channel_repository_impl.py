@@ -1,30 +1,19 @@
-from dataclasses import asdict
 from uuid import UUID
 
-from sqlalchemy import delete, func, insert, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select, update
 
 from src.modules.channels.adapters.persistence.mappers import ChannelDataMapper
 from src.modules.channels.adapters.persistence.models import ChannelOrm
 from src.modules.channels.domain.entities.channel import Channel
 from src.modules.channels.domain.entities.dtos import ChannelCreate, ChannelUpdate
-from src.shared.domain.unset import set_fields
+from src.shared.adapters.base_repository import BaseRepository
 
 
-class ChannelRepositoryImpl:
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
-
-    async def create(self, data: ChannelCreate) -> Channel:
-        stmt = insert(ChannelOrm).values(**asdict(data)).returning(ChannelOrm)
-        result = await self._session.execute(stmt)
-        return ChannelDataMapper.to_entity(result.scalar_one())
-
-    async def get_by_id(self, channel_id: UUID) -> Channel | None:
-        query = select(ChannelOrm).filter_by(id=channel_id)
-        result = await self._session.execute(query)
-        model = result.scalar_one_or_none()
-        return ChannelDataMapper.to_entity(model) if model else None
+class ChannelRepositoryImpl(
+    BaseRepository[ChannelOrm, Channel, ChannelCreate, ChannelUpdate]
+):
+    _model = ChannelOrm
+    _mapper = ChannelDataMapper
 
     async def find_by_name(self, server_id: UUID, name: str) -> Channel | None:
         query = select(ChannelOrm).where(
@@ -33,20 +22,6 @@ class ChannelRepositoryImpl:
         result = await self._session.execute(query)
         model = result.scalar_one_or_none()
         return ChannelDataMapper.to_entity(model) if model else None
-
-    async def update(self, channel_id: UUID, data: ChannelUpdate) -> Channel:
-        stmt = (
-            update(ChannelOrm)
-            .where(ChannelOrm.id == channel_id)
-            .values(updated_at=func.now(), **set_fields(data))
-            .returning(ChannelOrm)
-        )
-        result = await self._session.execute(stmt)
-        return ChannelDataMapper.to_entity(result.scalar_one())
-
-    async def delete(self, channel_id: UUID) -> None:
-        stmt = delete(ChannelOrm).where(ChannelOrm.id == channel_id)
-        await self._session.execute(stmt)
 
     async def count_by_server(self, server_id: UUID) -> int:
         stmt = select(func.count(ChannelOrm.id)).where(

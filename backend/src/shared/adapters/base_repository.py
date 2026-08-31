@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from uuid import UUID
 
-from sqlalchemy import delete, insert, select, update, Executable
+from sqlalchemy import Executable, delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database.base import UUIDBase
@@ -15,7 +15,7 @@ class BaseRepository[
     ModelT: UUIDBase,
     EntityT: object,
     CreateT: DataclassInstance,
-    UpdateT: DataclassInstance,
+    UpdateT: DataclassInstance | None,
 ]:
     """Provide common CRUD operations for a repository.
 

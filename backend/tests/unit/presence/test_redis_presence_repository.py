@@ -3,10 +3,10 @@ from uuid import uuid4
 import pytest
 from fakeredis.aioredis import FakeRedis
 
-from src.modules.presence.domain.entities.dtos import PresenceStatus
 from src.modules.presence.adapters.persistence.redis_presence_repository import (
     RedisPresenceRepository,
 )
+from src.modules.presence.domain.entities.dtos import PresenceStatus
 
 
 @pytest.fixture

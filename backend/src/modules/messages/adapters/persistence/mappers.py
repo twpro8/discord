@@ -1,8 +1,9 @@
 from src.modules.messages.adapters.persistence.models import MessageOrm
 from src.modules.messages.domain.entities.message import Message
+from src.shared.adapters.data_mapper import DataMapper
 
 
-class MessageDataMapper:
+class MessageDataMapper(DataMapper[MessageOrm, Message]):
     @staticmethod
     def to_entity(model: MessageOrm) -> Message:
         return Message(

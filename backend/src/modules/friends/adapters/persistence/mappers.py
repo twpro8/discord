@@ -1,8 +1,9 @@
 from src.modules.friends.adapters.persistence.models import FriendOrm
 from src.modules.friends.domain.entities.friend_request import FriendRequest
+from src.shared.adapters.data_mapper import DataMapper
 
 
-class FriendRequestDataMapper:
+class FriendRequestDataMapper(DataMapper[FriendOrm, FriendRequest]):
     @staticmethod
     def to_entity(model: FriendOrm) -> FriendRequest:
         return FriendRequest(

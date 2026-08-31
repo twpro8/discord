@@ -11,9 +11,10 @@ from src.modules.chats.domain.entities.dtos import (
     PrivateChatSummary,
 )
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
+from src.shared.adapters.data_mapper import DataMapper
 
 
-class ChatDataMapper:
+class ChatDataMapper(DataMapper[ChatOrm, Chat]):
     @staticmethod
     def to_entity(model: ChatOrm) -> Chat:
         return Chat(
@@ -30,7 +31,7 @@ class ChatDataMapper:
         )
 
 
-class ChatMemberDataMapper:
+class ChatMemberDataMapper(DataMapper[ChatMemberOrm, ChatMember]):
     @staticmethod
     def to_entity(model: ChatMemberOrm) -> ChatMember:
         return ChatMember(
@@ -44,7 +45,7 @@ class ChatMemberDataMapper:
         )
 
 
-class ChatSummaryDataMapper:
+class ChatSummaryDataMapper(DataMapper[Row[Any], ChatSummary]):
     @staticmethod
     def to_entity(row: Row[Any]) -> ChatSummary:
         last_message = (

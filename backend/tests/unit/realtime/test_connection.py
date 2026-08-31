@@ -2,8 +2,8 @@ import asyncio
 import json
 from uuid import uuid4
 
-from src.core.realtime.envelope import Envelope, EventType
 from src.core.realtime.connection import Connection
+from src.core.realtime.envelope import Envelope, EventType
 
 
 class FakeWebSocket:

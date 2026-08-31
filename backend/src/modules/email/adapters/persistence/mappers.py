@@ -1,9 +1,10 @@
 from src.modules.email.adapters.persistence.models import EmailMessageOrm
 from src.modules.email.domain.entities.email_message import EmailMessage
 from src.modules.email.domain.enums import EmailTemplateName
+from src.shared.adapters.data_mapper import DataMapper
 
 
-class EmailMessageDataMapper:
+class EmailMessageDataMapper(DataMapper[EmailMessageOrm, EmailMessage]):
     @staticmethod
     def to_entity(model: EmailMessageOrm) -> EmailMessage:
         return EmailMessage(

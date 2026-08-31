@@ -1,9 +1,7 @@
-from dataclasses import asdict
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Executable, and_, desc, func, insert, select, tuple_, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import Executable, and_, desc, func, select, tuple_, update
 from sqlalchemy.orm import aliased
 
 from src.modules.chats.adapters.persistence.mappers import (
@@ -22,19 +20,14 @@ from src.modules.chats.domain.entities.dtos import (
 from src.modules.chats.domain.enums import ChatType
 from src.modules.messages.adapters.persistence.models import MessageOrm
 from src.modules.users.adapters.persistence.models import UserOrm
-from src.shared.domain.unset import set_fields
+from src.shared.adapters.base_repository import BaseRepository
 
 SNIPPET_LEN = 120
 
 
-class ChatRepositoryImpl:
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
-
-    async def create(self, data: ChatCreate) -> Chat:
-        stmt = insert(ChatOrm).values(**asdict(data)).returning(ChatOrm)
-        result = await self._session.execute(stmt)
-        return ChatDataMapper.to_entity(result.scalar_one())
+class ChatRepositoryImpl(BaseRepository[ChatOrm, Chat, ChatCreate, ChatUpdate]):
+    _model = ChatOrm
+    _mapper = ChatDataMapper
 
     async def find_private_chat(self, user_a: UUID, user_b: UUID) -> Chat | None:
         """Find private chat between users"""
@@ -179,12 +172,6 @@ class ChatRepositoryImpl:
 
         return query
 
-    async def get_by_id(self, chat_id: UUID) -> Chat | None:
-        query = select(ChatOrm).filter_by(id=chat_id)
-        result = await self._session.execute(query)
-        model = result.scalar_one_or_none()
-        return ChatDataMapper.to_entity(model) if model else None
-
     async def increment_sequence(self, chat_id: UUID) -> int:
         stmt = (
             update(ChatOrm)
@@ -194,16 +181,6 @@ class ChatRepositoryImpl:
         )
         result = await self._session.execute(stmt)
         return result.scalar_one()
-
-    async def update(self, chat_id: UUID, data: ChatUpdate) -> Chat:
-        stmt = (
-            update(ChatOrm)
-            .where(ChatOrm.id == chat_id)
-            .values(**set_fields(data))
-            .returning(ChatOrm)
-        )
-        result = await self._session.execute(stmt)
-        return ChatDataMapper.to_entity(result.scalar_one())
 
     async def get_summary_for_user(
         self, chat_id: UUID, user_id: UUID

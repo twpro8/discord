@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from src.modules.users.domain.entities.dtos import UserUpdate
+from src.modules.users.domain.entities.dtos import UserCreate, UserUpdate
 from src.modules.users.domain.entities.user import User
 from src.shared.domain.unset import set_fields
 
@@ -25,8 +25,21 @@ class FakeUserRepository:
     def __init__(self, users: list[User] | None = None) -> None:
         self.users: dict[UUID, User] = {u.id: u for u in (users or [])}
 
-    async def add(self, user: User) -> None:
+    async def create(self, data: UserCreate) -> User:
+        now = datetime.now(UTC)
+        user = User(
+            id=uuid4(),
+            name=data.name,
+            username=data.username,
+            email=data.email,
+            password_hash=data.password_hash,
+            avatar_url=data.avatar_url,
+            is_active=data.is_active,
+            created_at=now,
+            updated_at=now,
+        )
         self.users[user.id] = user
+        return user
 
     async def get_by_id(self, user_id: UUID) -> User | None:
         return self.users.get(user_id)

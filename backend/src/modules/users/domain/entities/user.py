@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 
 from src.shared.domain.entity import Entity
 
@@ -26,29 +26,6 @@ class User(Entity):
         self.is_active = is_active
         self.created_at = created_at
         self.updated_at = updated_at
-
-    @classmethod
-    def register(
-        cls,
-        *,
-        name: str,
-        email: str,
-        username: str,
-        password_hash: str,
-    ) -> User:
-        """Factory encapsulating the invariants of user creation."""
-        now = datetime.now(UTC)
-        return cls(
-            id=uuid.uuid4(),
-            name=name,
-            email=email,
-            username=username,
-            password_hash=password_hash,
-            avatar_url=None,
-            is_active=True,
-            created_at=now,
-            updated_at=now,
-        )
 
     def mark_as_inactive(self) -> None:
         self.is_active = False

@@ -3,9 +3,10 @@ from typing import cast
 from src.modules.channels.adapters.persistence.models import ChannelOrm
 from src.modules.channels.domain.entities.channel import Channel
 from src.modules.channels.domain.enums import ChannelType
+from src.shared.adapters.data_mapper import DataMapper
 
 
-class ChannelDataMapper:
+class ChannelDataMapper(DataMapper[ChannelOrm, Channel]):
     @staticmethod
     def to_entity(model: ChannelOrm) -> Channel:
         return Channel(

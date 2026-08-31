@@ -1,5 +1,5 @@
 from dataclasses import Field
-from typing import Protocol, ClassVar, Any
+from typing import Any, ClassVar, Protocol
 
 
 class DataclassInstance(Protocol):
