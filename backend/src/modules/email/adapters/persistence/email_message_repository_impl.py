@@ -5,18 +5,20 @@ from uuid import UUID
 from asyncpg.exceptions import UniqueViolationError
 from sqlalchemy import insert, select, update
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.email.adapters.persistence.mappers import EmailMessageDataMapper
 from src.modules.email.adapters.persistence.models import EmailMessageOrm
 from src.modules.email.domain.entities.dtos import EmailMessageCreate
 from src.modules.email.domain.entities.email_message import EmailMessage
 from src.modules.email.domain.enums import EmailStatus
+from src.shared.adapters.base_repository import BaseRepository
 
 
-class EmailMessageRepositoryImpl:
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
+class EmailMessageRepositoryImpl(
+    BaseRepository[EmailMessageOrm, EmailMessage, EmailMessageCreate, None]
+):
+    _model = EmailMessageOrm
+    _mapper = EmailMessageDataMapper
 
     async def create(self, data: EmailMessageCreate) -> EmailMessage:
         """Create-or-get: a concurrent caller racing on the same
@@ -38,12 +40,6 @@ class EmailMessageRepositoryImpl:
                     return existing
             raise
         return EmailMessageDataMapper.to_entity(result.scalar_one())
-
-    async def find_by_id(self, message_id: UUID) -> EmailMessage | None:
-        query = select(EmailMessageOrm).filter_by(id=message_id)
-        result = await self._session.execute(query)
-        model = result.scalar_one_or_none()
-        return EmailMessageDataMapper.to_entity(model) if model else None
 
     async def find_by_idempotency_key(
         self, idempotency_key: str

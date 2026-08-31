@@ -1,8 +1,6 @@
-from collections.abc import Sequence
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from src.core.event_bus import EventHandler
 from src.modules.chats.domain import services as chat_permission_services
 from src.modules.chats.domain.entities.chat import Chat, ChatMember
 from src.modules.chats.domain.entities.dtos import (
@@ -14,7 +12,6 @@ from src.modules.chats.domain.entities.dtos import (
     MemberCreate,
 )
 from src.modules.chats.domain.enums import ChatMemberRole
-from src.shared.domain.domain_event import DomainEvent
 from src.shared.domain.unset import set_fields
 
 
@@ -56,7 +53,7 @@ class FakeChatRepository:
         self.chats[chat.id] = chat
         return chat
 
-    async def find_by_id(self, chat_id: UUID) -> Chat | None:
+    async def get_by_id(self, chat_id: UUID) -> Chat | None:
         return self.chats.get(chat_id)
 
     async def find_private_chat(self, user_a: UUID, user_b: UUID) -> Chat | None:
@@ -192,18 +189,3 @@ class FakeChatsFacade:
 
     async def list_active_user_ids(self, chat_id: UUID) -> set[UUID]:
         return await self._chat_members.list_active_user_ids(chat_id)
-
-
-class RecordingEventBus:
-    def __init__(self) -> None:
-        self.published: list[DomainEvent] = []
-
-    def subscribe(self, event_type: type[DomainEvent], handler: EventHandler) -> None:
-        pass
-
-    async def publish(self, event: DomainEvent) -> None:
-        self.published.append(event)
-
-    async def publish_many(self, events: Sequence[DomainEvent]) -> None:
-        for event in events:
-            await self.publish(event)

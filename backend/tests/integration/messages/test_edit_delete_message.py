@@ -51,7 +51,7 @@ async def test_non_sender_cannot_edit_message(
 
     await ac.post(
         "/api/v1/auth/login",
-        json={"username": str(peer.username), "password": "12345678"},
+        json={"username": peer.username, "password": "12345678"},
     )
     response = await ac.patch(
         f"/api/v1/chats/{chat_id}/messages/{message_id}", json={"body": "hacked"}
@@ -101,7 +101,7 @@ async def test_group_owner_can_delete_others_message(
 
     await ac.post(
         "/api/v1/auth/login",
-        json={"username": str(member.username), "password": "12345678"},
+        json={"username": member.username, "password": "12345678"},
     )
     send_resp = await ac.post(
         f"/api/v1/chats/{chat_id}/messages", json={"body": "member message"}

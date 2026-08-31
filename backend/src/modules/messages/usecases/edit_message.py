@@ -28,7 +28,7 @@ class EditMessageUseCase:
         chat_id: UUID | None = None,
         channel_id: UUID | None = None,
     ) -> Message:
-        message = await self._messages.find_by_id(message_id)
+        message = await self._messages.get_by_id(message_id)
         if message is None:
             raise MessageNotFoundError
 

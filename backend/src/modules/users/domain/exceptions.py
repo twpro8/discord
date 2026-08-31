@@ -24,16 +24,6 @@ class IncorrectPasswordError(UserError):
     status_code = status.HTTP_401_UNAUTHORIZED
 
 
-class InvalidEmail(UserError, ValidationError):
-    def __init__(self, value: str) -> None:
-        super().__init__(f"'{value}' is not a valid email address")
-
-
-class InvalidUsername(UserError, ValidationError):
-    def __init__(self, value: str) -> None:
-        super().__init__(f"'{value}' is not a valid username (3-32 characters)")
-
-
 class StorageNotConfiguredError(UserError):
     detail = "Object storage is not configured"
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE

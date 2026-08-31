@@ -1,6 +1,9 @@
 from celery import Celery
 
 from src.core.config import settings
+from src.core.jobs import (
+    signals,  # noqa: F401  (registers task logging-context signal handlers)
+)
 
 
 def build_celery_app() -> Celery:

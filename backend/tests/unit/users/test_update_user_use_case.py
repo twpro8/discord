@@ -1,11 +1,7 @@
 import pytest
 
 from src.modules.users.domain.entities.dtos import UserUpdate
-from src.modules.users.domain.exceptions import (
-    InvalidEmail,
-    InvalidUsername,
-    UserAlreadyExistsError,
-)
+from src.modules.users.domain.exceptions import UserAlreadyExistsError
 from src.modules.users.usecases.get_user_by_id import cache_key
 from src.modules.users.usecases.update_user import UpdateUserUseCase
 from tests.unit.fakes import FakeTransaction
@@ -21,7 +17,7 @@ async def test_partial_update_only_touches_provided_fields() -> None:
     updated = await use_case(user_id=user.id, data=UserUpdate(name="New Name"))
 
     assert updated.name == "New Name"
-    assert str(updated.username) == "original"
+    assert updated.username == "original"
     assert tx.committed
 
 
@@ -56,7 +52,7 @@ async def test_allows_keeping_own_username() -> None:
 
     updated = await use_case(user_id=user.id, data=UserUpdate(username="alice"))
 
-    assert str(updated.username) == "alice"
+    assert updated.username == "alice"
 
 
 async def test_rejects_email_taken_by_another_user() -> None:
@@ -69,19 +65,16 @@ async def test_rejects_email_taken_by_another_user() -> None:
         await use_case(user_id=user.id, data=UserUpdate(email="bob@test.com"))
 
 
-async def test_rejects_invalid_username_value() -> None:
-    user = make_user()
+async def test_normalizes_username_and_email_before_persisting() -> None:
+    user = make_user(username="alice")
+    users = FakeUserRepository([user])
     tx = FakeTransaction()
-    use_case = UpdateUserUseCase(tx, FakeUserRepository([user]), FakeCache())
+    use_case = UpdateUserUseCase(tx, users, FakeCache())
 
-    with pytest.raises(InvalidUsername):
-        await use_case(user_id=user.id, data=UserUpdate(username="ab"))
+    updated = await use_case(
+        user_id=user.id,
+        data=UserUpdate(username="  bob  ", email="  Bob@Example.COM  "),
+    )
 
-
-async def test_rejects_invalid_email_value() -> None:
-    user = make_user()
-    tx = FakeTransaction()
-    use_case = UpdateUserUseCase(tx, FakeUserRepository([user]), FakeCache())
-
-    with pytest.raises(InvalidEmail):
-        await use_case(user_id=user.id, data=UserUpdate(email="not-an-email"))
+    assert updated.username == "bob"
+    assert updated.email == "bob@example.com"

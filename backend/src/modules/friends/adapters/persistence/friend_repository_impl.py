@@ -1,8 +1,6 @@
-from dataclasses import asdict
 from uuid import UUID
 
-from sqlalchemy import delete, insert, or_, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import or_, select
 from sqlalchemy.orm import joinedload
 
 from src.modules.friends.adapters.persistence.mappers import (
@@ -16,35 +14,14 @@ from src.modules.friends.domain.entities.dtos import (
 )
 from src.modules.friends.domain.entities.friend_request import FriendRequest
 from src.modules.friends.domain.enums import FriendStatus
-from src.shared.domain.unset import set_fields
+from src.shared.adapters.base_repository import BaseRepository
 
 
-class FriendRepositoryImpl:
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
-
-    async def create(self, data: FriendRequestCreate) -> FriendRequest:
-        stmt = insert(FriendOrm).values(**asdict(data)).returning(FriendOrm)
-        result = await self._session.execute(stmt)
-        return FriendRequestDataMapper.to_entity(result.scalar_one())
-
-    async def update(
-        self,
-        request_id: UUID,
-        data: FriendRequestUpdate,
-    ) -> FriendRequest:
-        stmt = (
-            update(FriendOrm)
-            .where(FriendOrm.id == request_id)
-            .values(**set_fields(data))
-            .returning(FriendOrm)
-        )
-        result = await self._session.execute(stmt)
-        return FriendRequestDataMapper.to_entity(result.scalar_one())
-
-    async def delete(self, request_id: UUID) -> None:
-        stmt = delete(FriendOrm).where(FriendOrm.id == request_id)
-        await self._session.execute(stmt)
+class FriendRepositoryImpl(
+    BaseRepository[FriendOrm, FriendRequest, FriendRequestCreate, FriendRequestUpdate]
+):
+    _model = FriendOrm
+    _mapper = FriendRequestDataMapper
 
     async def get_between_users(
         self,
@@ -61,12 +38,6 @@ class FriendRepositoryImpl:
             )
         )
         result = await self._session.execute(stmt)
-        model = result.scalar_one_or_none()
-        return FriendRequestDataMapper.to_entity(model) if model else None
-
-    async def get_by_id(self, request_id: UUID) -> FriendRequest | None:
-        query = select(FriendOrm).filter_by(id=request_id)
-        result = await self._session.execute(query)
         model = result.scalar_one_or_none()
         return FriendRequestDataMapper.to_entity(model) if model else None
 

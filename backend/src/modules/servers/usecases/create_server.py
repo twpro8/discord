@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from src.core.websocket.manager import RoomMembershipUpdater
+from src.core.realtime.manager import RoomMembershipUpdater
 from src.modules.channels.public.facade import ChannelsFacade
 from src.modules.servers.domain.entities.dtos import (
     ServerCreate,

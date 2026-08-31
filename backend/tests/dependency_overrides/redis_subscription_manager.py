@@ -2,8 +2,8 @@ from typing import cast
 
 from fakeredis.aioredis import FakeRedis
 
+from src.core.realtime.manager import ConnectionManager
 from src.core.realtime.redis_pubsub import RedisLike, RedisSubscriptionManager
-from src.core.websocket.manager import ConnectionManager
 
 
 def get_test_redis_subscription_manager() -> RedisSubscriptionManager:

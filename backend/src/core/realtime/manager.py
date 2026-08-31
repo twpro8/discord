@@ -6,8 +6,8 @@ from uuid import UUID
 from starlette.websockets import WebSocketDisconnect
 
 from src.core.logging import get_logger
+from src.core.realtime.connection import Connection, SendableWebSocket
 from src.core.realtime.envelope import Envelope
-from src.core.websocket.connection import Connection, SendableWebSocket
 
 logger = get_logger(__name__)
 

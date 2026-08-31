@@ -10,7 +10,6 @@ from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.domain.repositories.email_message_repository import (
     EmailMessageRepository,
 )
-from src.modules.email.domain.value_objects.email_address import EmailAddress
 from src.shared.domain.transaction import Transaction
 
 
@@ -45,12 +44,12 @@ class SendEmailUseCase:
             if existing is not None:
                 return email_message_to_dto(existing)
 
-        address = EmailAddress(to)
+        to = to.strip().lower()
 
         message = await self._email_messages.create(
             EmailMessageCreate(
                 idempotency_key=idempotency_key,
-                to=str(address),
+                to=to,
                 template=template,
                 context=dict(context),
             )
@@ -61,7 +60,7 @@ class SendEmailUseCase:
             JobTaskName.SEND_EMAIL,
             {
                 "message_id": str(message.id),
-                "to": str(address),
+                "to": to,
                 "template": template.value,
                 "context": dict(context),
             },

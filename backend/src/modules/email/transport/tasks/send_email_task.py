@@ -18,7 +18,7 @@ from src.modules.email.adapters.rendering.jinja_renderer import (
 )
 from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.usecases.deliver_email import DeliverEmailUseCase
-from src.shared.data.transaction import SqlAlchemyTransaction
+from src.shared.adapters.transaction import SqlAlchemyTransaction
 from src.shared.errors import LumiereError
 
 logger = get_logger(__name__)

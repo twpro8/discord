@@ -10,8 +10,8 @@ from fastapi import FastAPI, WebSocket
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
+from src.core.realtime.auth import UserIdWSDep
 from src.core.security.jwt import create_access_token
-from src.core.websocket.auth import UserIdWSDep
 
 
 def _build_test_app() -> FastAPI:

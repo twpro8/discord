@@ -5,7 +5,6 @@ from uuid import UUID
 from asyncpg.exceptions import ForeignKeyViolationError
 from sqlalchemy import ColumnElement, Executable, insert, select, update
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.messages.adapters.persistence.mappers import MessageDataMapper
 from src.modules.messages.adapters.persistence.models import MessageOrm
@@ -21,11 +20,12 @@ from src.modules.messages.domain.entities.dtos import (
 )
 from src.modules.messages.domain.entities.message import Message
 from src.modules.messages.domain.exceptions import MessageNotFoundError
+from src.shared.adapters.base_repository import BaseRepository
 
 
-class MessageRepositoryImpl:
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
+class MessageRepositoryImpl(BaseRepository[MessageOrm, Message, MessageCreate, None]):
+    _model = MessageOrm
+    _mapper = MessageDataMapper
 
     async def create(self, data: MessageCreate) -> Message:
         stmt = insert(MessageOrm).values(**asdict(data)).returning(MessageOrm)
@@ -41,12 +41,6 @@ class MessageRepositoryImpl:
                 raise
             raise
         return MessageDataMapper.to_entity(result.scalar_one())
-
-    async def find_by_id(self, message_id: UUID) -> Message | None:
-        query = select(MessageOrm).filter_by(id=message_id)
-        result = await self._session.execute(query)
-        model = result.scalar_one_or_none()
-        return MessageDataMapper.to_entity(model) if model else None
 
     async def _fetch_page(
         self,

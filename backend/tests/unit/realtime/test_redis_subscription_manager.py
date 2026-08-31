@@ -9,8 +9,8 @@ from uuid import uuid4
 from fakeredis.aioredis import FakeRedis
 
 from src.core.realtime.envelope import Envelope, EventType
+from src.core.realtime.manager import ConnectionManager
 from src.core.realtime.redis_pubsub import RedisSubscriptionManager
-from src.core.websocket.manager import ConnectionManager
 
 
 class _FakeWebSocket:

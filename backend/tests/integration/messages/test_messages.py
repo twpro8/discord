@@ -91,10 +91,10 @@ class TestSendChannelMessage:
         )
         channel = result.scalar_one()
 
-        alice = next(u for u in get_all_users if str(u.username) == "alice")
+        alice = next(u for u in get_all_users if u.username == "alice")
         await ac.post(
             "/api/v1/auth/login",
-            json={"username": str(alice.username), "password": "12345678"},
+            json={"username": alice.username, "password": "12345678"},
         )
         response = await ac.post(
             f"/api/v1/channels/{channel.id}/messages",
@@ -198,10 +198,10 @@ class TestSendChatMessage:
         # guessing via an unordered/best-effort DB query.
         chat_id = chat_resp.json()["id"]
 
-        alice = next(u for u in get_all_users if str(u.username) == "alice")
+        alice = next(u for u in get_all_users if u.username == "alice")
         await ac.post(
             "/api/v1/auth/login",
-            json={"username": str(alice.username), "password": "12345678"},
+            json={"username": alice.username, "password": "12345678"},
         )
         response = await ac.post(
             f"/api/v1/chats/{chat_id}/messages",

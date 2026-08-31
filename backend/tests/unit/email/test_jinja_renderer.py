@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pytest
 
+from src.modules.email.adapters.rendering.jinja_renderer import (
+    JinjaTemplateRenderer,
+)
 from src.modules.email.domain.enums import EmailTemplateName
 from src.modules.email.domain.exceptions import (
     TemplateNotFoundError,
     TemplateRenderError,
-)
-from src.modules.email.adapters.rendering.jinja_renderer import (
-    JinjaTemplateRenderer,
 )
 
 

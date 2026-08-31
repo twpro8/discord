@@ -11,7 +11,7 @@ from src.core.config import settings
 from src.core.database import Base
 
 # required to load all ORM models for Alembic autogenerate
-import src.shared.data.models  # noqa
+import src.core.database.models  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

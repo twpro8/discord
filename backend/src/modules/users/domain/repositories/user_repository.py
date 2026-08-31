@@ -1,12 +1,12 @@
 import uuid
 from typing import Protocol
 
-from src.modules.users.domain.entities.dtos import UserUpdate
+from src.modules.users.domain.entities.dtos import UserCreate, UserUpdate
 from src.modules.users.domain.entities.user import User
 
 
 class UserRepository(Protocol):
-    async def add(self, user: User) -> None: ...
+    async def create(self, user: UserCreate) -> User: ...
 
     async def get_by_id(self, user_id: uuid.UUID) -> User | None: ...
 

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from src.core.websocket.manager import RoomMembershipUpdater
+from src.core.realtime.manager import RoomMembershipUpdater
 from src.modules.servers.domain.entities.dtos import ServerMemberCreate
 from src.modules.servers.domain.entities.server_member import ServerMember
 from src.modules.servers.domain.enums import ServerMemberRole

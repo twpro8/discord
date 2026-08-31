@@ -5,7 +5,6 @@ from fastapi.security import APIKeyCookie
 
 from src.api.v1.dependencies import (
     CacheDep,
-    EventBusDep,
     JobDispatcherDep,
     SessionDep,
     TransactionDep,
@@ -41,10 +40,8 @@ def get_refresh_token_repository(session: SessionDep) -> RefreshTokenRepository:
     return RefreshTokenRepositoryImpl(session)
 
 
-def get_users_facade(
-    session: SessionDep, cache: CacheDep, event_bus: EventBusDep
-) -> UsersFacade:
-    return build_users_facade(session, cache, event_bus)
+def get_users_facade(session: SessionDep, cache: CacheDep) -> UsersFacade:
+    return build_users_facade(session, cache)
 
 
 def get_email_facade(

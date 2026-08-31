@@ -37,7 +37,7 @@ class DeleteMessageUseCase:
         chat_id: UUID | None = None,
         channel_id: UUID | None = None,
     ) -> Message:
-        message = await self._messages.find_by_id(message_id)
+        message = await self._messages.get_by_id(message_id)
         if message is None:
             raise MessageNotFoundError
 
@@ -60,7 +60,7 @@ class DeleteMessageUseCase:
                     is_owner = False
             else:
                 assert message.channel_id is not None
-                channel = await self._channels.find_by_id(message.channel_id)
+                channel = await self._channels.get_by_id(message.channel_id)
                 if channel is not None:
                     try:
                         await self._servers_facade.assert_is_server_owner(

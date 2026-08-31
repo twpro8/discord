@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from src.api.v1.dependencies import RedisDep, SessionDep
-from src.core.config.settings import settings
+from src.core.config import settings
 from src.modules.friends.public.facade import FriendsFacade, build_friends_facade
 from src.modules.presence.adapters.persistence.redis_presence_repository import (
     RedisPresenceRepository,

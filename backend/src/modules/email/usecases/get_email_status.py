@@ -12,7 +12,7 @@ class GetEmailStatusUseCase:
         self._email_messages = email_message_repository
 
     async def __call__(self, *, message_id: UUID) -> EmailMessageDTO:
-        message = await self._email_messages.find_by_id(message_id)
+        message = await self._email_messages.get_by_id(message_id)
         if message is None:
             raise EmailMessageNotFoundError
         return email_message_to_dto(message)

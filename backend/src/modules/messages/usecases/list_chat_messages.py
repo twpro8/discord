@@ -1,8 +1,8 @@
 from uuid import UUID
 
 from src.core.logging import get_logger
+from src.core.realtime.manager import RoomMembershipUpdater
 from src.core.realtime.rooms import chat_room
-from src.core.websocket.manager import RoomMembershipUpdater
 from src.modules.chats.public.facade import ChatsFacade
 from src.modules.messages.domain.cursor import decode_cursor
 from src.modules.messages.domain.entities.dtos import ChatMessagePage

@@ -79,7 +79,7 @@ async def test_success_sends_login_notification_email() -> None:
 
     assert len(email.calls) == 1
     call = email.calls[0]
-    assert call["to"] == str(user.email)
+    assert call["to"] == user.email
     assert call["template"] == EmailTemplateName.GENERIC_NOTIFICATION
     assert call["context"]["recipient_name"] == user.name
     assert call["idempotency_key"] is not None

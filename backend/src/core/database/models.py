@@ -1,13 +1,4 @@
-"""
-Aggregates all ORM models into a single module.
-
-This module ensures that all model classes are imported and registered
-in SQLAlchemy's metadata. It is primarily used by Alembic during
-autogeneration, so that all tables are discovered correctly.
-
-Do not remove or bypass these imports unless you update Alembic's
-model discovery logic accordingly.
-"""
+# Aggregates all ORM models into a single module for Alembic autogeneration.
 
 from src.modules.auth.adapters.persistence.models import RefreshTokenOrm
 from src.modules.channels.adapters.persistence.models import ChannelOrm

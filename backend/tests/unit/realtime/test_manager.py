@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from starlette.websockets import WebSocketDisconnect
 
 from src.core.realtime.envelope import Envelope, EventType
-from src.core.websocket.manager import ConnectionManager
+from src.core.realtime.manager import ConnectionManager
 
 
 class FakeManagedWebSocket:

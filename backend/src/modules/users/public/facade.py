@@ -4,7 +4,6 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.cache import Cache
-from src.core.event_bus import EventBus
 from src.modules.users.adapters.persistence.user_repository_impl import (
     UserRepositoryImpl,
 )
@@ -14,7 +13,6 @@ from src.modules.users.usecases.create_user import CreateUserUseCase
 from src.modules.users.usecases.get_user_by_id import GetUserByIDUseCase
 from src.modules.users.usecases.get_user_by_username import GetUserByUsernameUseCase
 from src.modules.users.usecases.verify_credentials import VerifyCredentialsUseCase
-from src.shared.data.transaction import SqlAlchemyTransaction
 
 
 class UsersFacade(Protocol):
@@ -87,7 +85,10 @@ class UseCaseBackedUsersFacade:
         plain_password: str,
     ) -> UserDTO:
         user = await self._create_user(
-            name=name, username=username, email=email, plain_password=plain_password
+            name=name,
+            username=username,
+            email=email,
+            plain_password=plain_password,
         )
         return user_to_dto(user)
 
@@ -98,19 +99,17 @@ class UseCaseBackedUsersFacade:
         plain_password: str,
     ) -> UserDTO:
         user = await self._verify_credentials(
-            username=username, plain_password=plain_password
+            username=username,
+            plain_password=plain_password,
         )
         return user_to_dto(user)
 
 
-def build_users_facade(
-    session: AsyncSession, cache: Cache, event_bus: EventBus
-) -> UsersFacade:
+def build_users_facade(session: AsyncSession, cache: Cache) -> UsersFacade:
     user_repository = UserRepositoryImpl(session)
-    tx = SqlAlchemyTransaction(session)
     return UseCaseBackedUsersFacade(
         GetUserByIDUseCase(user_repository, cache),
         GetUserByUsernameUseCase(user_repository),
         VerifyCredentialsUseCase(user_repository),
-        CreateUserUseCase(tx, user_repository, event_bus),
+        CreateUserUseCase(user_repository),
     )

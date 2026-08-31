@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from src.core.logging import get_logger
 from src.core.realtime.envelope import Envelope, EventType
-from src.core.websocket.manager import ConnectionManager
+from src.core.realtime.manager import ConnectionManager
 
 logger = get_logger(__name__)
 

@@ -5,14 +5,12 @@ import pytest
 from src.core.realtime.rooms import chat_room
 from src.modules.chats.domain.entities.dtos import ChatCreate, ChatCreateData
 from src.modules.chats.domain.enums import ChatMemberRole, ChatType
-from src.modules.chats.domain.events import ChatCreatedEvent
 from src.modules.chats.domain.exceptions import SelfChatForbiddenError
 from src.modules.chats.usecases.create_chat import CreateChatUseCase
 from tests.unit.chats.fakes import (
     FakeChatMemberRepository,
     FakeChatRepository,
     FakeRoomMembershipUpdater,
-    RecordingEventBus,
 )
 from tests.unit.fakes import FakeTransaction
 
@@ -21,24 +19,21 @@ def _use_case() -> tuple[
     CreateChatUseCase,
     FakeChatRepository,
     FakeChatMemberRepository,
-    RecordingEventBus,
     FakeRoomMembershipUpdater,
 ]:
     chats = FakeChatRepository()
     members = FakeChatMemberRepository()
-    event_bus = RecordingEventBus()
     room_updater = FakeRoomMembershipUpdater()
     return (
-        CreateChatUseCase(FakeTransaction(), chats, members, event_bus, room_updater),
+        CreateChatUseCase(FakeTransaction(), chats, members, room_updater),
         chats,
         members,
-        event_bus,
         room_updater,
     )
 
 
 async def test_self_chat_is_rejected() -> None:
-    use_case, _, members, _, _ = _use_case()
+    use_case, _, members, _ = _use_case()
     user_id = uuid4()
 
     with pytest.raises(SelfChatForbiddenError):
@@ -56,7 +51,7 @@ async def test_self_chat_is_rejected() -> None:
 
 
 async def test_creates_private_chat_and_adds_both_members() -> None:
-    use_case, _, members, event_bus, room_updater = _use_case()
+    use_case, _, members, room_updater = _use_case()
     creator_id, target_id = uuid4(), uuid4()
 
     chat = await use_case(
@@ -71,16 +66,13 @@ async def test_creates_private_chat_and_adds_both_members() -> None:
 
     assert chat.type == ChatType.private
     assert {m.user_id for m in members.members} == {creator_id, target_id}
-    assert len(event_bus.published) == 1
-    assert isinstance(event_bus.published[0], ChatCreatedEvent)
-    assert event_bus.published[0].chat_id == chat.id
 
     room = chat_room(chat.id)
     assert set(room_updater.joined) == {(creator_id, room), (target_id, room)}
 
 
 async def test_reuses_existing_private_chat_without_adding_members() -> None:
-    use_case, chats, members, event_bus, room_updater = _use_case()
+    use_case, chats, members, room_updater = _use_case()
     creator_id, target_id = uuid4(), uuid4()
     existing = await chats.create(ChatCreate(type=ChatType.private))
     chats.seed_private_chat(creator_id, target_id, existing)
@@ -97,12 +89,11 @@ async def test_reuses_existing_private_chat_without_adding_members() -> None:
 
     assert chat.id == existing.id
     assert members.members == []
-    assert event_bus.published == []
     assert room_updater.joined == []
 
 
 async def test_creates_group_chat_with_owner_and_members() -> None:
-    use_case, _, members, event_bus, room_updater = _use_case()
+    use_case, _, members, room_updater = _use_case()
     creator_id, member_id = uuid4(), uuid4()
 
     chat = await use_case(
@@ -121,9 +112,6 @@ async def test_creates_group_chat_with_owner_and_members() -> None:
     roles = {m.user_id: m.role for m in members.members}
     assert roles[creator_id] == ChatMemberRole.owner
     assert roles[member_id] == ChatMemberRole.member
-
-    assert len(event_bus.published) == 1
-    assert isinstance(event_bus.published[0], ChatCreatedEvent)
 
     room = chat_room(chat.id)
     assert set(room_updater.joined) == {(creator_id, room), (member_id, room)}
