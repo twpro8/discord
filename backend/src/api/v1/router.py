@@ -6,6 +6,10 @@ from src.modules.auth.transport.http.router import router as auth_router
 from src.modules.channels.transport.http.router import router as channels_router
 from src.modules.chats.transport.http.router import router as chats_router
 from src.modules.friends.transport.http.router import router as friends_router
+from src.modules.messages.transport.http.router import (
+    channel_message_router,
+    chat_message_router,
+)
 from src.modules.presence.transport.http.router import router as presence_router
 from src.modules.servers.transport.http.router import router as servers_router
 from src.modules.users.transport.http.router import router as users_router
@@ -16,7 +20,9 @@ _MODULE_ROUTERS = [
     friends_router,
     servers_router,
     channels_router,
+    channel_message_router,
     chats_router,
+    chat_message_router,
     presence_router,
 ]
 

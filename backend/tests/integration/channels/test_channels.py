@@ -100,8 +100,8 @@ class TestUpdateChannel:
         server_id, channel_id = await _create_server_channel(authed_client, session)
 
         response = await authed_client.patch(
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id, "name": "renamed", "topic": "new topic"},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
+            json={"name": "renamed", "topic": "new topic"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -118,8 +118,8 @@ class TestUpdateChannel:
         server_id, channel_id = await _create_server_channel(authed_client, session)
 
         response = await authed_client.patch(
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id, "topic": "only topic"},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
+            json={"topic": "only topic"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -134,12 +134,12 @@ class TestUpdateChannel:
         server_id, channel_id = await _create_server_channel(authed_client, session)
 
         await authed_client.patch(
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id, "topic": "some topic"},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
+            json={"topic": "some topic"},
         )
         response = await authed_client.patch(
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id, "topic": ""},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
+            json={"topic": ""},
         )
         assert response.status_code == 200
         assert response.json()["topic"] is None
@@ -158,8 +158,8 @@ class TestUpdateChannel:
         before = channel.updated_at
 
         await authed_client.patch(
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id, "name": "touched"},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
+            json={"name": "touched"},
         )
 
         await session.refresh(channel)
@@ -175,8 +175,8 @@ class TestUpdateChannel:
         assert extra_channel_id
 
         response = await authed_client.patch(
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id, "name": "taken"},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
+            json={"name": "taken"},
         )
         assert response.status_code == 409
 
@@ -188,8 +188,8 @@ class TestUpdateChannel:
         server_id, _ = await _create_server_channel(authed_client, session)
 
         response = await authed_client.patch(
-            f"/api/v1/channels/{uuid4()}",
-            json={"server_id": server_id, "name": "renamed"},
+            f"/api/v1/servers/{server_id}/channels/{uuid4()}",
+            json={"name": "renamed"},
         )
         assert response.status_code == 404
 
@@ -201,8 +201,8 @@ class TestUpdateChannel:
         _, channel_id = await _create_server_channel(authed_client, session)
 
         response = await authed_client.patch(
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": str(uuid4()), "name": "renamed"},
+            f"/api/v1/servers/{uuid4()}/channels/{channel_id}",
+            json={"name": "renamed"},
         )
         assert response.status_code == 404
 
@@ -223,8 +223,8 @@ class TestUpdateChannel:
             json={"username": monica.username, "password": "12345678"},
         )
         response = await ac.patch(
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id, "name": "renamed"},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
+            json={"name": "renamed"},
         )
         assert response.status_code == 403
 
@@ -233,9 +233,10 @@ class TestUpdateChannel:
         ac: AsyncClient,
         session: AsyncSession,
     ) -> None:
+
         response = await ac.patch(
-            f"/api/v1/channels/{uuid4()}",
-            json={"server_id": str(uuid4()), "name": "renamed"},
+            f"/api/v1/servers/{uuid4()}/channels/{uuid4()}",
+            json={"name": "renamed"},
         )
         assert response.status_code == 401
 
@@ -253,8 +254,7 @@ class TestDeleteChannel:
 
         response = await authed_client.request(
             "DELETE",
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
         )
         assert response.status_code == 204
 
@@ -274,8 +274,7 @@ class TestDeleteChannel:
 
         response = await authed_client.request(
             "DELETE",
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
         )
         assert response.status_code == 422
 
@@ -288,8 +287,7 @@ class TestDeleteChannel:
 
         response = await authed_client.request(
             "DELETE",
-            f"/api/v1/channels/{uuid4()}",
-            json={"server_id": server_id},
+            f"/api/v1/servers/{server_id}/channels/{uuid4()}",
         )
         assert response.status_code == 404
 
@@ -302,8 +300,7 @@ class TestDeleteChannel:
 
         response = await authed_client.request(
             "DELETE",
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": str(uuid4())},
+            f"/api/v1/servers/{uuid4()}/channels/{channel_id}",
         )
         assert response.status_code == 404
 
@@ -326,8 +323,7 @@ class TestDeleteChannel:
         )
         response = await ac.request(
             "DELETE",
-            f"/api/v1/channels/{channel_id}",
-            json={"server_id": server_id},
+            f"/api/v1/servers/{server_id}/channels/{channel_id}",
         )
         assert response.status_code == 403
 
@@ -338,7 +334,6 @@ class TestDeleteChannel:
     ) -> None:
         response = await ac.request(
             "DELETE",
-            f"/api/v1/channels/{uuid4()}",
-            json={"server_id": str(uuid4())},
+            f"/api/v1/servers/{uuid4()}/channels/{uuid4()}",
         )
         assert response.status_code == 401
