@@ -32,8 +32,14 @@ from src.modules.messages.transport.http.schemas import (
     MessageEditRequest,
 )
 
-channel_message_router = APIRouter(prefix="/messages", tags=["Channel Messages"])
-chat_message_router = APIRouter(prefix="/messages", tags=["Chat Messages"])
+channel_message_router = APIRouter(
+    prefix="/channels/{channel_id}/messages",
+    tags=["Channel Messages"],
+)
+chat_message_router = APIRouter(
+    prefix="/chats/{chat_id}/messages",
+    tags=["Chat Messages"],
+)
 
 
 @channel_message_router.post("")

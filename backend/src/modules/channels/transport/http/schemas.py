@@ -21,11 +21,6 @@ class ChannelResponse(BaseSchema):
 
 
 class ChannelUpdateRequest(BaseSchema):
-    server_id: UUID
     name: str | None = Field(default=None, min_length=1, max_length=128)
     topic: str | None = Field(default=None, max_length=1024)
     position: int | None = Field(default=None, ge=0)
-
-
-class ChannelDeleteRequest(BaseSchema):
-    server_id: UUID
