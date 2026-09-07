@@ -47,3 +47,10 @@ class ChannelRepositoryImpl(
             .order_by(ChannelOrm.position.asc())
         )
         return await self._execute_and_map_all(query)
+
+    async def max_position_by_server(self, server_id: UUID) -> int:
+        stmt = select(func.coalesce(func.max(ChannelOrm.position), 0)).where(
+            ChannelOrm.server_id == server_id
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar_one()

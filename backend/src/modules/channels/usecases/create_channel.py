@@ -3,6 +3,7 @@ from uuid import UUID
 from src.modules.channels.domain.entities.channel import Channel
 from src.modules.channels.domain.entities.dtos import ChannelCreate
 from src.modules.channels.domain.enums import ChannelType
+from src.modules.channels.domain.exceptions import ChannelConflictError
 from src.modules.channels.domain.repositories.channel_repository import (
     ChannelRepository,
 )
@@ -32,11 +33,16 @@ class CreateChannelUseCase:
             if user_id is None:
                 raise ValueError("user_id is required when servers_facade is provided")
             await self._servers.assert_is_server_owner(user_id, server_id)
+        name = name.strip()
+        existing = await self._channels.find_by_name(server_id, name)
+        if existing is not None:
+            raise ChannelConflictError
+        max_pos = await self._channels.max_position_by_server(server_id)
         channel_data = ChannelCreate(
             server_id=server_id,
             name=name,
             type=channel_type,
-            position=0,
+            position=max_pos + 1,
             topic=topic,
             is_private=is_private,
         )

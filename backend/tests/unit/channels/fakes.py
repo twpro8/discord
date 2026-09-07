@@ -65,3 +65,9 @@ class FakeChannelRepository:
             [c for c in self.channels.values() if c.server_id == server_id],
             key=lambda c: c.position,
         )
+
+    async def max_position_by_server(self, server_id: UUID) -> int:
+        server_channels = [
+            c for c in self.channels.values() if c.server_id == server_id
+        ]
+        return max((c.position for c in server_channels), default=0)
