@@ -39,3 +39,11 @@ class ChannelRepositoryImpl(
         )
         result = await self._session.execute(stmt)
         return result.scalar_one()
+
+    async def list_by_server(self, server_id: UUID) -> list[Channel]:
+        query = (
+            select(ChannelOrm)
+            .where(ChannelOrm.server_id == server_id)
+            .order_by(ChannelOrm.position.asc())
+        )
+        return await self._execute_and_map_all(query)

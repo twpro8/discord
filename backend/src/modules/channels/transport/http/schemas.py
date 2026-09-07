@@ -20,6 +20,13 @@ class ChannelResponse(BaseSchema):
     updated_at: datetime
 
 
+class ChannelCreateRequest(BaseSchema):
+    name: str = Field(min_length=1, max_length=128)
+    type: ChannelType = ChannelType.text
+    topic: str | None = Field(default=None, max_length=1024)
+    is_private: bool = False
+
+
 class ChannelUpdateRequest(BaseSchema):
     name: str | None = Field(default=None, min_length=1, max_length=128)
     topic: str | None = Field(default=None, max_length=1024)
