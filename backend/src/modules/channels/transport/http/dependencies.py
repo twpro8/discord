@@ -11,6 +11,8 @@ from src.modules.channels.domain.repositories.channel_repository import (
 )
 from src.modules.channels.usecases.create_channel import CreateChannelUseCase
 from src.modules.channels.usecases.delete_channel import DeleteChannelUseCase
+from src.modules.channels.usecases.get_channel_by_id import GetChannelByIDUseCase
+from src.modules.channels.usecases.get_channels import GetChannelsUseCase
 from src.modules.channels.usecases.update_channel import UpdateChannelUseCase
 from src.modules.servers.public.facade import ServersFacade, build_servers_facade
 
@@ -29,12 +31,13 @@ ServersFacadeDep = Annotated[ServersFacade, Depends(get_servers_facade)]
 
 async def get_create_channel_use_case(
     channel_repository: ChannelRepositoryDep,
+    servers_facade: ServersFacadeDep,
     _tx: TransactionDep,
 ) -> CreateChannelUseCase:
     # CreateChannelUseCase never commits itself (see its docstring) — this
     # unused _tx forces the request's auto-commit dependency to actually
     # build, since nothing else in this provider's graph references it.
-    return CreateChannelUseCase(channel_repository)
+    return CreateChannelUseCase(channel_repository, servers_facade)
 
 
 async def get_update_channel_use_case(
@@ -53,8 +56,26 @@ async def get_delete_channel_use_case(
     return DeleteChannelUseCase(channel_repository, servers_facade)
 
 
+async def get_channels_use_case(
+    channel_repository: ChannelRepositoryDep,
+    servers_facade: ServersFacadeDep,
+) -> GetChannelsUseCase:
+    return GetChannelsUseCase(channel_repository, servers_facade)
+
+
+async def get_channel_by_id_use_case(
+    channel_repository: ChannelRepositoryDep,
+    servers_facade: ServersFacadeDep,
+) -> GetChannelByIDUseCase:
+    return GetChannelByIDUseCase(channel_repository, servers_facade)
+
+
 CreateChannelUseCaseDep = Annotated[
     CreateChannelUseCase, Depends(get_create_channel_use_case)
+]
+GetChannelsUseCaseDep = Annotated[GetChannelsUseCase, Depends(get_channels_use_case)]
+GetChannelByIDUseCaseDep = Annotated[
+    GetChannelByIDUseCase, Depends(get_channel_by_id_use_case)
 ]
 UpdateChannelUseCaseDep = Annotated[
     UpdateChannelUseCase, Depends(get_update_channel_use_case)

@@ -6,34 +6,38 @@ from src.modules.channels.domain.enums import ChannelType
 from src.modules.channels.domain.repositories.channel_repository import (
     ChannelRepository,
 )
+from src.modules.servers.public.facade import ServersFacade
 
 
 class CreateChannelUseCase:
-    """No explicit commit: called directly (auto-committed by the request's
-    TransactionDep) or, via ChannelsFacade.create_default_channel, as part
-    of another module's own atomic write (e.g. CreateServerUseCase) — that
-    caller's own explicit commit covers this write too, since both share
-    the same session."""
-
-    def __init__(self, channel_repository: ChannelRepository) -> None:
+    def __init__(
+        self,
+        channel_repository: ChannelRepository,
+        servers_facade: ServersFacade | None = None,
+    ) -> None:
         self._channels = channel_repository
+        self._servers = servers_facade
 
     async def __call__(
         self,
         *,
         server_id: UUID,
         name: str,
-        type: ChannelType = ChannelType.text,
+        user_id: UUID | None = None,
+        channel_type: ChannelType = ChannelType.text,
         topic: str | None = None,
         is_private: bool = False,
     ) -> Channel:
+        if self._servers is not None:
+            if user_id is None:
+                raise ValueError("user_id is required when servers_facade is provided")
+            await self._servers.assert_is_server_owner(user_id, server_id)
         channel_data = ChannelCreate(
             server_id=server_id,
             name=name,
-            type=type,
+            type=channel_type,
             position=0,
             topic=topic,
             is_private=is_private,
         )
-
         return await self._channels.create(channel_data)
