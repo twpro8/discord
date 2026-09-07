@@ -43,7 +43,7 @@ async def create_channel(
 
 
 @router.get(
-    "",
+    "/{server_id}/channels",
     status_code=status.HTTP_200_OK,
     summary="Get all channels",
 )
@@ -57,7 +57,7 @@ async def get_channels(
 
 
 @router.get(
-    "/{channel_id}",
+    "/{server_id}/channels/{channel_id}",
     status_code=status.HTTP_200_OK,
     summary="Get channel by id",
 )

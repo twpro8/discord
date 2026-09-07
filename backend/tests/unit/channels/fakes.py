@@ -59,3 +59,9 @@ class FakeChannelRepository:
         channel = self.channels[channel_id]
         channel.last_sequence += 1
         return channel.last_sequence
+
+    async def list_by_server(self, server_id: UUID) -> list[Channel]:
+        return sorted(
+            [c for c in self.channels.values() if c.server_id == server_id],
+            key=lambda c: c.position,
+        )
