@@ -14,7 +14,6 @@ class ChannelResponse(BaseSchema):
     type: ChannelType
     topic: str | None
     position: int
-    last_sequence: int
     is_private: bool
     created_at: datetime
     updated_at: datetime

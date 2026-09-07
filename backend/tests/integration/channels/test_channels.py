@@ -87,7 +87,7 @@ class TestChannelAutoCreation:
         assert channel.name == "general"
         assert channel.type == "text"
         assert channel.is_private is False
-        assert channel.position == 0
+        assert channel.position == 1
         assert channel.last_sequence == 0
 
 

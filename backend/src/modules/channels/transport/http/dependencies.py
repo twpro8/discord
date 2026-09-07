@@ -59,6 +59,7 @@ async def get_delete_channel_use_case(
 async def get_channels_use_case(
     channel_repository: ChannelRepositoryDep,
     servers_facade: ServersFacadeDep,
+    _tx: TransactionDep,
 ) -> GetChannelsUseCase:
     return GetChannelsUseCase(channel_repository, servers_facade)
 
@@ -66,6 +67,7 @@ async def get_channels_use_case(
 async def get_channel_by_id_use_case(
     channel_repository: ChannelRepositoryDep,
     servers_facade: ServersFacadeDep,
+    _tx: TransactionDep,
 ) -> GetChannelByIDUseCase:
     return GetChannelByIDUseCase(channel_repository, servers_facade)
 
