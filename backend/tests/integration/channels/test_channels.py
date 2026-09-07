@@ -337,3 +337,313 @@ class TestDeleteChannel:
             f"/api/v1/servers/{uuid4()}/channels/{uuid4()}",
         )
         assert response.status_code == 401
+
+
+class TestCreateChannel:
+    async def test_success(
+        self,
+        authed_client: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "Create Ch Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        response = await authed_client.post(
+            f"/api/v1/servers/{server_id}/channels",
+            json={
+                "name": "announcements",
+                "type": "text",
+                "topic": "Important updates",
+            },
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["name"] == "announcements"
+        assert data["type"] == "text"
+        assert data["topic"] == "Important updates"
+        assert data["server_id"] == server_id
+        assert data["is_private"] is False
+
+    async def test_create_voice_channel(
+        self,
+        authed_client: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "Voice Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        response = await authed_client.post(
+            f"/api/v1/servers/{server_id}/channels",
+            json={"name": "lounge", "type": "voice"},
+        )
+        assert response.status_code == 201
+        assert response.json()["type"] == "voice"
+
+    async def test_create_private_channel(
+        self,
+        authed_client: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "Private Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        response = await authed_client.post(
+            f"/api/v1/servers/{server_id}/channels",
+            json={"name": "secret", "is_private": True},
+        )
+        assert response.status_code == 201
+        assert response.json()["is_private"] is True
+
+    async def test_not_owner(
+        self,
+        authed_client: AsyncClient,
+        ac: AsyncClient,
+        session: AsyncSession,
+        get_all_users: list[User],
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "Owner Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        monica = get_all_users[1]
+        await ac.post(
+            "/api/v1/auth/login",
+            json={"username": monica.username, "password": "12345678"},
+        )
+        response = await ac.post(
+            f"/api/v1/servers/{server_id}/channels",
+            json={"name": "attempt"},
+        )
+        assert response.status_code == 403
+
+    async def test_unauthorized(
+        self,
+        ac: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await ac.post(
+            f"/api/v1/servers/{uuid4()}/channels",
+            json={"name": "nope"},
+        )
+        assert response.status_code == 401
+
+    async def test_defaults(
+        self,
+        authed_client: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "Defaults Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        response = await authed_client.post(
+            f"/api/v1/servers/{server_id}/channels",
+            json={"name": "chat"},
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["type"] == "text"
+        assert data["topic"] is None
+        assert data["is_private"] is False
+
+
+class TestGetChannels:
+    async def test_success(
+        self,
+        authed_client: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "List Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        await authed_client.post(
+            f"/api/v1/servers/{server_id}/channels",
+            json={"name": "second"},
+        )
+
+        response = await authed_client.get(
+            f"/api/v1/servers/{server_id}/channels",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        names = {ch["name"] for ch in data}
+        assert names == {"general", "second"}
+
+    async def test_empty_server(
+        self,
+        authed_client: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "Empty Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        result = await session.execute(
+            select(ChannelOrm).where(ChannelOrm.server_id == UUID(server_id))
+        )
+        for ch in result.scalars().all():
+            await session.delete(ch)
+        await session.commit()
+
+        response = await authed_client.get(
+            f"/api/v1/servers/{server_id}/channels",
+        )
+        assert response.status_code == 200
+        assert response.json() == []
+
+    async def test_not_member(
+        self,
+        authed_client: AsyncClient,
+        ac: AsyncClient,
+        session: AsyncSession,
+        get_all_users: list[User],
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "Member Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        monica = get_all_users[1]
+        await ac.post(
+            "/api/v1/auth/login",
+            json={"username": monica.username, "password": "12345678"},
+        )
+        response = await ac.get(
+            f"/api/v1/servers/{server_id}/channels",
+        )
+        assert response.status_code == 403
+
+    async def test_unauthorized(
+        self,
+        ac: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await ac.get(
+            f"/api/v1/servers/{uuid4()}/channels",
+        )
+        assert response.status_code == 401
+
+
+class TestGetChannelByID:
+    async def test_success(
+        self,
+        authed_client: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "Get Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        result = await session.execute(
+            select(ChannelOrm).where(ChannelOrm.server_id == UUID(server_id))
+        )
+        channel = result.scalar_one()
+
+        response = await authed_client.get(
+            f"/api/v1/servers/{server_id}/channels/{channel.id}",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == str(channel.id)
+        assert data["name"] == "general"
+        assert data["server_id"] == server_id
+
+    async def test_not_found(
+        self,
+        authed_client: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "NotFound Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        response = await authed_client.get(
+            f"/api/v1/servers/{server_id}/channels/{uuid4()}",
+        )
+        assert response.status_code == 404
+
+    async def test_server_mismatch(
+        self,
+        authed_client: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "Mismatch Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        result = await session.execute(
+            select(ChannelOrm).where(ChannelOrm.server_id == UUID(server_id))
+        )
+        channel = result.scalar_one()
+
+        response = await authed_client.post("/api/v1/servers", json={"name": "Other"})
+        other_server_id = response.json()["id"]
+
+        response = await authed_client.get(
+            f"/api/v1/servers/{other_server_id}/channels/{channel.id}",
+        )
+        assert response.status_code == 404
+
+    async def test_not_member(
+        self,
+        authed_client: AsyncClient,
+        ac: AsyncClient,
+        session: AsyncSession,
+        get_all_users: list[User],
+    ) -> None:
+        response = await authed_client.post(
+            "/api/v1/servers", json={"name": "GetMember Server"}
+        )
+        assert response.status_code == 201
+        server_id = response.json()["id"]
+
+        result = await session.execute(
+            select(ChannelOrm).where(ChannelOrm.server_id == UUID(server_id))
+        )
+        channel = result.scalar_one()
+
+        monica = get_all_users[1]
+        await ac.post(
+            "/api/v1/auth/login",
+            json={"username": monica.username, "password": "12345678"},
+        )
+        response = await ac.get(
+            f"/api/v1/servers/{server_id}/channels/{channel.id}",
+        )
+        assert response.status_code == 403
+
+    async def test_unauthorized(
+        self,
+        ac: AsyncClient,
+        session: AsyncSession,
+    ) -> None:
+        response = await ac.get(
+            f"/api/v1/servers/{uuid4()}/channels/{uuid4()}",
+        )
+        assert response.status_code == 401
